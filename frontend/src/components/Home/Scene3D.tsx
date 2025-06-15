@@ -165,12 +165,12 @@ function FloatingText({ onAnimationComplete, fonts, isPushedUp, pushUpAmount, on
 
     uniqueChars.forEach(char => {
       // Normal width
-      const normalGeom = new TextGeometry(char, { font: fonts.spaceGrotesk!, size: 0.6, height: 0, curveSegments: 12, bevelEnabled: true, bevelThickness: 0.12, bevelSize: 0, bevelSegments: 5 });
+      const normalGeom = new TextGeometry(char, { font: fonts.spaceGrotesk!, size: 0.6, depth: 0, curveSegments: 12, bevelEnabled: true, bevelThickness: 0.12, bevelSize: 0, bevelSegments: 5 });
       normalGeom.computeBoundingBox();
       const normalWidth = normalGeom.boundingBox!.max.x - normalGeom.boundingBox!.min.x;
 
       // Hovered width
-      const hoveredGeom = new TextGeometry(char, { font: fonts.jua!, size: 0.6, height: 0, curveSegments: 12, bevelEnabled: true, bevelThickness: 0.12, bevelSize: 0, bevelSegments: 5 });
+      const hoveredGeom = new TextGeometry(char, { font: fonts.jua!, size: 0.6, depth: 0, curveSegments: 12, bevelEnabled: true, bevelThickness: 0.12, bevelSize: 0, bevelSegments: 5 });
       hoveredGeom.computeBoundingBox();
       const hoveredWidth = hoveredGeom.boundingBox!.max.x - hoveredGeom.boundingBox!.min.x;
 
