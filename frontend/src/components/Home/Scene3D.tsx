@@ -6,7 +6,7 @@ import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 import { FontLoader } from 'three/addons/loaders/FontLoader.js';
 import { Font } from 'three/addons/loaders/FontLoader.js';
 import { Character } from './Character';
-import { AnimatedGrid } from './AnimatedGrid';
+import { CustomGrid } from './CustomGrid';
 import { ProjectsButton } from './ProjectsButton';
 
 interface FloatingTextProps {
@@ -285,10 +285,10 @@ const Scene3D = () => {
         <ambientLight intensity={0.5} />
         <directionalLight position={[10, 10, 5]} intensity={1} />
         <ReflectivePlane />
-        <AnimatedGrid
+        <CustomGrid
           fadeDistance={20}
           fadeStrength={2}
-          lineThickness={0.5}
+          lineThickness={0.04}
           startAnimation={startGridAnimation}
           onAnimationComplete={() => setShowProjectsButton(true)}
         />
