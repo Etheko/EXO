@@ -7,7 +7,6 @@ import { FontLoader } from 'three/addons/loaders/FontLoader.js';
 import { Font } from 'three/addons/loaders/FontLoader.js';
 import { Character } from './Character';
 import { CustomGrid } from './CustomGrid';
-import { ProjectsButton } from './ProjectsButton';
 
 interface FloatingTextProps {
   onAnimationComplete: () => void;
@@ -15,12 +14,9 @@ interface FloatingTextProps {
     spaceGrotesk: Font;
     jua: Font;
   };
-  isPushedUp: boolean;
-  pushUpAmount: number;
-  onTypingStart: () => void;
 }
 
-function FloatingText({ onAnimationComplete, fonts, isPushedUp, pushUpAmount, onTypingStart }: FloatingTextProps) {
+function FloatingText({ onAnimationComplete, fonts }: FloatingTextProps) {
   const textRef = useRef<Group>(null);
   const [mouse, setMouse] = useState(new Vector2());
 
@@ -49,7 +45,6 @@ function FloatingText({ onAnimationComplete, fonts, isPushedUp, pushUpAmount, on
     if (animationStep === 'blinkingCursor') {
         const timer = setTimeout(() => {
           setAnimationStep('typing');
-          onTypingStart();
         }, 3000);
         return () => clearTimeout(timer);
     } else if (animationStep === 'typing' && displayedText.length < fullText.length) {
@@ -62,7 +57,7 @@ function FloatingText({ onAnimationComplete, fonts, isPushedUp, pushUpAmount, on
         const timer = setTimeout(() => setAnimationStep('rising'), 1200); // Wait a bit after typing
         return () => clearTimeout(timer);
     }
-  }, [animationStep, displayedText, fullText, onTypingStart]);
+  }, [animationStep, displayedText, fullText]);
 
   // Cursor blinking controller
   useEffect(() => {
@@ -121,7 +116,7 @@ function FloatingText({ onAnimationComplete, fonts, isPushedUp, pushUpAmount, on
         }
     } else if (animationStep === 'idle') {
         // When button appears, smoothly move up to new resting position
-        const targetY = isPushedUp ? finalY + pushUpAmount : finalY;
+        const targetY = finalY;
         textRef.current.position.y += (targetY - textRef.current.position.y) * 0.05;
 
         // Smoothed mouse move effect
@@ -259,14 +254,7 @@ function ReflectivePlane() {
 
 const Scene3D = () => {
   const [startGridAnimation, setStartGridAnimation] = useState(false);
-  const [showProjectsButton, setShowProjectsButton] = useState(false);
-  const [shouldPreloadButton, setShouldPreloadButton] = useState(false);
   const [fonts, setFonts] = useState<{ spaceGrotesk: Font | null; jua: Font | null }>({ spaceGrotesk: null, jua: null });
-
-  // This is the single variable to control the vertical layout.
-  // It defines the button's Y position. The text's push distance is derived from it.
-  const buttonYPosition = -0.4;
-  const textPushUpAmount = Math.abs(buttonYPosition) * 0.6; // e.g. 0.8 -> 0.4
 
   useEffect(() => {
     const fontLoader = new FontLoader();
@@ -290,22 +278,12 @@ const Scene3D = () => {
           fadeStrength={2}
           lineThickness={0.04}
           startAnimation={startGridAnimation}
-          onAnimationComplete={() => setShowProjectsButton(true)}
         />
         {fonts.spaceGrotesk && fonts.jua ? (
           <>
             <FloatingText
               onAnimationComplete={() => setStartGridAnimation(true)}
               fonts={fonts as { spaceGrotesk: Font; jua: Font }}
-              isPushedUp={showProjectsButton}
-              pushUpAmount={textPushUpAmount}
-              onTypingStart={() => setShouldPreloadButton(true)}
-            />
-            <ProjectsButton
-              fonts={{ spaceGrotesk: fonts.spaceGrotesk }}
-              position={[0, buttonYPosition, 0]}
-              show={showProjectsButton}
-              preload={shouldPreloadButton}
             />
           </>
         ) : null}
@@ -314,4 +292,4 @@ const Scene3D = () => {
   );
 };
 
-export default Scene3D; 
+export default Scene3D;
