@@ -1,12 +1,13 @@
 import { useRef, useState, useEffect, useMemo } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { MeshReflectorMaterial } from '@react-three/drei';
+import { MeshReflectorMaterial, Environment } from '@react-three/drei';
 import { Group, Mesh, Vector2, MeshStandardMaterial, Color } from 'three';
 import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 import { FontLoader } from 'three/addons/loaders/FontLoader.js';
 import { Font } from 'three/addons/loaders/FontLoader.js';
 import { Character } from './Character';
 import { CustomGrid } from './CustomGrid';
+import MainFrame from './MainFrame';
 
 interface FloatingTextProps {
   onAnimationComplete: () => void;
@@ -285,6 +286,8 @@ const Scene3D = () => {
               onAnimationComplete={() => setStartGridAnimation(true)}
               fonts={fonts as { spaceGrotesk: Font; jua: Font }}
             />
+            {/* 3D HTML window that slides into view on scroll */}
+            <MainFrame z={3.5}/>
           </>
         ) : null}
       </Canvas>

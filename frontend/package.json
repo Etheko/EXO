@@ -21,6 +21,7 @@
     "autoprefixer": "10.4.17",
     "axios": "1.10.0",
     "framer-motion": "11.0.5",
+    "html2canvas": "^1.4.1",
     "postcss": "8.4.35",
     "react": "18.2.0",
     "react-dom": "18.2.0",
