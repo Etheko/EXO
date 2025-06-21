@@ -1,14 +1,64 @@
 import { useRef, useState, useEffect, useMemo } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { MeshReflectorMaterial, Environment } from '@react-three/drei';
 import { Group, Mesh, Vector2, MeshStandardMaterial, Color } from 'three';
 import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 import { FontLoader } from 'three/addons/loaders/FontLoader.js';
 import { Font } from 'three/addons/loaders/FontLoader.js';
+import { useSpring, a, to } from '@react-spring/three';
 import { Character } from './Character';
 import { CustomGrid } from './CustomGrid';
 import MainFrame from './MainFrame';
 import Projects from '../Projects';
+
+interface CameraAnimatorProps {
+  focusOnGrid: boolean;
+  onAnimationComplete: () => void;
+  onCameraAlmostAtText: () => void;
+}
+
+function CameraAnimator({ focusOnGrid, onAnimationComplete, onCameraAlmostAtText }: CameraAnimatorProps) {
+  const { camera } = useThree();
+  const almostAtTextFired = useRef(false);
+  const [springs, api] = useSpring(() => ({
+    position: [0, 0, 5],
+    rotation: [0, 0, 0],
+    config: { mass: 2, tension: 100, friction: 50 },
+  }));
+
+  useEffect(() => {
+    if (focusOnGrid) {
+      almostAtTextFired.current = false; // Reset when moving to grid
+    }
+
+    api.start({
+      position: focusOnGrid ? [0, 4, 0.01] : [0, 0, 5],
+      rotation: focusOnGrid ? [-Math.PI / 2, 0, 0] : [0, 0, 0],
+      onChange: ({ value }) => {
+        const z = value.position[2];
+        // Check if moving towards text and close enough
+        if (!focusOnGrid && z > 4.5 && !almostAtTextFired.current) {
+          onCameraAlmostAtText();
+          almostAtTextFired.current = true;
+        }
+      },
+      onRest: (result) => {
+        if (result.finished && !focusOnGrid) {
+          onAnimationComplete();
+        }
+      },
+    });
+  }, [focusOnGrid, api, onAnimationComplete, onCameraAlmostAtText]);
+
+  useFrame(() => {
+    const pos = springs.position.get();
+    const rot = springs.rotation.get();
+    camera.position.set(pos[0], pos[1], pos[2]);
+    camera.rotation.set(rot[0], rot[1], rot[2]);
+  });
+
+  return null;
+}
 
 interface FloatingTextProps {
   onAnimationComplete: () => void;
@@ -17,9 +67,10 @@ interface FloatingTextProps {
     jua: Font;
   };
   isTextVisible: boolean;
+  onDisappearAnimationComplete?: () => void;
 }
 
-function FloatingText({ onAnimationComplete, fonts, isTextVisible }: FloatingTextProps) {
+function FloatingText({ onAnimationComplete, fonts, isTextVisible, onDisappearAnimationComplete }: FloatingTextProps) {
   const textRef = useRef<Group>(null);
   const [mouse, setMouse] = useState(new Vector2());
 
@@ -232,6 +283,7 @@ function FloatingText({ onAnimationComplete, fonts, isTextVisible }: FloatingTex
           isAnimationEnabled={animationStep === 'rising' || animationStep === 'idle'}
           isVisible={isTextVisible}
           index={index}
+          onDisappearAnimationComplete={index === fullText.length - 1 ? onDisappearAnimationComplete : undefined}
         />
       ))}
     </group>
@@ -259,9 +311,19 @@ function ReflectivePlane() {
 
 interface Scene3DProps {
   isTextVisible: boolean;
+  focusOnGrid: boolean;
+  onTextDisappearAnimationComplete: () => void;
+  onCameraToTextAnimationComplete: () => void;
+  onCameraAlmostAtText: () => void;
 }
 
-const Scene3D = ({ isTextVisible }: Scene3DProps) => {
+const Scene3D = ({ 
+  isTextVisible, 
+  focusOnGrid,
+  onTextDisappearAnimationComplete,
+  onCameraToTextAnimationComplete,
+  onCameraAlmostAtText,
+}: Scene3DProps) => {
   const [startGridAnimation, setStartGridAnimation] = useState(false);
   const [fonts, setFonts] = useState<{ spaceGrotesk: Font | null; jua: Font | null }>({ spaceGrotesk: null, jua: null });
 
@@ -282,6 +344,11 @@ const Scene3D = ({ isTextVisible }: Scene3DProps) => {
         <ambientLight intensity={0.5} />
         <directionalLight position={[10, 10, 5]} intensity={1} />
         <ReflectivePlane />
+        <CameraAnimator 
+          focusOnGrid={focusOnGrid}
+          onAnimationComplete={onCameraToTextAnimationComplete}
+          onCameraAlmostAtText={onCameraAlmostAtText}
+        />
         <CustomGrid
           fadeDistance={20}
           fadeStrength={2}
@@ -294,6 +361,7 @@ const Scene3D = ({ isTextVisible }: Scene3DProps) => {
               onAnimationComplete={() => setStartGridAnimation(true)}
               fonts={fonts as { spaceGrotesk: Font; jua: Font }}
               isTextVisible={isTextVisible}
+              onDisappearAnimationComplete={onTextDisappearAnimationComplete}
             />
           </>
         ) : null}

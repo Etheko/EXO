@@ -1,56 +1,93 @@
-import { useState, useEffect, useRef } from 'react';
-import MainFrame from './MainFrame';
+import { useEffect, useRef, useState } from 'react';
 import Scene3D from './Scene3D';
 import './Home.css';
 import Navbar from './Navbar';
-import Projects from '../Projects/Projects';
+import MainFrame from './MainFrame';
+import Projects from '../Projects';
+
+type AnimationState = 'text' | 'camera-to-grid' | 'mainframe' | 'camera-to-text';
 
 const Home = () => {
-  const [isVisible, setIsVisible] = useState(false);
+  const [animationState, setAnimationState] = useState<AnimationState>('text');
+  const [isAnimationInProgress, setIsAnimationInProgress] = useState(false);
+  const [isTextReady, setIsTextReady] = useState(true);
   const mainFrameRef = useRef<HTMLDivElement>(null);
-  const mainFrameContentRef = useRef<HTMLDivElement>(null);
-  const isHoveringMainFrame = useRef(false);
+  const contentRef = useRef<HTMLDivElement>(null);
 
+  const handleWheel = (e: WheelEvent) => {
+    if (isAnimationInProgress) return;
+
+    // Scroll down to show mainframe
+    if (e.deltaY > 0 && animationState === 'text') {
+      setIsAnimationInProgress(true);
+      setIsTextReady(false); // Text starts disappearing
+      setAnimationState('camera-to-grid'); 
+    }
+    // Scroll up to hide mainframe
+    else if (e.deltaY < 0 && animationState === 'mainframe' && contentRef.current?.scrollTop === 0) {
+      setIsAnimationInProgress(true);
+      // isMainFrameVisible will become false
+      setAnimationState('camera-to-text');
+    }
+  };
+  
   useEffect(() => {
-    const handleWheel = (e: WheelEvent) => {
-      if (isHoveringMainFrame.current) {
-        const content = mainFrameContentRef.current;
-        if (content) {
-          const isScrollingUp = e.deltaY < 0;
-          if (isScrollingUp && content.scrollTop === 0) {
-            setIsVisible(false);
-          }
-        }
-        return;
-      }
-
-      const isScrollingDown = e.deltaY > 0;
-      if (isScrollingDown && !isVisible) {
-        setIsVisible(true);
-      }
-    };
-
-    window.addEventListener('wheel', handleWheel);
+    const mainFrameElement = mainFrameRef.current;
+    if (animationState === 'mainframe') {
+      mainFrameElement?.addEventListener('wheel', handleWheel);
+    } else {
+      window.addEventListener('wheel', handleWheel);
+    }
 
     return () => {
+      mainFrameElement?.removeEventListener('wheel', handleWheel);
       window.removeEventListener('wheel', handleWheel);
     };
-  }, [isVisible]);
+  }, [isAnimationInProgress, animationState]);
+
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = 'auto';
+    };
+  }, []);
+
+  const handleTextDisappearAnimationComplete = () => {
+    // Now that text is hidden, we can proceed to show the mainframe
+    setAnimationState('mainframe');
+    setIsAnimationInProgress(false);
+  };
+  
+  const handleCameraToTextAnimationComplete = () => {
+    setAnimationState('text');
+    setIsAnimationInProgress(false);
+  };
+
+  const handleCameraAlmostAtText = () => {
+    setIsTextReady(true);
+  };
+
+  const isMainFrameVisible = animationState === 'mainframe';
+  const focusOnGrid = animationState === 'mainframe' || animationState === 'camera-to-grid';
 
   return (
     <div className="home-container">
-      <Scene3D isTextVisible={!isVisible} />
-      <Navbar isVisible={isVisible} />
+      <Navbar isVisible={isMainFrameVisible} />
+      <div className="scene-container">
+        <Scene3D 
+          isTextVisible={isTextReady}
+          focusOnGrid={focusOnGrid}
+          onTextDisappearAnimationComplete={handleTextDisappearAnimationComplete}
+          onCameraToTextAnimationComplete={handleCameraToTextAnimationComplete}
+          onCameraAlmostAtText={handleCameraAlmostAtText}
+        />
+      </div>
       <MainFrame
-        isVisible={isVisible}
+        isVisible={isMainFrameVisible}
         frameRef={mainFrameRef}
-        contentRef={mainFrameContentRef}
-        onMouseEnter={() => {
-          isHoveringMainFrame.current = true;
-        }}
-        onMouseLeave={() => {
-          isHoveringMainFrame.current = false;
-        }}
+        contentRef={contentRef}
+        onMouseEnter={() => {}}
+        onMouseLeave={() => {}}
       >
         <Projects />
       </MainFrame>

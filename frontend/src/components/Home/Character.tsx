@@ -17,9 +17,10 @@ interface CharacterProps {
   isAnimationEnabled: boolean;
   isVisible: boolean;
   index: number;
+  onDisappearAnimationComplete?: () => void;
 }
 
-export function Character({ char, isHovered, position, fonts, onPointerOver, onPointerOut, isAnimationEnabled, isVisible, index }: CharacterProps) {
+export function Character({ char, isHovered, position, fonts, onPointerOver, onPointerOut, isAnimationEnabled, isVisible, index, onDisappearAnimationComplete }: CharacterProps) {
   const [isFirstRender, setIsFirstRender] = React.useState(true);
 
   React.useEffect(() => {
@@ -31,6 +32,11 @@ export function Character({ char, isHovered, position, fonts, onPointerOver, onP
     delay: index * 60,
     config: { mass: 0.6, tension: 250, friction: 18 },
     immediate: isFirstRender || !isAnimationEnabled,
+    onRest: (result) => {
+      if (!isVisible && result.finished) {
+        onDisappearAnimationComplete?.();
+      }
+    }
   });
 
   const { scale: hoverScale, p } = useSpring({
