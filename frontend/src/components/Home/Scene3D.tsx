@@ -16,9 +16,10 @@ interface FloatingTextProps {
     spaceGrotesk: Font;
     jua: Font;
   };
+  isTextVisible: boolean;
 }
 
-function FloatingText({ onAnimationComplete, fonts }: FloatingTextProps) {
+function FloatingText({ onAnimationComplete, fonts, isTextVisible }: FloatingTextProps) {
   const textRef = useRef<Group>(null);
   const [mouse, setMouse] = useState(new Vector2());
 
@@ -229,6 +230,8 @@ function FloatingText({ onAnimationComplete, fonts }: FloatingTextProps) {
           onPointerOver={() => handlePointerOver(index)}
           onPointerOut={() => handlePointerOut(index)}
           isAnimationEnabled={animationStep === 'rising' || animationStep === 'idle'}
+          isVisible={isTextVisible}
+          index={index}
         />
       ))}
     </group>
@@ -254,7 +257,11 @@ function ReflectivePlane() {
   );
 }
 
-const Scene3D = () => {
+interface Scene3DProps {
+  isTextVisible: boolean;
+}
+
+const Scene3D = ({ isTextVisible }: Scene3DProps) => {
   const [startGridAnimation, setStartGridAnimation] = useState(false);
   const [fonts, setFonts] = useState<{ spaceGrotesk: Font | null; jua: Font | null }>({ spaceGrotesk: null, jua: null });
 
@@ -286,6 +293,7 @@ const Scene3D = () => {
             <FloatingText
               onAnimationComplete={() => setStartGridAnimation(true)}
               fonts={fonts as { spaceGrotesk: Font; jua: Font }}
+              isTextVisible={isTextVisible}
             />
           </>
         ) : null}

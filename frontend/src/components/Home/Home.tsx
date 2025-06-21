@@ -39,7 +39,7 @@ const Home = () => {
 
   return (
     <div className="home-container">
-      <Scene3D />
+      <Scene3D isTextVisible={!isVisible} />
       <Navbar isVisible={isVisible} />
       <MainFrame
         isVisible={isVisible}

@@ -1,7 +1,8 @@
 import { useMemo, useEffect, useRef } from 'react';
 import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 import { Font } from 'three/addons/loaders/FontLoader.js';
-import { useSpring, a } from '@react-spring/three';
+import { useSpring, a, to } from '@react-spring/three';
+import React from 'react';
 
 interface CharacterProps {
   char: string;
@@ -14,10 +15,25 @@ interface CharacterProps {
   onPointerOver: () => void;
   onPointerOut: () => void;
   isAnimationEnabled: boolean;
+  isVisible: boolean;
+  index: number;
 }
 
-export function Character({ char, isHovered, position, fonts, onPointerOver, onPointerOut, isAnimationEnabled }: CharacterProps) {
-  const { scale, p } = useSpring({
+export function Character({ char, isHovered, position, fonts, onPointerOver, onPointerOut, isAnimationEnabled, isVisible, index }: CharacterProps) {
+  const [isFirstRender, setIsFirstRender] = React.useState(true);
+
+  React.useEffect(() => {
+    setIsFirstRender(false);
+  }, []);
+  
+  const { scale: visibilityScale } = useSpring({
+    scale: isVisible ? 1 : 0,
+    delay: index * 60,
+    config: { mass: 0.6, tension: 250, friction: 18 },
+    immediate: isFirstRender || !isAnimationEnabled,
+  });
+
+  const { scale: hoverScale, p } = useSpring({
     scale: isHovered ? 1.2 : 1,
     p: position,
     config: { mass: 0.5, tension: 400, friction: 15 },
@@ -54,7 +70,7 @@ export function Character({ char, isHovered, position, fonts, onPointerOver, onP
   return (
     <a.mesh
       position={p as any}
-      scale={scale}
+      scale={to([visibilityScale, hoverScale], (v, h) => v * h)}
       geometry={visibleGeometry}
       onPointerOver={onPointerOver}
       onPointerOut={onPointerOut}
