@@ -34,6 +34,14 @@
     -webkit-user-select: none;
     user-select: none;
     cursor: default;
+    display: flex;
+}
+
+.char-container {
+    width: 12.8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .navbar-socials {
