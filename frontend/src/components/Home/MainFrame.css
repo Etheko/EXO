@@ -1,6 +1,6 @@
 .main-frame-container {
   position: fixed;
-  bottom: 7vh;
+  bottom: 0;
   left: 50%;
   transform: translateX(-50%) translateY(100%);
   width: 80vw;
@@ -20,7 +20,7 @@
 }
 
 .main-frame-container.visible {
-  transform: translateX(-50%) translateY(0);
+  transform: translateX(-50%) translateY(-7vh);
 }
 
 .main-frame-content {
