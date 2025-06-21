@@ -29,7 +29,7 @@
 
 .navbar-brand {
     font-family: 'Jua', sans-serif;
-    font-size: 24px;
+    font-size: 30px;
     font-weight: 600;
     -webkit-user-select: none;
     user-select: none;
@@ -38,7 +38,7 @@
 }
 
 .char-container {
-    width: 12.8px;
+    width: 15.2px;
     display: flex;
     justify-content: center;
     align-items: center;

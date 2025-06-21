@@ -9,21 +9,26 @@ interface AnimatedNavbarCharProps {
 const AnimatedNavbarChar = ({ char }: AnimatedNavbarCharProps) => {
   const [isHovered, setIsHovered] = useState(false);
 
-  const { transform, fontFamily } = useSpring({
+  const baseMarginLeft = char === 'e' ? 1.2 : 0;
+  const baseMarginRight = char === 'e' ? 0.5 : 0;
+  const hoverMarginIncrease = 1;
+
+  const { transform, fontFamily, marginLeft, marginRight } = useSpring({
     transform: `scale(${isHovered ? 1.2 : 1})`,
     fontFamily: isHovered ? 'Jua, sans-serif' : 'Space Grotesk, sans-serif',
+    marginLeft: isHovered ? baseMarginLeft + hoverMarginIncrease : baseMarginLeft,
+    marginRight: isHovered ? baseMarginRight + hoverMarginIncrease : baseMarginRight,
     config: { mass: 0.5, tension: 400, friction: 15 },
+    delay: isHovered ? 0 : 2000,
   });
 
-  const containerStyle = {
-    marginLeft: char === 'e' ? '1.2px' : '0',
-    marginRight: char === 'e' ? '0.5px' : '0',
-  };
-
   return (
-    <div
+    <animated.div
       className="char-container"
-      style={containerStyle}
+      style={{
+        marginLeft,
+        marginRight,
+      }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -36,7 +41,7 @@ const AnimatedNavbarChar = ({ char }: AnimatedNavbarCharProps) => {
       >
         {char}
       </animated.span>
-    </div>
+    </animated.div>
   );
 };
 
