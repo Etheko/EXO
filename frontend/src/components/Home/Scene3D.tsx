@@ -8,6 +8,7 @@ import { Font } from 'three/addons/loaders/FontLoader.js';
 import { Character } from './Character';
 import { CustomGrid } from './CustomGrid';
 import MainFrame from './MainFrame';
+import Projects from '../Projects';
 
 interface FloatingTextProps {
   onAnimationComplete: () => void;
@@ -286,11 +287,12 @@ const Scene3D = () => {
               onAnimationComplete={() => setStartGridAnimation(true)}
               fonts={fonts as { spaceGrotesk: Font; jua: Font }}
             />
-            {/* 3D HTML window that slides into view on scroll */}
-            <MainFrame z={3.5}/>
           </>
         ) : null}
       </Canvas>
+      <MainFrame>
+        <Projects />
+      </MainFrame>
     </div>
   );
 };
