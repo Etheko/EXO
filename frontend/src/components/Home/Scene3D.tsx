@@ -290,9 +290,6 @@ const Scene3D = () => {
           </>
         ) : null}
       </Canvas>
-      <MainFrame>
-        <Projects />
-      </MainFrame>
     </div>
   );
 };

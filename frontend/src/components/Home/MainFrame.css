@@ -20,7 +20,7 @@
 }
 
 .main-frame-container.visible {
-  transform: translateX(-50%) translateY(-7vh);
+  transform: translateX(-50%) translateY(-5vh);
 }
 
 .main-frame-content {
