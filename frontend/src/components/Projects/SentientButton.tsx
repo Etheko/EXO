@@ -11,8 +11,8 @@ interface SentientButtonProps {
 const SentientButton: React.FC<SentientButtonProps> = ({ 
     href, 
     children, 
-    intensity = 0.05, 
-    scaleIntensity = 1.05,
+    intensity = 0.08, 
+    scaleIntensity = 1.06,
     className 
 }) => {
     const buttonRef = useRef<HTMLAnchorElement>(null);
