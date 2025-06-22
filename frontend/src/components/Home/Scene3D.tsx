@@ -307,7 +307,7 @@ function ReflectivePlane() {
         mixStrength={0.5}
         color="#000000FF"
         metalness={0}
-        roughness={0}
+        roughness={1}
       />
     </mesh>
   );
@@ -350,7 +350,7 @@ const Scene3D = ({
       <Canvas camera={{ position: [0, 0, 5], fov: 75 }}>
         <color attach="background" args={['#000000']} />
         <ambientLight intensity={0.5} />
-        <directionalLight position={[10, 10, 5]} intensity={1} />
+        <directionalLight position={[10, 10, 5]} intensity={0.5} />
         <ReflectivePlane />
         <CameraAnimator 
           focusOnGrid={focusOnGrid}

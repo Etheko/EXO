@@ -182,6 +182,7 @@ export const CustomGrid = forwardRef<ShaderMaterial, CustomGridProps>(
           uniforms={uniforms}
           transparent
           depthWrite={false}
+          lights={false}
         />
       </mesh>
     )
