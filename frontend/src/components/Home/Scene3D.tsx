@@ -68,9 +68,10 @@ interface FloatingTextProps {
   };
   isTextVisible: boolean;
   onDisappearAnimationComplete?: () => void;
+  onInitialTextAnimationComplete: () => void;
 }
 
-function FloatingText({ onAnimationComplete, fonts, isTextVisible, onDisappearAnimationComplete }: FloatingTextProps) {
+function FloatingText({ onAnimationComplete, fonts, isTextVisible, onDisappearAnimationComplete, onInitialTextAnimationComplete }: FloatingTextProps) {
   const textRef = useRef<Group>(null);
   const [mouse, setMouse] = useState(new Vector2());
 
@@ -139,8 +140,9 @@ function FloatingText({ onAnimationComplete, fonts, isTextVisible, onDisappearAn
   useEffect(() => {
     if (animationStep === 'idle') {
       onAnimationComplete();
+      onInitialTextAnimationComplete();
     }
-  }, [animationStep, onAnimationComplete]);
+  }, [animationStep, onAnimationComplete, onInitialTextAnimationComplete]);
 
   useEffect(() => {
     const handleMouseMove = (event: MouseEvent) => {
@@ -315,6 +317,7 @@ interface Scene3DProps {
   onTextDisappearAnimationComplete: () => void;
   onCameraToTextAnimationComplete: () => void;
   onCameraAlmostAtText: () => void;
+  onInitialTextAnimationComplete: () => void;
 }
 
 const Scene3D = ({ 
@@ -323,6 +326,7 @@ const Scene3D = ({
   onTextDisappearAnimationComplete,
   onCameraToTextAnimationComplete,
   onCameraAlmostAtText,
+  onInitialTextAnimationComplete,
 }: Scene3DProps) => {
   const [startGridAnimation, setStartGridAnimation] = useState(false);
   const [fonts, setFonts] = useState<{ spaceGrotesk: Font | null; jua: Font | null }>({ spaceGrotesk: null, jua: null });
@@ -362,6 +366,7 @@ const Scene3D = ({
               fonts={fonts as { spaceGrotesk: Font; jua: Font }}
               isTextVisible={isTextVisible}
               onDisappearAnimationComplete={onTextDisappearAnimationComplete}
+              onInitialTextAnimationComplete={onInitialTextAnimationComplete}
             />
           </>
         ) : null}

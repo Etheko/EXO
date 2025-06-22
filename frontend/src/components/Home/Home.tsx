@@ -11,10 +11,14 @@ const Home = () => {
   const [animationState, setAnimationState] = useState<AnimationState>('text');
   const [isAnimationInProgress, setIsAnimationInProgress] = useState(false);
   const [isTextReady, setIsTextReady] = useState(true);
+  const [isInitialTextAnimationComplete, setIsInitialTextAnimationComplete] = useState(false);
   const mainFrameRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
   const handleWheel = (e: WheelEvent) => {
+    // Ignore scroll events until initial text animation is complete
+    if (!isInitialTextAnimationComplete) return;
+    
     if (isAnimationInProgress) return;
 
     // Scroll down to show mainframe
@@ -43,7 +47,7 @@ const Home = () => {
       mainFrameElement?.removeEventListener('wheel', handleWheel);
       window.removeEventListener('wheel', handleWheel);
     };
-  }, [isAnimationInProgress, animationState]);
+  }, [isAnimationInProgress, animationState, isInitialTextAnimationComplete]);
 
   useEffect(() => {
     document.body.style.overflow = 'hidden';
@@ -67,6 +71,10 @@ const Home = () => {
     setIsTextReady(true);
   };
 
+  const handleInitialTextAnimationComplete = () => {
+    setIsInitialTextAnimationComplete(true);
+  };
+
   const isMainFrameVisible = animationState === 'mainframe';
   const focusOnGrid = animationState === 'mainframe' || animationState === 'camera-to-grid';
 
@@ -80,6 +88,7 @@ const Home = () => {
           onTextDisappearAnimationComplete={handleTextDisappearAnimationComplete}
           onCameraToTextAnimationComplete={handleCameraToTextAnimationComplete}
           onCameraAlmostAtText={handleCameraAlmostAtText}
+          onInitialTextAnimationComplete={handleInitialTextAnimationComplete}
         />
       </div>
       <MainFrame
