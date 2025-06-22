@@ -57,3 +57,50 @@ A layout for horizontally-oriented cards, resembling a list.
 -   **List Behavior**: Items are stacked vertically. Each card will span the full available width of the component, with a shorter height to create a horizontal aspect ratio.
 -   **Card Content**:
     -   Follows the same principles as the Grid layout for title, description, and image/enumeration. 
+
+## Buttons
+
+This section defines the styling and behavior for different types of buttons used in the application.
+
+### Button Types
+
+#### Primary Action Button (PAB)
+
+PABs represent the primary action a user is encouraged to take within a specific context.
+
+-   **Usage**: They MUST always be associated with positive or neutral actions (e.g., "Save," "Submit," "Create").
+-   **Negative Actions**: They MUST NOT be used for negative actions. For instance, in a deletion confirmation dialog, the "Cancel" button should be the PAB, while "Confirm Deletion" should be a Secondary Action Button (SAB).
+
+#### Secondary Action Button (SAB)
+
+SABs are used for actions that are secondary to the primary action within the same context.
+
+-   **Usage**: They can be associated with positive, neutral, or negative actions.
+
+### Generic Styling and Behavior
+
+The following rules apply to all button types unless specified otherwise.
+
+-   **Hover Elevation**: On hover, buttons will "elevate" by projecting a subtle drop shadow, which disappears when the hover state ends.
+-   **Hover Interaction**: To enhance user feedback, non-disabled buttons will subtly shift their position to follow the user's mouse cursor on hover, creating a "sentient" feel.
+-   **Content Layout**: Buttons can contain text, an icon, or both. When both are present, the icon MUST be placed to the left of the text.
+
+### PAB Styling
+
+-   **Background**: Solid pitch-white (`#FFFFFF`).
+-   **Content Color**: Pitch-black (`#000000`) for text and icons.
+
+### SAB Styling
+
+-   **Background**: Grey, with a slightly lighter grey outline, matching the style of `MainFrame` and cards.
+-   **Content Color**: Light grey for text and icons.
+-   **Negative Action SABs**: For SABs tied to negative actions (e.g., "Delete," "Remove"), the button's outline and background will turn red on hover to signal a destructive action.
+
+## Links
+
+-   **Default Style**: All hyperlinks MUST have an underline and be pitch-white (`#FFFFFF`).
+-   **Hover Style**: On hover, hyperlinks will turn blue.
+
+## Icons
+
+-   **Icon Library**: The [Tabler Icons](https://tabler-icons.io/) library is the single source of icons for this project. Use of any other icon library is strictly forbidden to ensure visual consistency. 

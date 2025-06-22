@@ -17,6 +17,7 @@
     "@react-spring/web": "^9.7.5",
     "@react-three/drei": "^9.102.6",
     "@react-three/fiber": "^8.15.19",
+    "@tabler/icons-react": "^3.34.0",
     "@types/three": "^0.158.0",
     "autoprefixer": "10.4.17",
     "axios": "1.10.0",

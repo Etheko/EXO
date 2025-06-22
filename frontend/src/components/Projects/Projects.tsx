@@ -3,6 +3,8 @@ import projectService from '../../services/projectService';
 import { Project } from '../../types/Project';
 import './Projects.css';
 import TechnologyIcon from './TechnologyIcon';
+import { TbBrandGithub, TbExternalLink } from 'react-icons/tb';
+import SentientButton from './SentientButton';
 
 interface ProjectsProps {
     onProjectSelected: (project: Project) => void;
@@ -63,24 +65,16 @@ const Projects = ({ onProjectSelected }: ProjectsProps) => {
                             </div>
                             <div className="project-links">
                                 {project.githubUrl && (
-                                    <a
-                                        href={project.githubUrl}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="project-link"
-                                    >
-                                        GitHub
-                                    </a>
+                                    <SentientButton href={project.githubUrl} className="project-button">
+                                        <TbBrandGithub size={20} />
+                                        <span>GitHub</span>
+                                    </SentientButton>
                                 )}
                                 {project.liveUrl && (
-                                    <a
-                                        href={project.liveUrl}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="project-link"
-                                    >
-                                        Live Demo
-                                    </a>
+                                    <SentientButton href={project.liveUrl} className="project-button">
+                                        <TbExternalLink size={20} />
+                                        <span>Live Demo</span>
+                                    </SentientButton>
                                 )}
                             </div>
                         </div>
