@@ -69,9 +69,10 @@ interface FloatingTextProps {
   isTextVisible: boolean;
   onDisappearAnimationComplete?: () => void;
   onInitialTextAnimationComplete: () => void;
+  onTextAppearAnimationComplete: () => void;
 }
 
-function FloatingText({ onAnimationComplete, fonts, isTextVisible, onDisappearAnimationComplete, onInitialTextAnimationComplete }: FloatingTextProps) {
+function FloatingText({ onAnimationComplete, fonts, isTextVisible, onDisappearAnimationComplete, onInitialTextAnimationComplete, onTextAppearAnimationComplete }: FloatingTextProps) {
   const textRef = useRef<Group>(null);
   const [mouse, setMouse] = useState(new Vector2());
 
@@ -286,6 +287,7 @@ function FloatingText({ onAnimationComplete, fonts, isTextVisible, onDisappearAn
           isVisible={isTextVisible}
           index={index}
           onDisappearAnimationComplete={index === fullText.length - 1 ? onDisappearAnimationComplete : undefined}
+          onAppearAnimationComplete={index === fullText.length - 1 ? onTextAppearAnimationComplete : undefined}
         />
       ))}
     </group>
@@ -318,6 +320,7 @@ interface Scene3DProps {
   onCameraToTextAnimationComplete: () => void;
   onCameraAlmostAtText: () => void;
   onInitialTextAnimationComplete: () => void;
+  onTextAppearAnimationComplete: () => void;
 }
 
 const Scene3D = ({ 
@@ -327,6 +330,7 @@ const Scene3D = ({
   onCameraToTextAnimationComplete,
   onCameraAlmostAtText,
   onInitialTextAnimationComplete,
+  onTextAppearAnimationComplete,
 }: Scene3DProps) => {
   const [startGridAnimation, setStartGridAnimation] = useState(false);
   const [fonts, setFonts] = useState<{ spaceGrotesk: Font | null; jua: Font | null }>({ spaceGrotesk: null, jua: null });
@@ -367,6 +371,7 @@ const Scene3D = ({
               isTextVisible={isTextVisible}
               onDisappearAnimationComplete={onTextDisappearAnimationComplete}
               onInitialTextAnimationComplete={onInitialTextAnimationComplete}
+              onTextAppearAnimationComplete={onTextAppearAnimationComplete}
             />
           </>
         ) : null}

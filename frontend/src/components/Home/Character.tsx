@@ -18,9 +18,10 @@ interface CharacterProps {
   isVisible: boolean;
   index: number;
   onDisappearAnimationComplete?: () => void;
+  onAppearAnimationComplete?: () => void;
 }
 
-export function Character({ char, isHovered, position, fonts, onPointerOver, onPointerOut, isAnimationEnabled, isVisible, index, onDisappearAnimationComplete }: CharacterProps) {
+export function Character({ char, isHovered, position, fonts, onPointerOver, onPointerOut, isAnimationEnabled, isVisible, index, onDisappearAnimationComplete, onAppearAnimationComplete }: CharacterProps) {
   const [isFirstRender, setIsFirstRender] = React.useState(true);
 
   React.useEffect(() => {
@@ -33,8 +34,12 @@ export function Character({ char, isHovered, position, fonts, onPointerOver, onP
     config: { mass: 0.6, tension: 250, friction: 18 },
     immediate: isFirstRender || !isAnimationEnabled,
     onRest: (result) => {
-      if (!isVisible && result.finished) {
-        onDisappearAnimationComplete?.();
+      if (result.finished) {
+        if (isVisible) {
+          onAppearAnimationComplete?.();
+        } else {
+          onDisappearAnimationComplete?.();
+        }
       }
     }
   });

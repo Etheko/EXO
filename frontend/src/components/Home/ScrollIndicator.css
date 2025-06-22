@@ -1,0 +1,48 @@
+.scroll-indicator-container {
+  position: absolute;
+  top: 50px;
+  right: 50px;
+  opacity: 0;
+  transition: opacity 0.5s ease-in-out;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.scroll-indicator-container.visible {
+  opacity: 1;
+}
+
+.mouse {
+  width: 24px;
+  height: 40px;
+  border: 2px solid rgb(255, 255, 255);
+  border-radius: 12px;
+  position: relative;
+}
+
+.wheel {
+  width: 4px;
+  height: 8px;
+  background-color: rgb(255, 255, 255);  
+  border-radius: 2px;
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  animation: scroll-wheel 2s ease-in-out infinite;
+}
+
+@keyframes scroll-wheel {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+  75% {
+    opacity: 1;
+    transform: translate(-50%, 16px);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, 16px);
+  }
+} 

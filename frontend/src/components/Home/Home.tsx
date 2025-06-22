@@ -4,6 +4,7 @@ import './Home.css';
 import Navbar from './Navbar';
 import MainFrame from './MainFrame';
 import Projects from '../Projects';
+import ScrollIndicator from './ScrollIndicator';
 
 type AnimationState = 'text' | 'camera-to-grid' | 'mainframe' | 'camera-to-text';
 
@@ -12,6 +13,7 @@ const Home = () => {
   const [isAnimationInProgress, setIsAnimationInProgress] = useState(false);
   const [isTextReady, setIsTextReady] = useState(true);
   const [isInitialTextAnimationComplete, setIsInitialTextAnimationComplete] = useState(false);
+  const [isScrollIndicatorForceHidden, setIsScrollIndicatorForceHidden] = useState(false);
   const mainFrameRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -23,6 +25,7 @@ const Home = () => {
 
     // Scroll down to show mainframe
     if (e.deltaY > 0 && animationState === 'text') {
+      setIsScrollIndicatorForceHidden(true);
       setIsAnimationInProgress(true);
       setIsTextReady(false); // Text starts disappearing
       setAnimationState('camera-to-grid'); 
@@ -75,8 +78,13 @@ const Home = () => {
     setIsInitialTextAnimationComplete(true);
   };
 
+  const handleTextAppearAnimationComplete = () => {
+    setIsScrollIndicatorForceHidden(false);
+  };
+
   const isMainFrameVisible = animationState === 'mainframe';
   const focusOnGrid = animationState === 'mainframe' || animationState === 'camera-to-grid';
+  const isScrollIndicatorVisible = isInitialTextAnimationComplete && !isMainFrameVisible && !isScrollIndicatorForceHidden;
 
   return (
     <div className="home-container">
@@ -89,6 +97,7 @@ const Home = () => {
           onCameraToTextAnimationComplete={handleCameraToTextAnimationComplete}
           onCameraAlmostAtText={handleCameraAlmostAtText}
           onInitialTextAnimationComplete={handleInitialTextAnimationComplete}
+          onTextAppearAnimationComplete={handleTextAppearAnimationComplete}
         />
       </div>
       <MainFrame
@@ -100,6 +109,7 @@ const Home = () => {
       >
         <Projects />
       </MainFrame>
+      <ScrollIndicator isVisible={isScrollIndicatorVisible} />
     </div>
   );
 };
