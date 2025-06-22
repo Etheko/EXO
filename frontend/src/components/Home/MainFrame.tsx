@@ -1,12 +1,14 @@
-import { PropsWithChildren, RefObject, useState } from 'react';
+import { PropsWithChildren, RefObject } from 'react';
 import './MainFrame.css';
 
 /**
- * A 2D window that slides up from the bottom of the viewport on scroll.
- * It features a semi-transparent background, a backdrop blur, a custom scrollbar,
- * and can host any HTML content. It hides automatically when scrolling up
- * while its content is at the top.
+ * MainFrame: The Dynamic Viewport
+ * 
+ * This component acts as a dynamic container, or "viewport," for different views within the application.
+ * Its content is managed by its parent component (e.g., Home.tsx), which passes in the view
+ * to be rendered (e.g., a list of projects or a detailed project view).
  */
+
 interface MainFrameProps extends PropsWithChildren {
   isVisible: boolean;
   frameRef: RefObject<HTMLDivElement>;

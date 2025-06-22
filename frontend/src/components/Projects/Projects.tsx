@@ -3,7 +3,11 @@ import projectService from '../../services/projectService';
 import { Project } from '../../types/Project';
 import './Projects.css';
 
-const Projects = () => {
+interface ProjectsProps {
+    onProjectSelected: (project: Project) => void;
+}
+
+const Projects = ({ onProjectSelected }: ProjectsProps) => {
     const [projects, setProjects] = useState<Project[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -38,7 +42,7 @@ const Projects = () => {
             <h2 className="heading-secondary mb-8">My Projects</h2>
             <div className="projects-grid">
                 {projects.map((project) => (
-                    <div key={project.id} className="project-card">
+                    <div key={project.id} className="project-card" onClick={() => onProjectSelected(project)}>
                         <h3 className="project-title">{project.title}</h3>
                         <p className="project-description">{project.description}</p>
                         <div className="project-technologies">

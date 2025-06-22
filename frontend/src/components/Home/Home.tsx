@@ -5,11 +5,16 @@ import Navbar from './Navbar';
 import MainFrame from './MainFrame';
 import Projects from '../Projects';
 import ScrollIndicator from './ScrollIndicator';
+import { Project } from '../../types/Project';
+import ProjectView from '../Projects/ProjectView';
 
 type AnimationState = 'text' | 'camera-to-grid' | 'mainframe' | 'camera-to-text';
+type MainFrameView = 'projects' | 'projectView';
 
 const Home = () => {
   const [animationState, setAnimationState] = useState<AnimationState>('text');
+  const [mainFrameView, setMainFrameView] = useState<MainFrameView>('projects');
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [isAnimationInProgress, setIsAnimationInProgress] = useState(false);
   const [isTextReady, setIsTextReady] = useState(true);
   const [isInitialTextAnimationComplete, setIsInitialTextAnimationComplete] = useState(false);
@@ -82,6 +87,16 @@ const Home = () => {
     setIsScrollIndicatorForceHidden(false);
   };
 
+  const handleProjectSelected = (project: Project) => {
+    setSelectedProject(project);
+    setMainFrameView('projectView');
+  };
+
+  const handleBackToProjects = () => {
+    setSelectedProject(null);
+    setMainFrameView('projects');
+  };
+
   const isMainFrameVisible = animationState === 'mainframe';
   const focusOnGrid = animationState === 'mainframe' || animationState === 'camera-to-grid';
   const isScrollIndicatorVisible = isInitialTextAnimationComplete && !isMainFrameVisible && !isScrollIndicatorForceHidden;
@@ -107,7 +122,10 @@ const Home = () => {
         onMouseEnter={() => {}}
         onMouseLeave={() => {}}
       >
-        <Projects />
+        {mainFrameView === 'projects' && <Projects onProjectSelected={handleProjectSelected} />}
+        {mainFrameView === 'projectView' && selectedProject && (
+          <ProjectView project={selectedProject} onBack={handleBackToProjects} />
+        )}
       </MainFrame>
       <ScrollIndicator isVisible={isScrollIndicatorVisible} />
     </div>
