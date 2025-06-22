@@ -1,4 +1,9 @@
-import { FaGithub, FaInstagram, FaLinkedin, FaTwitter } from 'react-icons/fa';
+import {
+  TbBrandGithub,
+  TbBrandInstagram,
+  TbBrandLinkedin,
+  TbBrandX,
+} from 'react-icons/tb';
 import './Navbar.css';
 import AnimatedNavbarChar from './AnimatedNavbarChar';
 
@@ -18,16 +23,16 @@ const Navbar = ({ isVisible }: NavbarProps) => {
       </div>
       <div className="navbar-socials">
         <a href="https://instagram.com" target="_blank" rel="noopener noreferrer">
-          <FaInstagram size={24} />
+          <TbBrandInstagram size={24} />
         </a>
-        <a href="https://twitter.com" target="_blank" rel="noopener noreferrer">
-          <FaTwitter size={24} />
+        <a href="https://x.com" target="_blank" rel="noopener noreferrer">
+          <TbBrandX size={24} />
         </a>
         <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer">
-          <FaLinkedin size={24} />
+          <TbBrandLinkedin size={24} />
         </a>
         <a href="https://github.com/Etheko" target="_blank" rel="noopener noreferrer">
-          <FaGithub size={24} />
+          <TbBrandGithub size={24} />
         </a>
       </div>
     </div>
