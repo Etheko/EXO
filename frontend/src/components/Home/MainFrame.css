@@ -24,10 +24,12 @@
 }
 
 .main-frame-content {
-  padding: 2.5rem;
+  padding: 0;
   color: white;
   overflow-y: auto;
+  overflow-x: hidden;
   flex-grow: 1;
+  position: relative;
 }
 
 .main-frame-content::-webkit-scrollbar {

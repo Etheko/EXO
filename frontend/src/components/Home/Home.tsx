@@ -143,6 +143,16 @@ const Home = () => {
   const isScrollIndicatorVisible = isInitialTextAnimationComplete && !isMainFrameVisible && !isScrollIndicatorForceHidden;
   const showBackButton = mainFrameView !== 'portfolioIndex';
 
+  // Map the textual view to a numeric id so that MainFrame can work out the navigation
+  // direction and play the right animation. Increasing numbers represent moving forward
+  // (e.g. Index -> Projects -> Project View) while decreasing numbers represent moving back.
+  const viewIdMap: Record<MainFrameView, number> = {
+    portfolioIndex: 0,
+    projects: 1,
+    projectView: 2,
+  };
+  const currentViewId = viewIdMap[mainFrameView];
+
   return (
     <div className="home-container">
       <Navbar 
@@ -168,6 +178,7 @@ const Home = () => {
         contentRef={contentRef}
         onMouseEnter={() => {}}
         onMouseLeave={() => {}}
+        viewId={currentViewId}
       >
         {mainFrameView === 'portfolioIndex' && <PortfolioIndex onSectionSelected={handleSectionSelected} />}
         {mainFrameView === 'projects' && <Projects onProjectSelected={handleProjectSelected} onBackToIndex={handleBackToIndex} />}
