@@ -1,4 +1,4 @@
-import React, { useRef, MouseEvent } from 'react';
+import React, { useRef, MouseEvent, useCallback } from 'react';
 import { useCursor } from '../../contexts/CursorContext';
 
 interface SentientButtonProps {
@@ -17,31 +17,70 @@ const SentientButton: React.FC<SentientButtonProps> = ({
     className 
 }) => {
     const buttonRef = useRef<HTMLAnchorElement>(null);
+    const animationFrameRef = useRef<number>();
     const { setCursorState } = useCursor();
 
-    const handleMouseMove = (e: MouseEvent<HTMLAnchorElement>) => {
+    const handleMouseMove = useCallback((e: MouseEvent<HTMLAnchorElement>) => {
         const button = buttonRef.current;
         if (!button) return;
 
-        const rect = button.getBoundingClientRect();
-        const x = e.clientX - rect.left - rect.width / 2;
-        const y = e.clientY - rect.top - rect.height / 2;
+        // Cancel previous animation frame to avoid stacking
+        if (animationFrameRef.current) {
+            cancelAnimationFrame(animationFrameRef.current);
+        }
 
-        const moveFactor = intensity;
-        const translateX = x * moveFactor;
-        const translateY = y * moveFactor;
+        animationFrameRef.current = requestAnimationFrame(() => {
+            const rect = button.getBoundingClientRect();
+            const x = e.clientX - rect.left - rect.width / 2;
+            const y = e.clientY - rect.top - rect.height / 2;
 
-        button.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scaleIntensity})`;
-        button.style.transition = 'transform 0.1s ease-out';
-    };
+            const moveFactor = intensity;
+            const translateX = x * moveFactor;
+            const translateY = y * moveFactor;
 
-    const handleMouseLeave = () => {
+            // Use CSS custom properties and transform3d for hardware acceleration
+            button.style.setProperty('--translate-x', `${translateX}px`);
+            button.style.setProperty('--translate-y', `${translateY}px`);
+            button.style.setProperty('--scale', scaleIntensity.toString());
+            button.style.transform = `translate3d(var(--translate-x, 0), var(--translate-y, 0), 0) scale(var(--scale, 1))`;
+        });
+    }, [intensity, scaleIntensity]);
+
+    const handleMouseLeave = useCallback(() => {
         const button = buttonRef.current;
         if (!button) return;
         
-        button.style.transform = 'translate(0, 0) scale(1)';
+        // Cancel any pending animation frame
+        if (animationFrameRef.current) {
+            cancelAnimationFrame(animationFrameRef.current);
+            animationFrameRef.current = undefined;
+        }
+        
+        // Apply smoother transition for mouse leave
         button.style.transition = 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
-    };
+        
+        // Reset to default state with smooth transition
+        button.style.setProperty('--translate-x', '0px');
+        button.style.setProperty('--translate-y', '0px');
+        button.style.setProperty('--scale', '1');
+        button.style.transform = `translate3d(var(--translate-x, 0), var(--translate-y, 0), 0) scale(var(--scale, 1))`;
+        
+        // Reset transition back to fast for mouse moves
+        setTimeout(() => {
+            if (button) {
+                button.style.transition = 'transform 0.1s ease-out';
+            }
+        }, 300);
+    }, []);
+
+    const handleMouseEnter = useCallback(() => {
+        setCursorState('hovering');
+    }, [setCursorState]);
+
+    const handleMouseLeaveComplete = useCallback(() => {
+        handleMouseLeave();
+        setCursorState('default');
+    }, [handleMouseLeave, setCursorState]);
 
     return (
         <a
@@ -50,13 +89,15 @@ const SentientButton: React.FC<SentientButtonProps> = ({
             target="_blank"
             rel="noopener noreferrer"
             className={`${className}`}
+            style={{
+                // Set up CSS transitions once
+                transition: 'transform 0.1s ease-out',
+                willChange: 'transform', // Hint to browser for optimization
+            }}
             onClick={(e) => e.stopPropagation()}
             onMouseMove={handleMouseMove}
-            onMouseEnter={() => setCursorState('hovering')}
-            onMouseLeave={() => {
-                handleMouseLeave();
-                setCursorState('default');
-            }}
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeaveComplete}
         >
             {children}
         </a>
