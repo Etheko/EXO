@@ -1,4 +1,4 @@
-import { PropsWithChildren, RefObject, useEffect, useRef, useState } from 'react';
+import { PropsWithChildren, RefObject, useEffect, useRef, useState, useCallback } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import './MainFrame.css';
 
@@ -53,14 +53,46 @@ const MainFrame = ({
 }: MainFrameProps) => {
   // Keep track of the previously rendered view so we can determine navigation direction
   const previousViewId = useRef<number>(viewId);
+  // Keep live reference of the current view id for event listeners
+  const currentViewIdRef = useRef<number>(viewId);
 
   const direction = viewId > previousViewId.current ? 1 : -1;
+  // Update ref each render
+  currentViewIdRef.current = viewId;
 
   /* ------------------------------------------------------------------
    * Custom scrollbar state & helpers
    * ------------------------------------------------------------------ */
   const [thumbHeight, setThumbHeight] = useState<number>(0);
   const [thumbTop, setThumbTop] = useState<number>(0); // position within track
+
+  /* ------------------------------------------------------------------
+   * Per-view scroll position persistence
+   * ------------------------------------------------------------------ */
+  const scrollPositions = useRef<Record<number, number>>({});
+
+  /* ------------------------------------------------------------------
+   * Scrollbar visibility handling
+   * ------------------------------------------------------------------ */
+  const [scrollbarVisible, setScrollbarVisible] = useState<boolean>(false);
+  const hideTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearHideTimeout = () => {
+    if (hideTimeout.current) {
+      clearTimeout(hideTimeout.current);
+      hideTimeout.current = null;
+    }
+  };
+
+  const scheduleHide = () => {
+    clearHideTimeout();
+    hideTimeout.current = setTimeout(() => setScrollbarVisible(false), 2000);
+  };
+
+  const showScrollbar = useCallback(() => {
+    setScrollbarVisible(true);
+    scheduleHide();
+  }, []);
 
   // Keep track of dragging state outside of React state to avoid rerenders
   const isDragging = useRef<boolean>(false);
@@ -95,14 +127,31 @@ const MainFrame = ({
     setThumbTop(top);
   };
 
+  /* Flag true while slide animation between views is running */
+  const [isSliding, setIsSliding] = useState(false);
+
   /* Attach scroll & resize listeners once */
   useEffect(() => {
     updateThumb();
 
+    // Show scrollbar briefly when viewport becomes visible
+    if (isVisible) {
+      showScrollbar();
+    }
+
     const content = contentRef.current;
     if (!content) return;
 
-    content.addEventListener('scroll', updateThumb);
+    const handleScroll = () => {
+      const current = content as HTMLDivElement;
+      // use ref to grab latest id
+      scrollPositions.current[currentViewIdRef.current] = current.scrollTop;
+
+      updateThumb();
+      showScrollbar();
+    };
+
+    content.addEventListener('scroll', handleScroll);
     window.addEventListener('resize', updateThumb);
 
     // Observe element resize (clientHeight changes)
@@ -114,21 +163,48 @@ const MainFrame = ({
     mutationObserver.observe(content, { childList: true, subtree: true });
 
     return () => {
-      content.removeEventListener('scroll', updateThumb);
+      content.removeEventListener('scroll', handleScroll);
       window.removeEventListener('resize', updateThumb);
       resizeObserver.disconnect();
       mutationObserver.disconnect();
     };
     // We only want to attach listeners once – contentRef itself is stable.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isVisible, showScrollbar]);
 
-  /* Re-compute thumb size when the displayed view changes */
+  /* Restore scroll position for the incoming view */
   useEffect(() => {
-    // Run after next paint to ensure new content is laid out
-    const id = requestAnimationFrame(updateThumb);
-    return () => cancelAnimationFrame(id);
-  }, [viewId]);
+    const content = contentRef.current;
+    if (!content) return;
+
+    // Slide is starting -> hide scrollbar
+    setIsSliding(true);
+
+    // Persist scroll of the outgoing view (whose id is held in previousViewId)
+    if (previousViewId.current !== viewId) {
+      scrollPositions.current[previousViewId.current] = content.scrollTop;
+    }
+
+    // Determine target position for the new view
+    const targetPos = direction > 0 ? 0 : (scrollPositions.current[viewId] ?? 0);
+
+    // Progressive restoration – try until container is tall enough
+    let attempts = 0;
+    const tryRestore = () => {
+      if (!content) return;
+
+      if (content.scrollHeight > content.clientHeight || targetPos === 0 || attempts > 10) {
+        content.scrollTop = targetPos;
+        updateThumb();
+        if (content.scrollHeight > content.clientHeight) showScrollbar();
+      } else {
+        attempts += 1;
+        requestAnimationFrame(tryRestore);
+      }
+    };
+
+    tryRestore();
+  }, [viewId, showScrollbar]);
 
   /** Begins dragging the scrollbar thumb */
   const handleThumbMouseDown = (e: React.MouseEvent) => {
@@ -169,6 +245,12 @@ const MainFrame = ({
     previousViewId.current = viewId;
   }, [viewId]);
 
+  const visibleNow = scrollbarVisible && !isSliding;
+  const opacityTarget = visibleNow ? 1 : 0;
+  const opacityTransition = !visibleNow && isSliding
+    ? { duration: 0.05, ease: 'linear' }
+    : { type: 'tween', duration: 0.3 };
+
   return (
     <div
       ref={frameRef}
@@ -186,6 +268,15 @@ const MainFrame = ({
             initial="enter"
             animate="center"
             exit="exit"
+            onAnimationComplete={() => {
+              // animation finished -> allow scrollbar to appear
+              setIsSliding(false);
+              // show for 2s if scrollable
+              const el = contentRef.current;
+              if (el && el.scrollHeight > el.clientHeight) {
+                showScrollbar();
+              }
+            }}
             transition={{
               x: { type: 'spring', stiffness: 260, damping: 25, bounce: 0.05 },
               opacity: { duration: 0.2 },
@@ -200,8 +291,21 @@ const MainFrame = ({
       {/* ------------------------------------------------------------------
        * Custom Scrollbar Overlay (track + thumb) - fixed relative to frame
        * ------------------------------------------------------------------ */}
-      {thumbHeight > 0 && (
-        <div className="custom-scrollbar">
+      <motion.div
+        className="custom-scrollbar"
+        style={{ pointerEvents: visibleNow ? 'auto' : 'none' }}
+        initial={false}
+        animate={{ opacity: opacityTarget }}
+        transition={opacityTransition}
+        onMouseEnter={() => {
+          clearHideTimeout();
+          setScrollbarVisible(true);
+        }}
+        onMouseLeave={() => {
+          scheduleHide();
+        }}
+      >
+        {thumbHeight > 0 && (
           <motion.div
             className="custom-scrollbar-thumb"
             /* Instant position updates via inline style; animated height for content changes */
@@ -213,8 +317,8 @@ const MainFrame = ({
             }}
             onMouseDown={handleThumbMouseDown}
           />
-        </div>
-      )}
+        )}
+      </motion.div>
     </div>
   );
 };

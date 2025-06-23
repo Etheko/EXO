@@ -67,7 +67,7 @@
   bottom: 20px;
   right: 0;
   width: 5px;
-  pointer-events: none; /* let thumb handle the interactions */
+  /* pointer-events controlled inline for visibility logic */
 }
 
 .custom-scrollbar-thumb {
