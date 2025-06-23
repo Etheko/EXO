@@ -4,7 +4,7 @@ import { Project } from '../../types/Project';
 import './Projects.css';
 import TechnologyIcon from './TechnologyIcon';
 import { TbBrandGithub, TbExternalLink } from 'react-icons/tb';
-import SentientButton from './SentientButton';
+import SentientButton from '../SentientButton';
 
 interface ProjectsProps {
     onProjectSelected: (project: Project) => void;

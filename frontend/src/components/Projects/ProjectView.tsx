@@ -9,7 +9,7 @@ const ProjectView = ({ project, onBack }: ProjectViewProps) => {
   return (
     <div>
       <button onClick={onBack}>Back to Projects</button>
-      <h1>{project.name}</h1>
+      <h1>{project.title}</h1>
       <p>{project.description}</p>
     </div>
   );
