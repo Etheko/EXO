@@ -2,11 +2,15 @@ import React, { useRef, MouseEvent, useCallback } from 'react';
 import { useCursor } from '../../contexts/CursorContext';
 
 interface SentientButtonProps {
-    href: string;
+    href?: string;
     children: React.ReactNode;
     intensity?: number;
     scaleIntensity?: number;
     className?: string;
+    as?: 'a' | 'button' | 'div' | 'span';
+    onClick?: (e: MouseEvent<HTMLElement>) => void;
+    type?: 'button' | 'submit' | 'reset';
+    disabled?: boolean;
 }
 
 const SentientButton: React.FC<SentientButtonProps> = ({ 
@@ -14,13 +18,17 @@ const SentientButton: React.FC<SentientButtonProps> = ({
     children, 
     intensity = 0.09, 
     scaleIntensity = 1.06,
-    className 
+    className,
+    as = 'a',
+    onClick,
+    type = 'button',
+    disabled = false
 }) => {
-    const buttonRef = useRef<HTMLAnchorElement>(null);
+    const buttonRef = useRef<HTMLElement>(null);
     const animationFrameRef = useRef<number>();
     const { setCursorState } = useCursor();
 
-    const handleMouseMove = useCallback((e: MouseEvent<HTMLAnchorElement>) => {
+    const handleMouseMove = useCallback((e: MouseEvent<HTMLElement>) => {
         const button = buttonRef.current;
         if (!button) return;
 
@@ -82,26 +90,79 @@ const SentientButton: React.FC<SentientButtonProps> = ({
         setCursorState('default');
     }, [handleMouseLeave, setCursorState]);
 
-    return (
-        <a
-            ref={buttonRef}
-            href={href}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={`${className}`}
-            style={{
-                // Set up CSS transitions once
-                transition: 'transform 0.1s ease-out',
-                willChange: 'transform', // Hint to browser for optimization
-            }}
-            onClick={(e) => e.stopPropagation()}
-            onMouseMove={handleMouseMove}
-            onMouseEnter={handleMouseEnter}
-            onMouseLeave={handleMouseLeaveComplete}
-        >
-            {children}
-        </a>
-    );
+    const handleClick = useCallback((e: MouseEvent<HTMLElement>) => {
+        if (onClick) {
+            onClick(e);
+        }
+        e.stopPropagation();
+    }, [onClick]);
+
+    const commonProps = {
+        ref: buttonRef as any,
+        className: `${className}`,
+        style: {
+            // Set up CSS transitions once
+            transition: 'transform 0.1s ease-out',
+            willChange: 'transform', // Hint to browser for optimization
+        },
+        onMouseMove: handleMouseMove,
+        onMouseEnter: handleMouseEnter,
+        onMouseLeave: handleMouseLeaveComplete,
+        onClick: handleClick,
+    };
+
+    // Render different element types based on the 'as' prop
+    switch (as) {
+        case 'button':
+            return (
+                <button
+                    {...commonProps}
+                    type={type}
+                    disabled={disabled}
+                >
+                    {children}
+                </button>
+            );
+        
+        case 'div':
+            return (
+                <div
+                    {...commonProps}
+                    role="button"
+                    tabIndex={disabled ? -1 : 0}
+                    {...(disabled && { 'aria-disabled': 'true' })}
+                >
+                    {children}
+                </div>
+            );
+        
+        case 'span':
+            return (
+                <span
+                    {...commonProps}
+                    role="button"
+                    tabIndex={disabled ? -1 : 0}
+                    {...(disabled && { 'aria-disabled': 'true' })}
+                >
+                    {children}
+                </span>
+            );
+        
+        case 'a':
+        default:
+            return (
+                <a
+                    {...commonProps}
+                    href={href}
+                    target={href?.startsWith('http') ? "_blank" : undefined}
+                    rel={href?.startsWith('http') ? "noopener noreferrer" : undefined}
+                    tabIndex={disabled ? -1 : 0}
+                    {...(disabled && { 'aria-disabled': 'true' })}
+                >
+                    {children}
+                </a>
+            );
+    }
 };
 
 export default SentientButton; 

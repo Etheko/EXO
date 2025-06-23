@@ -65,13 +65,13 @@ const Projects = ({ onProjectSelected }: ProjectsProps) => {
                             </div>
                             <div className="project-links">
                                 {project.githubUrl && (
-                                    <SentientButton href={project.githubUrl} className="project-button">
+                                    <SentientButton href={project.githubUrl} className="project-button" as="a">
                                         <TbBrandGithub size={20} />
                                         <span>GitHub</span>
                                     </SentientButton>
                                 )}
                                 {project.liveUrl && (
-                                    <SentientButton href={project.liveUrl} className="project-button">
+                                    <SentientButton href={project.liveUrl} className="project-button" as="a">
                                         <TbExternalLink size={20} />
                                         <span>Live Demo</span>
                                     </SentientButton>
