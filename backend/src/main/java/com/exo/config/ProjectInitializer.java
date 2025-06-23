@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 import java.util.Arrays;
 
 @Component
-public class DataInitializer implements CommandLineRunner {
+public class ProjectInitializer implements CommandLineRunner {
 
     @Autowired
     private ProjectRepository projectRepository;
