@@ -77,6 +77,32 @@ SABs are used for actions that are secondary to the primary action within the sa
 
 -   **Usage**: They can be associated with positive, neutral, or negative actions.
 
+#### Icon-Only Button (IOB)
+
+IOBs are compact, square buttons whose primary (and often only) content is an icon. They have **no visible housing in their default state**; the housing animates in on hover, giving them a clean, unobtrusive appearance when idle while still conforming to SAB visuals when interacted with.
+
+-   **Default (Idle) State**
+    -   **Content**: Only the icon is visible.
+    -   **Icon Size**: Slightly larger than the hovered‐state icon (e.g., `1.4×` scale) so it feels touch-friendly and legible without a background.
+    -   **Housing**: **None** – no background, no outline, no shadow.
+    -   **Colour**: Icon is light grey (`rgba(255,255,255,0.8)`).
+
+-   **Hover / Active State**  
+    _The moment the pointer enters the button area, the component MUST visually match an SAB._
+    -   **Housing**: A translucent grey background (`rgba(255,255,255,0.08)`) and lighter grey outline (`rgba(255,255,255,0.4)`), with the same border-radius as standard SABs (8 px).
+    -   **Elevation**: Subtle drop-shadow (`0 8px 20px rgba(0,0,0,0.2)`).
+    -   **Icon Animation**: Icon smoothly scales **down** to fit the newly-appeared housing (e.g., from `1.4×` ➜ `0.9×`).
+    -   **Colour**: Icon turns pure white for higher contrast.
+
+-   **Interaction**
+    -   IOBs MUST use the _Sentient Button_ behaviour (cursor-follower) consistent with other buttons.
+    -   They respect the same disabled, focus, and active states as SABs.
+
+-   **Sizing**
+    -   Container dimensions are fixed (e.g., **40 × 40 px**). The housing pseudo-element scales from `0.6` ➜ `1` on hover using the elastic cubic-bezier curve (`0.175, 0.885, 0.32, 1.275`).
+
+This specification ensures that icon-only controls like the navbar **chevron back button** look minimalist by default yet remain perfectly consistent with SABs when hovered, maintaining a cohesive visual language throughout the application.
+
 ### Generic Styling and Behavior
 
 The following rules apply to all button types unless specified otherwise.

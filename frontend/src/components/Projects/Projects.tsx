@@ -8,9 +8,10 @@ import SentientButton from '../SentientButton';
 
 interface ProjectsProps {
     onProjectSelected: (project: Project) => void;
+    onBackToIndex: () => void;
 }
 
-const Projects = ({ onProjectSelected }: ProjectsProps) => {
+const Projects = ({ onProjectSelected, onBackToIndex }: ProjectsProps) => {
     const [projects, setProjects] = useState<Project[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -43,7 +44,9 @@ const Projects = ({ onProjectSelected }: ProjectsProps) => {
     return (
         <div className="projects-component">
             <header className="projects-header">
-                <h1 className="projects-title">My Projects</h1>
+                <div className="projects-header-content">
+                    <h1 className="projects-title">My Projects</h1>
+                </div>
             </header>
             <main className="projects-content">
                 <div className="projects-grid">

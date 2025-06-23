@@ -27,6 +27,13 @@
     transform: translateX(-50%) translateY(5vh);
 }
 
+.navbar-left-section {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    position: relative;
+}
+
 .navbar-brand {
     font-family: 'Jua', sans-serif;
     font-size: 30px;
@@ -35,6 +42,11 @@
     user-select: none;
     cursor: pointer;
     display: flex;
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.navbar-brand.shifted {
+    transform: translateX(44px);
 }
 
 .char-container {
@@ -42,6 +54,71 @@
     display: flex;
     justify-content: center;
     align-items: center;
+}
+
+.navbar-back-button {
+    position: absolute;
+    left: -8px;
+    opacity: 0;
+    transform: scale(0.8);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    pointer-events: none;
+}
+
+.navbar-back-button.visible {
+    opacity: 1;
+    transform: scale(1);
+    pointer-events: all;
+}
+
+.back-button-sentient {
+    width: 40px;
+    height: 40px;
+    position: relative;
+    border-radius: 8px;
+    background-color: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.3s ease;
+    overflow: visible;
+}
+
+/* Housing (background + outline) */
+.back-button-sentient::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 8px;
+    background-color: rgba(60, 60, 60, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    transform: scale(0.6);
+    opacity: 0;
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
+    pointer-events: none;
+}
+
+.back-button-sentient:hover::before {
+    transform: scale(1);
+    opacity: 1;
+    background-color: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* Icon scaling */
+.back-button-sentient svg {
+    transition: transform 0.3s ease;
+    transform: scale(1.4);
+}
+
+.back-button-sentient:hover svg {
+    transform: scale(0.9);
+}
+
+.back-button-sentient:hover {
+    color: rgba(255, 255, 255, 1);
 }
 
 .navbar-socials {

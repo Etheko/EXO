@@ -4,16 +4,17 @@ import './Home.css';
 import Navbar from './Navbar';
 import MainFrame from './MainFrame';
 import Projects from '../Projects';
+import PortfolioIndex from '../PortfolioIndex';
 import ScrollIndicator from './ScrollIndicator';
 import { Project } from '../../types/Project';
 import ProjectView from '../Projects/ProjectView';
 
 type AnimationState = 'text' | 'camera-to-grid' | 'mainframe' | 'camera-to-text';
-type MainFrameView = 'projects' | 'projectView';
+type MainFrameView = 'portfolioIndex' | 'projects' | 'projectView';
 
 const Home = () => {
   const [animationState, setAnimationState] = useState<AnimationState>('text');
-  const [mainFrameView, setMainFrameView] = useState<MainFrameView>('projects');
+  const [mainFrameView, setMainFrameView] = useState<MainFrameView>('portfolioIndex');
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [isAnimationInProgress, setIsAnimationInProgress] = useState(false);
   const [isTextReady, setIsTextReady] = useState(true);
@@ -87,6 +88,14 @@ const Home = () => {
     setIsScrollIndicatorForceHidden(false);
   };
 
+  const handleSectionSelected = (sectionId: number) => {
+    // For now, only handle the projects section (id 1 and 2)
+    if (sectionId === 1 || sectionId === 2) {
+      setMainFrameView('projects');
+    }
+    // Add more section handlers as needed
+  };
+
   const handleProjectSelected = (project: Project) => {
     setSelectedProject(project);
     setMainFrameView('projectView');
@@ -95,6 +104,19 @@ const Home = () => {
   const handleBackToProjects = () => {
     setSelectedProject(null);
     setMainFrameView('projects');
+  };
+
+  const handleBackToIndex = () => {
+    setSelectedProject(null);
+    setMainFrameView('portfolioIndex');
+  };
+
+  const handleNavbarBackClick = () => {
+    if (mainFrameView === 'projectView') {
+      handleBackToProjects();
+    } else if (mainFrameView === 'projects') {
+      handleBackToIndex();
+    }
   };
 
   const handleBrandClick = () => {
@@ -119,10 +141,16 @@ const Home = () => {
   const isMainFrameVisible = animationState === 'mainframe';
   const focusOnGrid = animationState === 'mainframe' || animationState === 'camera-to-grid';
   const isScrollIndicatorVisible = isInitialTextAnimationComplete && !isMainFrameVisible && !isScrollIndicatorForceHidden;
+  const showBackButton = mainFrameView !== 'portfolioIndex';
 
   return (
     <div className="home-container">
-      <Navbar isVisible={isMainFrameVisible} onBrandClick={handleBrandClick} />
+      <Navbar 
+        isVisible={isMainFrameVisible} 
+        onBrandClick={handleBrandClick}
+        showBackButton={showBackButton}
+        onBackClick={handleNavbarBackClick}
+      />
       <div className="scene-container">
         <Scene3D 
           isTextVisible={isTextReady}
@@ -141,7 +169,8 @@ const Home = () => {
         onMouseEnter={() => {}}
         onMouseLeave={() => {}}
       >
-        {mainFrameView === 'projects' && <Projects onProjectSelected={handleProjectSelected} />}
+        {mainFrameView === 'portfolioIndex' && <PortfolioIndex onSectionSelected={handleSectionSelected} />}
+        {mainFrameView === 'projects' && <Projects onProjectSelected={handleProjectSelected} onBackToIndex={handleBackToIndex} />}
         {mainFrameView === 'projectView' && selectedProject && (
           <ProjectView project={selectedProject} onBack={handleBackToProjects} />
         )}

@@ -3,16 +3,20 @@ import {
   TbBrandInstagram,
   TbBrandLinkedin,
   TbBrandX,
+  TbChevronLeft,
 } from 'react-icons/tb';
 import './Navbar.css';
 import AnimatedNavbarChar from './AnimatedNavbarChar';
+import SentientButton from '../SentientButton';
 
 interface NavbarProps {
   isVisible: boolean;
   onBrandClick?: () => void;
+  showBackButton?: boolean;
+  onBackClick?: () => void;
 }
 
-const Navbar = ({ isVisible, onBrandClick }: NavbarProps) => {
+const Navbar = ({ isVisible, onBrandClick, showBackButton = false, onBackClick }: NavbarProps) => {
   const brandName = "Etheko.";
 
   const handleBrandClick = () => {
@@ -21,12 +25,29 @@ const Navbar = ({ isVisible, onBrandClick }: NavbarProps) => {
     }
   };
 
+  const handleBackClick = () => {
+    if (onBackClick) {
+      onBackClick();
+    }
+  };
+
   return (
     <div className={`navbar-container ${isVisible ? 'visible' : ''}`}>
-      <div className="navbar-brand" onClick={handleBrandClick}>
-        {brandName.split('').map((char, index) => (
-          <AnimatedNavbarChar key={index} char={char} />
-        ))}
+      <div className="navbar-left-section">
+        <div className={`navbar-brand ${showBackButton ? 'shifted' : ''}`} onClick={handleBrandClick}>
+          {brandName.split('').map((char, index) => (
+            <AnimatedNavbarChar key={index} char={char} />
+          ))}
+        </div>
+        <div className={`navbar-back-button ${showBackButton ? 'visible' : ''}`}>
+          <SentientButton
+            onClick={handleBackClick}
+            className="back-button-sentient"
+            as="button"
+          >
+            <TbChevronLeft size={26} />
+          </SentientButton>
+        </div>
       </div>
       <div className="navbar-socials">
         <a href="https://instagram.com" target="_blank" rel="noopener noreferrer">
