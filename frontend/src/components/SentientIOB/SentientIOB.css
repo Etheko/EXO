@@ -39,7 +39,7 @@
 }
 
 .sentient-iob:hover svg {
-    transform: scale(0.9);
+    transform: scale(var(--iob-hover-scale, 0.9));
 }
 
 .sentient-iob:hover {

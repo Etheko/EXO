@@ -11,6 +11,7 @@ interface SentientButtonProps {
     onClick?: (e: MouseEvent<HTMLElement>) => void;
     type?: 'button' | 'submit' | 'reset';
     disabled?: boolean;
+    style?: React.CSSProperties;
 }
 
 const SentientButton: React.FC<SentientButtonProps> = ({ 
@@ -22,7 +23,8 @@ const SentientButton: React.FC<SentientButtonProps> = ({
     as = 'a',
     onClick,
     type = 'button',
-    disabled = false
+    disabled = false,
+    style: externalStyle = {}
 }) => {
     const buttonRef = useRef<HTMLElement>(null);
     const animationFrameRef = useRef<number>();
@@ -101,10 +103,11 @@ const SentientButton: React.FC<SentientButtonProps> = ({
         ref: buttonRef as any,
         className: `${className}`,
         style: {
-            // Set up CSS transitions once
+            // default styles
             transition: 'transform 0.1s ease-out',
             willChange: 'transform', // Hint to browser for optimization
-        },
+            ...externalStyle,
+        } as React.CSSProperties,
         onMouseMove: handleMouseMove,
         onMouseEnter: handleMouseEnter,
         onMouseLeave: handleMouseLeaveComplete,

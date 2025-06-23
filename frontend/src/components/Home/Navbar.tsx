@@ -46,18 +46,18 @@ const Navbar = ({ isVisible, onBrandClick, showBackButton = false, onBackClick }
         </div>
       </div>
       <div className="navbar-socials">
-        <a href="https://instagram.com" target="_blank" rel="noopener noreferrer">
-          <TbBrandInstagram size={24} />
-        </a>
-        <a href="https://x.com" target="_blank" rel="noopener noreferrer">
-          <TbBrandX size={24} />
-        </a>
-        <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer">
-          <TbBrandLinkedin size={24} />
-        </a>
-        <a href="https://github.com/Etheko" target="_blank" rel="noopener noreferrer">
-          <TbBrandGithub size={24} />
-        </a>
+        <SentientIOB href="https://instagram.com" as="a" hoverScale={1}>
+          <TbBrandInstagram size={18} />
+        </SentientIOB>
+        <SentientIOB href="https://x.com" as="a" hoverScale={1}>
+          <TbBrandX size={18} />
+        </SentientIOB>
+        <SentientIOB href="https://linkedin.com" as="a" hoverScale={1}>
+          <TbBrandLinkedin size={18} />
+        </SentientIOB>
+        <SentientIOB href="https://github.com/Etheko" as="a" hoverScale={1}>
+          <TbBrandGithub size={18} />
+        </SentientIOB>
       </div>
     </div>
   );

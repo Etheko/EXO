@@ -11,6 +11,11 @@ interface SentientIOBProps {
     onClick?: (e: MouseEvent<HTMLElement>) => void;
     type?: 'button' | 'submit' | 'reset';
     disabled?: boolean;
+    /**
+     * Scale factor applied to the icon on hover (how small it becomes inside the housing).
+     * Default is 0.9 (matches chevron behaviour).
+     */
+    hoverScale?: number;
 }
 
 /**
@@ -29,9 +34,16 @@ const SentientIOB: React.FC<SentientIOBProps> = ({
     onClick,
     type = 'button',
     disabled = false,
+    hoverScale = 0.9,
 }) => {
     // Merge custom class with the generic style
     const mergedClass = `sentient-iob ${className}`.trim();
+
+    const style: React.CSSProperties = {
+        // Expose the CSS variable for hover scale so CSS can reference it
+        // Using a string ensures proper CSS value formatting
+        ['--iob-hover-scale' as any]: hoverScale,
+    };
 
     return (
         <SentientButton
@@ -41,6 +53,7 @@ const SentientIOB: React.FC<SentientIOBProps> = ({
             onClick={onClick}
             type={type}
             disabled={disabled}
+            style={style}
         >
             {children}
         </SentientButton>
