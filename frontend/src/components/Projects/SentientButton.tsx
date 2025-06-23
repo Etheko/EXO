@@ -1,4 +1,5 @@
 import React, { useRef, MouseEvent } from 'react';
+import { useCursor } from '../../contexts/CursorContext';
 
 interface SentientButtonProps {
     href: string;
@@ -11,11 +12,12 @@ interface SentientButtonProps {
 const SentientButton: React.FC<SentientButtonProps> = ({ 
     href, 
     children, 
-    intensity = 0.08, 
+    intensity = 0.09, 
     scaleIntensity = 1.06,
     className 
 }) => {
     const buttonRef = useRef<HTMLAnchorElement>(null);
+    const { setCursorState } = useCursor();
 
     const handleMouseMove = (e: MouseEvent<HTMLAnchorElement>) => {
         const button = buttonRef.current;
@@ -50,7 +52,11 @@ const SentientButton: React.FC<SentientButtonProps> = ({
             className={`${className}`}
             onClick={(e) => e.stopPropagation()}
             onMouseMove={handleMouseMove}
-            onMouseLeave={handleMouseLeave}
+            onMouseEnter={() => setCursorState('hovering')}
+            onMouseLeave={() => {
+                handleMouseLeave();
+                setCursorState('default');
+            }}
         >
             {children}
         </a>

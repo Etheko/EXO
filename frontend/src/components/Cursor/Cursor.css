@@ -1,0 +1,28 @@
+.custom-cursor-wrapper {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 9999;
+    pointer-events: none;
+    will-change: transform;
+}
+
+.custom-cursor {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: transparent;
+    transform: translate(-50%, -50%) scale(1);
+    transform-origin: center;
+    opacity: 1;
+    transition: transform 0.2s ease-out, opacity 0.15s ease-out;
+    filter: invert(1);
+    -webkit-backdrop-filter: blur(0px);
+    backdrop-filter: blur(0px);
+    border: 1px solid rgb(0, 0, 0);
+}
+
+.custom-cursor.hovering {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.5);
+} 
