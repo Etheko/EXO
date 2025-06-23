@@ -7,7 +7,7 @@ import {
 } from 'react-icons/tb';
 import './Navbar.css';
 import AnimatedNavbarChar from './AnimatedNavbarChar';
-import SentientButton from '../SentientButton';
+import SentientIOB from '../SentientIOB';
 
 interface NavbarProps {
   isVisible: boolean;
@@ -40,13 +40,9 @@ const Navbar = ({ isVisible, onBrandClick, showBackButton = false, onBackClick }
           ))}
         </div>
         <div className={`navbar-back-button ${showBackButton ? 'visible' : ''}`}>
-          <SentientButton
-            onClick={handleBackClick}
-            className="back-button-sentient"
-            as="button"
-          >
+          <SentientIOB onClick={handleBackClick} as="button">
             <TbChevronLeft size={26} />
-          </SentientButton>
+          </SentientIOB>
         </div>
       </div>
       <div className="navbar-socials">
