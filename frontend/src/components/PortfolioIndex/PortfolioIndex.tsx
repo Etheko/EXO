@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import './PortfolioIndex.css';
 
 interface PortfolioSection {
@@ -14,41 +14,61 @@ interface PortfolioIndexProps {
 
 const PortfolioIndexItem = ({ section }: { section: PortfolioSection }) => {
   const [commentText, setCommentText] = useState<string>('');
+  const [isHovered, setIsHovered] = useState<boolean>(false);
   const typeIntervalRef = useRef<number | null>(null);
   const deleteIntervalRef = useRef<number | null>(null);
 
-  const handleMouseEnter = () => {
-    // Stop any deletion in progress and reset
-    if (deleteIntervalRef.current) clearInterval(deleteIntervalRef.current);
-    if (typeIntervalRef.current) clearInterval(typeIntervalRef.current);
+  // Handle the typing / deleting animations based on the hover state
+  useEffect(() => {
+    // Clear any previous intervals before starting a new one
+    if (typeIntervalRef.current) {
+      clearInterval(typeIntervalRef.current);
+      typeIntervalRef.current = null;
+    }
+    if (deleteIntervalRef.current) {
+      clearInterval(deleteIntervalRef.current);
+      deleteIntervalRef.current = null;
+    }
 
-    // Continue typing from current position instead of starting over
-    let currentIndex = commentText.length;
-    typeIntervalRef.current = window.setInterval(() => {
-      if (currentIndex < section.comment.length) {
-        setCommentText(section.comment.slice(0, currentIndex + 1));
-        currentIndex += 1;
-      } else {
-        if (typeIntervalRef.current) clearInterval(typeIntervalRef.current);
-      }
-    }, 50);
-  };
+    if (isHovered) {
+      // Typing animation
+      let currentIndex = commentText.length;
+      typeIntervalRef.current = window.setInterval(() => {
+        if (currentIndex < section.comment.length) {
+          currentIndex += 1;
+          setCommentText(section.comment.slice(0, currentIndex));
+        } else if (typeIntervalRef.current) {
+          clearInterval(typeIntervalRef.current);
+          typeIntervalRef.current = null;
+        }
+      }, 50);
+    } else {
+      // Deleting animation
+      let currentLength = commentText.length;
+      if (currentLength === 0) return; // Nothing to delete
 
-  const handleMouseLeave = () => {
-    if (typeIntervalRef.current) clearInterval(typeIntervalRef.current);
-    if (deleteIntervalRef.current) clearInterval(deleteIntervalRef.current);
-
-    // Start deletion immediately with current comment text length
-    let currentLength = commentText.length;
-    deleteIntervalRef.current = window.setInterval(() => {
-      if (currentLength > 0) {
+      deleteIntervalRef.current = window.setInterval(() => {
         currentLength -= 1;
         setCommentText((prev) => prev.slice(0, currentLength));
-      } else {
-        if (deleteIntervalRef.current) clearInterval(deleteIntervalRef.current);
-      }
-    }, 30);
-  };
+
+        if (currentLength <= 0 && deleteIntervalRef.current) {
+          clearInterval(deleteIntervalRef.current);
+          deleteIntervalRef.current = null;
+        }
+      }, 30);
+    }
+
+    // Cleanup when component unmounts
+    return () => {
+      if (typeIntervalRef.current) clearInterval(typeIntervalRef.current);
+      if (deleteIntervalRef.current) clearInterval(deleteIntervalRef.current);
+    };
+    // We intentionally leave commentText out of the dependency array to avoid restarting the interval on every character change
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isHovered]);
+
+  const handleMouseEnter = () => setIsHovered(true);
+  const handleMouseLeave = () => setIsHovered(false);
 
   return (
     <div
