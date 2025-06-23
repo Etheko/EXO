@@ -67,15 +67,15 @@
 .portfolio-index-list {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.4rem;
   text-align: left;
 }
 
 .portfolio-index-item {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  padding: 0.75rem 0;
+  gap: 0.8rem;
+  padding: 0.4rem 0;
   cursor: pointer;
   transition: all 0.3s ease;
   position: relative;
@@ -95,7 +95,7 @@
   font-family: 'Outfit', sans-serif;
   font-weight: 700;
   font-size: 1.1rem;
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(255, 255, 255, 0.5);
   min-width: 2.5rem;
 }
 

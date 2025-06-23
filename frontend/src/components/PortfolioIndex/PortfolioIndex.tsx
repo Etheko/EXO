@@ -78,7 +78,7 @@ const PortfolioIndexItem = ({ section }: { section: PortfolioSection }) => {
       onClick={section.onClick}
     >
       <span className="section-number">
-        {section.id.toString().padStart(2, '0')}.
+        {section.id.toString().padStart(2, '0')}
       </span>
       <span className="section-title">
         {section.title}
