@@ -33,7 +33,7 @@
     font-weight: 600;
     -webkit-user-select: none;
     user-select: none;
-    cursor: default;
+    cursor: pointer;
     display: flex;
 }
 

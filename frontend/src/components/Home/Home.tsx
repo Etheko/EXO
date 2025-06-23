@@ -97,13 +97,32 @@ const Home = () => {
     setMainFrameView('projects');
   };
 
+  const handleBrandClick = () => {
+    // Only trigger if we're in mainframe state and no animation is in progress
+    if (animationState === 'mainframe' && !isAnimationInProgress) {
+      // First, scroll the Dynamic Viewport to the top
+      if (contentRef.current) {
+        contentRef.current.scrollTo({
+          top: 0,
+          behavior: 'smooth'
+        });
+      }
+      
+      // Then, after a short delay to allow the scroll to complete, hide the components
+      setTimeout(() => {
+        setIsAnimationInProgress(true);
+        setAnimationState('camera-to-text');
+      }, 300); // Wait for scroll animation to complete
+    }
+  };
+
   const isMainFrameVisible = animationState === 'mainframe';
   const focusOnGrid = animationState === 'mainframe' || animationState === 'camera-to-grid';
   const isScrollIndicatorVisible = isInitialTextAnimationComplete && !isMainFrameVisible && !isScrollIndicatorForceHidden;
 
   return (
     <div className="home-container">
-      <Navbar isVisible={isMainFrameVisible} />
+      <Navbar isVisible={isMainFrameVisible} onBrandClick={handleBrandClick} />
       <div className="scene-container">
         <Scene3D 
           isTextVisible={isTextReady}

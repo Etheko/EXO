@@ -9,14 +9,21 @@ import AnimatedNavbarChar from './AnimatedNavbarChar';
 
 interface NavbarProps {
   isVisible: boolean;
+  onBrandClick?: () => void;
 }
 
-const Navbar = ({ isVisible }: NavbarProps) => {
+const Navbar = ({ isVisible, onBrandClick }: NavbarProps) => {
   const brandName = "Etheko.";
+
+  const handleBrandClick = () => {
+    if (onBrandClick) {
+      onBrandClick();
+    }
+  };
 
   return (
     <div className={`navbar-container ${isVisible ? 'visible' : ''}`}>
-      <div className="navbar-brand">
+      <div className="navbar-brand" onClick={handleBrandClick}>
         {brandName.split('').map((char, index) => (
           <AnimatedNavbarChar key={index} char={char} />
         ))}
