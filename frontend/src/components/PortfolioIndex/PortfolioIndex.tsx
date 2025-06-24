@@ -2,6 +2,8 @@ import { useState, useRef, useEffect } from 'react';
 import './PortfolioIndex.css';
 import sectionService from '../../services/SectionService';
 import type { Section } from '../../types/Section';
+import { useError } from '../../hooks/useError';
+import { ERROR_CODES } from '../../utils/errorCodes';
 
 interface PortfolioIndexProps {
   onSectionSelected: (sectionId: number, componentType?: string) => void;
@@ -106,7 +108,7 @@ const PortfolioIndexItem = ({ section, onSectionSelected }: { section: Section; 
 const PortfolioIndex = ({ onSectionSelected }: PortfolioIndexProps) => {
   const [sections, setSections] = useState<Section[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  const { showError } = useError();
 
   useEffect(() => {
     const fetchSections = async () => {
@@ -114,17 +116,17 @@ const PortfolioIndex = ({ onSectionSelected }: PortfolioIndexProps) => {
         setLoading(true);
         const fetchedSections = await sectionService.getAllSectionsOrdered();
         setSections(fetchedSections);
-        setError(null);
       } catch (err) {
         console.error('Error fetching sections:', err);
-        setError('Failed to load sections');
+        // Use the unified error system instead of local error state
+        showError(ERROR_CODES.INTERNAL.DATA_FETCH_FAILED, 'Failed to load portfolio sections');
       } finally {
         setLoading(false);
       }
     };
 
     fetchSections();
-  }, []);
+  }, [showError]);
 
   if (loading) {
     return (
@@ -132,18 +134,6 @@ const PortfolioIndex = ({ onSectionSelected }: PortfolioIndexProps) => {
         <main className="portfolio-index-content">
           <div className="portfolio-index-list">
             <div>Loading sections...</div>
-          </div>
-        </main>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="portfolio-index-component">
-        <main className="portfolio-index-content">
-          <div className="portfolio-index-list">
-            <div>Error: {error}</div>
           </div>
         </main>
       </div>
