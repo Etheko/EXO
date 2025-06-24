@@ -37,7 +37,7 @@ const Navbar = ({
   const [shakeIntensity, setShakeIntensity] = useState(0);
   
   const { transform } = useSpring({
-    transform: `translateX(${Math.sin(Date.now() * 0.05) * shakeIntensity * 0.5}px) translateY(${Math.cos(Date.now() * 0.03) * shakeIntensity * 0.3}px)`,
+    transform: `translateX(${showBackButton ? 44 : 0}px) translateX(${Math.sin(Date.now() * 0.05) * shakeIntensity * 0.5}px) translateY(${Math.cos(Date.now() * 0.03) * shakeIntensity * 0.3}px)`,
     config: { mass: 0.1, tension: 800, friction: 5 },
     immediate: shakeIntensity === 0, // Disable spring when not shaking for performance
   });
@@ -128,7 +128,7 @@ const Navbar = ({
     <div className={`navbar-container ${isVisible ? 'visible' : ''}`}>
       <div className="navbar-left-section">
         <animated.div 
-          className={`navbar-brand ${showBackButton ? 'shifted' : ''}`}
+          className="navbar-brand"
           style={{ transform }}
           onMouseDown={handleBrandMouseDown}
           onMouseUp={handleBrandMouseUp}
