@@ -5,6 +5,9 @@ import com.fasterxml.jackson.annotation.JsonView;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import javax.sql.rowset.serial.SerialBlob;
 import java.io.File;
@@ -17,12 +20,14 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 
 @Setter
 @Getter
 @Entity
-public class User {
+public class User implements UserDetails {
 
     /*
      * JsonView interfaces to control serialization scopes
@@ -50,6 +55,10 @@ public class User {
 
     @JsonIgnore
     private String password;
+
+    @JsonView(BasicInfo.class)
+    @Enumerated(EnumType.STRING)
+    private Role role;
 
     @JsonView(BasicInfo.class)
     private String nick; // Alias
@@ -195,13 +204,14 @@ public class User {
 
     public User(String username, String password, String nick, String email, String pfpPath,
                 String realName, String firstSurname, String secondSurname, LocalDate dateOfBirth,
-                String github, String instagram, String facebook, String xUsername, String mastodon, 
+                String github, String instagram, String facebook, String xUsername, String mastodon,
                 String bluesky, String tiktok, String linkedIn,
                 String distinctivePhrase, String description) throws IOException, SQLException {
         this.username = username;
         this.password = password;
         this.nick = nick;
         this.email = email;
+        this.role = Role.USER; // Default role
         this.realName = realName;
         this.firstSurname = firstSurname;
         this.secondSurname = secondSurname;
@@ -388,5 +398,35 @@ public class User {
     @Override
     public String toString() {
         return this.username;
+    }
+
+    /* ==========================
+     *   SPRING SECURITY IMPL
+     * ==========================
+     */
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return List.of(new SimpleGrantedAuthority(role.name()));
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return true;
     }
 }

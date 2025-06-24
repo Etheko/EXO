@@ -7,6 +7,8 @@ import com.exo.model.Course;
 import com.exo.model.CV;
 import com.exo.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -16,7 +18,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
-public class UserService {
+public class UserService implements UserDetailsService {
 
     @Autowired
     private UserRepository userRepository;
@@ -372,5 +374,15 @@ public class UserService {
             return userRepository.save(user);
         }
         return null;
+    }
+
+    /* ==========================
+     *      SPRING SECURITY
+     * ==========================
+     */
+
+    @Override
+    public User loadUserByUsername(String username) throws UsernameNotFoundException {
+        return userRepository.findByUsername(username);
     }
 }
