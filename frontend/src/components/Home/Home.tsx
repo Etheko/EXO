@@ -10,7 +10,7 @@ import { Project } from '../../types/Project';
 import ProjectView from '../Projects/ProjectView';
 
 type AnimationState = 'text' | 'camera-to-grid' | 'mainframe' | 'camera-to-text';
-type MainFrameView = 'portfolioIndex' | 'projects' | 'projectView';
+type MainFrameView = 'portfolioIndex' | 'projects' | 'projectView' | 'about' | 'tech-stack' | 'design' | 'cyber-logs' | 'devops' | 'blog' | 'contact' | 'certificates';
 
 const Home = () => {
   const [animationState, setAnimationState] = useState<AnimationState>('text');
@@ -88,12 +88,42 @@ const Home = () => {
     setIsScrollIndicatorForceHidden(false);
   };
 
-  const handleSectionSelected = (sectionId: number) => {
-    // For now, only handle the projects section (id 1 and 2)
-    if (sectionId === 1 || sectionId === 2) {
-      setMainFrameView('projects');
+  const handleSectionSelected = (sectionId: number, componentType?: string) => {
+    switch (componentType) {
+      case 'projects':
+        setMainFrameView('projects');
+        break;
+      case 'about':
+        setMainFrameView('about');
+        break;
+      case 'tech-stack':
+        setMainFrameView('tech-stack');
+        break;
+      case 'design':
+        setMainFrameView('design');
+        break;
+      case 'cyber-logs':
+        setMainFrameView('cyber-logs');
+        break;
+      case 'devops':
+        setMainFrameView('devops');
+        break;
+      case 'blog':
+        setMainFrameView('blog');
+        break;
+      case 'contact':
+        setMainFrameView('contact');
+        break;
+      case 'certificates':
+        setMainFrameView('certificates');
+        break;
+      default:
+        console.warn(`No component handler for type: ${componentType}`);
+        // Fallback to projects for backward compatibility
+        if (sectionId === 1 || sectionId === 2) {
+          setMainFrameView('projects');
+        }
     }
-    // Add more section handlers as needed
   };
 
   const handleProjectSelected = (project: Project) => {
@@ -150,6 +180,14 @@ const Home = () => {
     portfolioIndex: 0,
     projects: 1,
     projectView: 2,
+    about: 3,
+    'tech-stack': 4,
+    design: 5,
+    'cyber-logs': 6,
+    devops: 7,
+    blog: 8,
+    contact: 9,
+    certificates: 10,
   };
   const currentViewId = viewIdMap[mainFrameView];
 
@@ -185,6 +223,14 @@ const Home = () => {
         {mainFrameView === 'projectView' && selectedProject && (
           <ProjectView project={selectedProject} onBack={handleBackToProjects} />
         )}
+        {mainFrameView === 'about' && <div>About Component - Coming Soon</div>}
+        {mainFrameView === 'tech-stack' && <div>Tech Stack Component - Coming Soon</div>}
+        {mainFrameView === 'design' && <div>Design Component - Coming Soon</div>}
+        {mainFrameView === 'cyber-logs' && <div>Cyber Logs Component - Coming Soon</div>}
+        {mainFrameView === 'devops' && <div>DevOps Component - Coming Soon</div>}
+        {mainFrameView === 'blog' && <div>Blog Component - Coming Soon</div>}
+        {mainFrameView === 'contact' && <div>Contact Component - Coming Soon</div>}
+        {mainFrameView === 'certificates' && <div>Certificates Component - Coming Soon</div>}
       </MainFrame>
       <ScrollIndicator isVisible={isScrollIndicatorVisible} />
     </div>

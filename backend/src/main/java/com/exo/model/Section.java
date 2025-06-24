@@ -28,6 +28,9 @@ public class Section {
     private Integer displayOrder = 0;
     private Boolean published = true;
 
+    @Column(name = "component_type")
+    private String componentType; // "projects", "blog", "about", "tech-stack", etc.
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 

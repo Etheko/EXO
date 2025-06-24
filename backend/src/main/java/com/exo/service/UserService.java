@@ -91,17 +91,140 @@ public class UserService {
         return null;
     }
 
-    public User updateSocialLinks(String username, String instagram, String xUsername, 
-                                 String linkedIn, String github) {
+    public User updateSocialLinks(String username, String github, String instagram, String facebook, 
+                                 String xUsername, String mastodon, String bluesky, String tiktok, 
+                                 String linkedIn) {
         User user = userRepository.findByUsername(username);
         if (user != null) {
-            user.setInstagram(instagram);
-            user.setXUsername(xUsername);
-            user.setLinkedIn(linkedIn);
-            user.setGithub(github);
+            user.setGithub(github != null ? buildGithubUrl(github) : null);
+            user.setInstagram(instagram != null ? buildInstagramUrl(instagram) : null);
+            user.setFacebook(facebook != null ? buildFacebookUrl(facebook) : null);
+            user.setXUsername(xUsername != null ? buildXUrl(xUsername) : null);
+            user.setMastodon(mastodon != null ? buildMastodonUrl(mastodon) : null);
+            user.setBluesky(bluesky != null ? buildBlueskyUrl(bluesky) : null);
+            user.setTiktok(tiktok != null ? buildTiktokUrl(tiktok) : null);
+            user.setLinkedIn(linkedIn != null ? buildLinkedInUrl(linkedIn) : null);
             return userRepository.save(user);
         }
         return null;
+    }
+
+    /* ==========================
+     *      URL BUILDERS
+     * ==========================
+     */
+
+    private String buildGithubUrl(String username) {
+        if (username == null || username.trim().isEmpty()) return null;
+        username = username.trim();
+        // Remove @ if present
+        if (username.startsWith("@")) {
+            username = username.substring(1);
+        }
+        // Remove https://github.com/ if already present
+        if (username.startsWith("https://github.com/")) {
+            return username;
+        }
+        return "https://github.com/" + username;
+    }
+
+    private String buildInstagramUrl(String username) {
+        if (username == null || username.trim().isEmpty()) return null;
+        username = username.trim();
+        // Remove @ if present
+        if (username.startsWith("@")) {
+            username = username.substring(1);
+        }
+        // Remove https://instagram.com/ if already present
+        if (username.startsWith("https://instagram.com/")) {
+            return username;
+        }
+        return "https://instagram.com/" + username;
+    }
+
+    private String buildFacebookUrl(String username) {
+        if (username == null || username.trim().isEmpty()) return null;
+        username = username.trim();
+        // Remove https://facebook.com/ if already present
+        if (username.startsWith("https://facebook.com/")) {
+            return username;
+        }
+        return "https://facebook.com/" + username;
+    }
+
+    private String buildXUrl(String username) {
+        if (username == null || username.trim().isEmpty()) return null;
+        username = username.trim();
+        // Remove @ if present
+        if (username.startsWith("@")) {
+            username = username.substring(1);
+        }
+        // Remove https://x.com/ or https://twitter.com/ if already present
+        if (username.startsWith("https://x.com/") || username.startsWith("https://twitter.com/")) {
+            return username;
+        }
+        return "https://x.com/" + username;
+    }
+
+    private String buildMastodonUrl(String username) {
+        if (username == null || username.trim().isEmpty()) return null;
+        username = username.trim();
+        // If it's already a full URL, return as is
+        if (username.startsWith("https://")) {
+            return username;
+        }
+        // If it contains @, it's likely in the format username@instance.com
+        if (username.contains("@")) {
+            String[] parts = username.split("@");
+            if (parts.length == 2) {
+                return "https://" + parts[1] + "/@" + parts[0];
+            }
+        }
+        // Default to a common Mastodon instance if no instance specified
+        return "https://mastodon.social/@" + username;
+    }
+
+    private String buildBlueskyUrl(String username) {
+        if (username == null || username.trim().isEmpty()) return null;
+        username = username.trim();
+        // Remove @ if present
+        if (username.startsWith("@")) {
+            username = username.substring(1);
+        }
+        // Remove https://bsky.app/ if already present
+        if (username.startsWith("https://bsky.app/")) {
+            return username;
+        }
+        return "https://bsky.app/profile/" + username;
+    }
+
+    private String buildTiktokUrl(String username) {
+        if (username == null || username.trim().isEmpty()) return null;
+        username = username.trim();
+        // Remove @ if present
+        if (username.startsWith("@")) {
+            username = username.substring(1);
+        }
+        // Remove https://tiktok.com/@ if already present
+        if (username.startsWith("https://tiktok.com/@")) {
+            return username;
+        }
+        return "https://tiktok.com/@" + username;
+    }
+
+    private String buildLinkedInUrl(String username) {
+        if (username == null || username.trim().isEmpty()) return null;
+        username = username.trim();
+        // If it's already a full URL, return as is
+        if (username.startsWith("https://linkedin.com/") || username.startsWith("https://www.linkedin.com/")) {
+            return username;
+        }
+        // If it looks like a profile ID, construct the URL
+        if (username.matches("^[a-zA-Z0-9_-]+$")) {
+            return "https://linkedin.com/in/" + username;
+        }
+        // If it's a full name, try to construct a profile URL
+        return "https://linkedin.com/in/" + username.toLowerCase().replaceAll("\\s+", "-");
     }
 
     /* ==========================

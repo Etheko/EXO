@@ -105,16 +105,28 @@ public class User {
      */
 
     @JsonView(SocialInfo.class)
+    private String github;
+
+    @JsonView(SocialInfo.class)
     private String instagram;
+
+    @JsonView(SocialInfo.class)
+    private String facebook;
 
     @JsonView(SocialInfo.class)
     private String xUsername; // Formerly Twitter
 
     @JsonView(SocialInfo.class)
-    private String linkedIn;
+    private String mastodon;
 
     @JsonView(SocialInfo.class)
-    private String github;
+    private String bluesky;
+
+    @JsonView(SocialInfo.class)
+    private String tiktok;
+
+    @JsonView(SocialInfo.class)
+    private String linkedIn;
 
     /* ==========================
      *        RELATIONS
@@ -183,7 +195,8 @@ public class User {
 
     public User(String username, String password, String nick, String email, String pfpPath,
                 String realName, String firstSurname, String secondSurname, LocalDate dateOfBirth,
-                String instagram, String xUsername, String linkedIn, String github,
+                String github, String instagram, String facebook, String xUsername, String mastodon, 
+                String bluesky, String tiktok, String linkedIn,
                 String distinctivePhrase, String description) throws IOException, SQLException {
         this.username = username;
         this.password = password;
@@ -193,10 +206,14 @@ public class User {
         this.firstSurname = firstSurname;
         this.secondSurname = secondSurname;
         this.dateOfBirth = dateOfBirth;
-        this.instagram = instagram;
-        this.xUsername = xUsername;
-        this.linkedIn = linkedIn;
-        this.github = github;
+        this.github = buildGithubUrl(github);
+        this.instagram = buildInstagramUrl(instagram);
+        this.facebook = buildFacebookUrl(facebook);
+        this.xUsername = buildXUrl(xUsername);
+        this.mastodon = buildMastodonUrl(mastodon);
+        this.bluesky = buildBlueskyUrl(bluesky);
+        this.tiktok = buildTiktokUrl(tiktok);
+        this.linkedIn = buildLinkedInUrl(linkedIn);
         this.distinctivePhrase = distinctivePhrase;
         this.description = description;
 
@@ -206,6 +223,107 @@ public class User {
             this.pfpString = pfpPath;
         }
         this.pfp = localImageToBlob(this.pfpString);
+    }
+
+    /* ==========================
+     *      URL BUILDERS
+     * ==========================
+     */
+
+    private String buildGithubUrl(String username) {
+        if (username == null || username.trim().isEmpty()) return null;
+        username = username.trim();
+        if (username.startsWith("@")) {
+            username = username.substring(1);
+        }
+        if (username.startsWith("https://github.com/")) {
+            return username;
+        }
+        return "https://github.com/" + username;
+    }
+
+    private String buildInstagramUrl(String username) {
+        if (username == null || username.trim().isEmpty()) return null;
+        username = username.trim();
+        if (username.startsWith("@")) {
+            username = username.substring(1);
+        }
+        if (username.startsWith("https://instagram.com/")) {
+            return username;
+        }
+        return "https://instagram.com/" + username;
+    }
+
+    private String buildFacebookUrl(String username) {
+        if (username == null || username.trim().isEmpty()) return null;
+        username = username.trim();
+        if (username.startsWith("https://facebook.com/")) {
+            return username;
+        }
+        return "https://facebook.com/" + username;
+    }
+
+    private String buildXUrl(String username) {
+        if (username == null || username.trim().isEmpty()) return null;
+        username = username.trim();
+        if (username.startsWith("@")) {
+            username = username.substring(1);
+        }
+        if (username.startsWith("https://x.com/") || username.startsWith("https://twitter.com/")) {
+            return username;
+        }
+        return "https://x.com/" + username;
+    }
+
+    private String buildMastodonUrl(String username) {
+        if (username == null || username.trim().isEmpty()) return null;
+        username = username.trim();
+        if (username.startsWith("https://")) {
+            return username;
+        }
+        if (username.contains("@")) {
+            String[] parts = username.split("@");
+            if (parts.length == 2) {
+                return "https://" + parts[1] + "/@" + parts[0];
+            }
+        }
+        return "https://mastodon.social/@" + username;
+    }
+
+    private String buildBlueskyUrl(String username) {
+        if (username == null || username.trim().isEmpty()) return null;
+        username = username.trim();
+        if (username.startsWith("@")) {
+            username = username.substring(1);
+        }
+        if (username.startsWith("https://bsky.app/")) {
+            return username;
+        }
+        return "https://bsky.app/profile/" + username;
+    }
+
+    private String buildTiktokUrl(String username) {
+        if (username == null || username.trim().isEmpty()) return null;
+        username = username.trim();
+        if (username.startsWith("@")) {
+            username = username.substring(1);
+        }
+        if (username.startsWith("https://tiktok.com/@")) {
+            return username;
+        }
+        return "https://tiktok.com/@" + username;
+    }
+
+    private String buildLinkedInUrl(String username) {
+        if (username == null || username.trim().isEmpty()) return null;
+        username = username.trim();
+        if (username.startsWith("https://linkedin.com/") || username.startsWith("https://www.linkedin.com/")) {
+            return username;
+        }
+        if (username.matches("^[a-zA-Z0-9_-]+$")) {
+            return "https://linkedin.com/in/" + username;
+        }
+        return "https://linkedin.com/in/" + username.toLowerCase().replaceAll("\\s+", "-");
     }
 
     /* ==========================

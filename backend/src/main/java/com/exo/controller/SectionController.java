@@ -83,8 +83,9 @@ public class SectionController {
             @Parameter(description = "Section description") @RequestParam(required = false) String description,
             @Parameter(description = "Section content") @RequestParam String content,
             @Parameter(description = "Display order") @RequestParam(required = false) Integer displayOrder,
-            @Parameter(description = "Published status") @RequestParam(defaultValue = "true") Boolean published) {
-        Section section = sectionService.createSection(slug, title, description, content, displayOrder, published);
+            @Parameter(description = "Published status") @RequestParam(defaultValue = "true") Boolean published,
+            @Parameter(description = "Component type") @RequestParam(required = false) String componentType) {
+        Section section = sectionService.createSection(slug, title, description, content, displayOrder, published, componentType);
         return ResponseEntity.ok(section);
     }
 
@@ -97,8 +98,9 @@ public class SectionController {
             @Parameter(description = "Section description") @RequestParam(required = false) String description,
             @Parameter(description = "Section content") @RequestParam(required = false) String content,
             @Parameter(description = "Display order") @RequestParam(required = false) Integer displayOrder,
-            @Parameter(description = "Published status") @RequestParam(required = false) Boolean published) {
-        Section section = sectionService.updateSection(id, slug, title, description, content, displayOrder, published);
+            @Parameter(description = "Published status") @RequestParam(required = false) Boolean published,
+            @Parameter(description = "Component type") @RequestParam(required = false) String componentType) {
+        Section section = sectionService.updateSection(id, slug, title, description, content, displayOrder, published, componentType);
         return section != null ? ResponseEntity.ok(section) : ResponseEntity.notFound().build();
     }
 

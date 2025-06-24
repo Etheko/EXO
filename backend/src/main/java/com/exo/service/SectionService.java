@@ -41,7 +41,7 @@ public class SectionService {
      */
 
     public Section createSection(String slug, String title, String description, 
-                                String content, Integer displayOrder, Boolean published) {
+                                String content, Integer displayOrder, Boolean published, String componentType) {
         Section section = new Section();
         section.setSlug(slug);
         section.setTitle(title);
@@ -49,11 +49,12 @@ public class SectionService {
         section.setContent(content);
         section.setDisplayOrder(displayOrder != null ? displayOrder : 0);
         section.setPublished(published != null ? published : true);
+        section.setComponentType(componentType);
         return sectionRepository.save(section);
     }
 
     public Section updateSection(Long id, String slug, String title, String description,
-                                String content, Integer displayOrder, Boolean published) {
+                                String content, Integer displayOrder, Boolean published, String componentType) {
         Optional<Section> optional = sectionRepository.findById(id);
         if (optional.isPresent()) {
             Section section = optional.get();
@@ -63,6 +64,7 @@ public class SectionService {
             if (content != null) section.setContent(content);
             if (displayOrder != null) section.setDisplayOrder(displayOrder);
             if (published != null) section.setPublished(published);
+            if (componentType != null) section.setComponentType(componentType);
             return sectionRepository.save(section);
         }
         return null;

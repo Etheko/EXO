@@ -212,11 +212,16 @@ public class UserController {
     public ResponseEntity<User> updateSocialLinks(
             @Parameter(description = "Username of the user") 
             @PathVariable String username,
+            @Parameter(description = "GitHub username") @RequestParam(required = false) String github,
             @Parameter(description = "Instagram username") @RequestParam(required = false) String instagram,
+            @Parameter(description = "Facebook profile") @RequestParam(required = false) String facebook,
             @Parameter(description = "X (Twitter) username") @RequestParam(required = false) String xUsername,
-            @Parameter(description = "LinkedIn profile") @RequestParam(required = false) String linkedIn,
-            @Parameter(description = "GitHub username") @RequestParam(required = false) String github) {
-        User updatedUser = userService.updateSocialLinks(username, instagram, xUsername, linkedIn, github);
+            @Parameter(description = "Mastodon profile") @RequestParam(required = false) String mastodon,
+            @Parameter(description = "Bluesky username") @RequestParam(required = false) String bluesky,
+            @Parameter(description = "TikTok username") @RequestParam(required = false) String tiktok,
+            @Parameter(description = "LinkedIn profile") @RequestParam(required = false) String linkedIn) {
+        User updatedUser = userService.updateSocialLinks(username, github, instagram, facebook, 
+                                                       xUsername, mastodon, bluesky, tiktok, linkedIn);
         return updatedUser != null ? ResponseEntity.ok(updatedUser) : ResponseEntity.notFound().build();
     }
 

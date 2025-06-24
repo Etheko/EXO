@@ -1,25 +1,25 @@
 import { useState, useRef, useEffect } from 'react';
 import './PortfolioIndex.css';
-
-interface PortfolioSection {
-  id: number;
-  title: string;
-  comment: string;
-  onClick: () => void;
-}
+import sectionService from '../../services/SectionService';
+import type { Section } from '../../types/Section';
 
 interface PortfolioIndexProps {
-  onSectionSelected: (sectionId: number) => void;
+  onSectionSelected: (sectionId: number, componentType?: string) => void;
 }
 
-const PortfolioIndexItem = ({ section }: { section: PortfolioSection }) => {
+const PortfolioIndexItem = ({ section, onSectionSelected }: { section: Section; onSectionSelected: (sectionId: number, componentType?: string) => void }) => {
   const [commentText, setCommentText] = useState<string>('');
   const [isHovered, setIsHovered] = useState<boolean>(false);
   const typeIntervalRef = useRef<number | null>(null);
   const deleteIntervalRef = useRef<number | null>(null);
 
+  const isPublished = section.published !== false; // Default to true if not specified
+
   // Handle the typing / deleting animations based on the hover state
   useEffect(() => {
+    // Don't run animations for unpublished sections
+    if (!isPublished) return;
+
     // Clear any previous intervals before starting a new one
     if (typeIntervalRef.current) {
       clearInterval(typeIntervalRef.current);
@@ -34,9 +34,9 @@ const PortfolioIndexItem = ({ section }: { section: PortfolioSection }) => {
       // Typing animation
       let currentIndex = commentText.length;
       typeIntervalRef.current = window.setInterval(() => {
-        if (currentIndex < section.comment.length) {
+        if (currentIndex < (section.description?.length || 0)) {
           currentIndex += 1;
-          setCommentText(section.comment.slice(0, currentIndex));
+          setCommentText(section.description?.slice(0, currentIndex) || '');
         } else if (typeIntervalRef.current) {
           clearInterval(typeIntervalRef.current);
           typeIntervalRef.current = null;
@@ -65,20 +65,35 @@ const PortfolioIndexItem = ({ section }: { section: PortfolioSection }) => {
     };
     // We intentionally leave commentText out of the dependency array to avoid restarting the interval on every character change
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isHovered]);
+  }, [isHovered, section.description, isPublished]);
 
-  const handleMouseEnter = () => setIsHovered(true);
-  const handleMouseLeave = () => setIsHovered(false);
+  const handleMouseEnter = () => {
+    if (isPublished) {
+      setIsHovered(true);
+    }
+  };
+  
+  const handleMouseLeave = () => {
+    if (isPublished) {
+      setIsHovered(false);
+    }
+  };
+
+  const handleClick = () => {
+    if (isPublished) {
+      onSectionSelected(section.id || 0, section.componentType);
+    }
+  };
 
   return (
     <div
-      className="portfolio-index-item"
+      className={`portfolio-index-item ${!isPublished ? 'unpublished' : ''}`}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      onClick={section.onClick}
+      onClick={handleClick}
     >
       <span className="section-number">
-        {section.id.toString().padStart(2, '0')}
+        {(section.displayOrder || 0).toString().padStart(2, '0')}
       </span>
       <span className="section-title">
         {section.title}
@@ -89,75 +104,62 @@ const PortfolioIndexItem = ({ section }: { section: PortfolioSection }) => {
 };
 
 const PortfolioIndex = ({ onSectionSelected }: PortfolioIndexProps) => {
-  const sections: PortfolioSection[] = [
-    {
-      id: 0,
-      title: 'INIT::Etheko()',
-      comment: '// Who am I?',
-      onClick: () => onSectionSelected(0)
-    },
-    {
-      id: 1,
-      title: 'BUILD_STREAM[]',
-      comment: '// Current Projects',
-      onClick: () => onSectionSelected(1)
-    },
-    {
-      id: 2,
-      title: 'RETRO_LOG{}',
-      comment: '// Past Projects',
-      onClick: () => onSectionSelected(2)
-    },
-    {
-      id: 3,
-      title: 'MODULES_LOADED',
-      comment: '// Tech Stack',
-      onClick: () => onSectionSelected(3)
-    },
-    {
-      id: 4,
-      title: 'UX.LAB{👾}',
-      comment: '// Design Zone',
-      onClick: () => onSectionSelected(4)
-    },
-    {
-      id: 5,
-      title: 'SYS_SEC::INSIGHTS',
-      comment: '// Cyber Logs',
-      onClick: () => onSectionSelected(5)
-    },
-    {
-      id: 6,
-      title: 'PIPELINE::WORKFLOW',
-      comment: '// DevOps & Agile',
-      onClick: () => onSectionSelected(6)
-    },
-    {
-      id: 7,
-      title: 'blog.txt',
-      comment: '// Thoughts & Posts',
-      onClick: () => onSectionSelected(7)
-    },
-    {
-      id: 8,
-      title: 'contact.txt',
-      comment: '// CV & Links',
-      onClick: () => onSectionSelected(8)
-    },
-    {
-      id: 9,
-      title: 'CERTS.log',
-      comment: '// Certificates & Courses',
-      onClick: () => onSectionSelected(9)
-    }
-  ];
+  const [sections, setSections] = useState<Section[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchSections = async () => {
+      try {
+        setLoading(true);
+        const fetchedSections = await sectionService.getAllSectionsOrdered();
+        setSections(fetchedSections);
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching sections:', err);
+        setError('Failed to load sections');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSections();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="portfolio-index-component">
+        <main className="portfolio-index-content">
+          <div className="portfolio-index-list">
+            <div>Loading sections...</div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="portfolio-index-component">
+        <main className="portfolio-index-content">
+          <div className="portfolio-index-list">
+            <div>Error: {error}</div>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="portfolio-index-component">
       <main className="portfolio-index-content">
         <div className="portfolio-index-list">
           {sections.map((section) => (
-            <PortfolioIndexItem key={section.id} section={section} />
+            <PortfolioIndexItem 
+              key={section.id} 
+              section={section} 
+              onSectionSelected={onSectionSelected}
+            />
           ))}
         </div>
       </main>

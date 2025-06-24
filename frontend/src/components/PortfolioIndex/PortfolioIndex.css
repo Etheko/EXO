@@ -81,6 +81,21 @@
   position: relative;
 }
 
+.portfolio-index-item.unpublished {
+  cursor: not-allowed;
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.portfolio-index-item.unpublished .section-number,
+.portfolio-index-item.unpublished .section-title {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.portfolio-index-item.unpublished .section-comment {
+  color: rgba(255, 255, 255, 0.2);
+}
+
 .portfolio-index-item:hover .section-number,
 .portfolio-index-item:hover .section-title {
   text-decoration: underline;
