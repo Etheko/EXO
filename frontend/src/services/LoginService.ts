@@ -84,6 +84,11 @@ class LoginService {
     logout(): void {
         this.clearTokens();
         this.clearAuthHeader();
+        
+        // Dispatch custom event for immediate UI updates
+        window.dispatchEvent(new CustomEvent('loginStatusChanged', { 
+            detail: { isAuthenticated: false } 
+        }));
     }
 
     // Validate token format (basic validation)
@@ -150,6 +155,12 @@ class LoginService {
             const response = await this.login(credentials);
             this.storeTokens(response.accessToken, response.refreshToken);
             this.setAuthHeader(response.accessToken);
+            
+            // Dispatch custom event for immediate UI updates
+            window.dispatchEvent(new CustomEvent('loginStatusChanged', { 
+                detail: { isAuthenticated: true } 
+            }));
+            
             return true;
         } catch (error) {
             console.error('Login failed:', error);

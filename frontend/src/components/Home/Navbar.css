@@ -160,6 +160,33 @@
     white-space: nowrap;
 }
 
+/* ----- Right Section (Login Indicator + Socials) ----- */
+.navbar-right-section {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.login-indicator {
+    display: flex;
+    align-items: center;
+}
+
+.login-indicator-dot {
+    width: 8px;
+    height: 8px;
+    background-color: #22c55e; /* Green color */
+    border-radius: 50%;
+    box-shadow: 0 0 8px rgba(34, 197, 94, 0.4); /* Green glow */
+    transition: all 0.3s ease;
+}
+
+/* Apply SentientIOB hover effects to the dot */
+.sentient-iob:hover .login-indicator-dot {
+    transform: scale(1.2);
+    box-shadow: 0 0 12px rgba(34, 197, 94, 0.6);
+}
+
 /* Hide tooltip on narrow viewports */
 @media (max-width: 768px) {
     .navbar-center-section {

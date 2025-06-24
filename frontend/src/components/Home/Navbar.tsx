@@ -10,6 +10,7 @@ import { useSpring, animated } from '@react-spring/web';
 import './Navbar.css';
 import AnimatedNavbarChar from './AnimatedNavbarChar';
 import SentientIOB from '../SentientIOB';
+import LoginService from '../../services/LoginService';
 
 interface NavbarProps {
   isVisible: boolean;
@@ -41,6 +42,40 @@ const Navbar = ({
   const [displayedTooltip, setDisplayedTooltip] = useState<string>('');
   const animationRef = useRef<number | null>(null);
   const currentTextRef = useRef<string>(''); // Track current text without triggering re-renders
+
+  // Login status state
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  // Check login status on mount and when component updates
+  useEffect(() => {
+    const checkLoginStatus = () => {
+      setIsLoggedIn(LoginService.isAuthenticated());
+    };
+    
+    checkLoginStatus();
+    
+    // Listen for storage changes to update login status
+    const handleStorageChange = () => {
+      checkLoginStatus();
+    };
+    
+    // Listen for custom login status change events
+    const handleLoginStatusChange = (event: CustomEvent) => {
+      setIsLoggedIn(event.detail.isAuthenticated);
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('loginStatusChanged', handleLoginStatusChange as EventListener);
+    
+    // Also check periodically in case of other login/logout methods
+    const interval = setInterval(checkLoginStatus, 1000);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('loginStatusChanged', handleLoginStatusChange as EventListener);
+      clearInterval(interval);
+    };
+  }, []);
 
   const { transform } = useSpring({
     transform: `translateX(${showBackButton ? 44 : 0}px) translateX(${Math.sin(Date.now() * 0.05) * shakeIntensity * 0.5}px) translateY(${Math.cos(Date.now() * 0.03) * shakeIntensity * 0.3}px)`,
@@ -255,19 +290,36 @@ const Navbar = ({
       <div className="navbar-center-section">
         {displayedTooltip && <span className="tooltip-texts">{displayedTooltip}</span>}
       </div>
-      <div className="navbar-socials">
-        <SentientIOB href="https://instagram.com" as="a" hoverScale={1} {...createTooltipHandlers('instagram')}>
-          <TbBrandInstagram size={18} />
-        </SentientIOB>
-        <SentientIOB href="https://x.com" as="a" hoverScale={1} {...createTooltipHandlers('x / twitter')}>
-          <TbBrandX size={18} />
-        </SentientIOB>
-        <SentientIOB href="https://linkedin.com" as="a" hoverScale={1} {...createTooltipHandlers('linkedin')}>
-          <TbBrandLinkedin size={18} />
-        </SentientIOB>
-        <SentientIOB href="https://github.com/Etheko" as="a" hoverScale={1} {...createTooltipHandlers('github')}>
-          <TbBrandGithub size={18} />
-        </SentientIOB>
+      <div className="navbar-right-section">
+        {isLoggedIn && (
+          <div className="login-indicator">
+            <SentientIOB 
+              as="div" 
+              hoverScale={1} 
+              onClick={() => {
+                LoginService.logout();
+                setHoveredTooltip(null); // Clear tooltip immediately
+              }}
+              {...createTooltipHandlers('Logged in (click to logout)')}
+            >
+              <div className="login-indicator-dot"></div>
+            </SentientIOB>
+          </div>
+        )}
+        <div className="navbar-socials">
+          <SentientIOB href="https://instagram.com" as="a" hoverScale={1} {...createTooltipHandlers('instagram')}>
+            <TbBrandInstagram size={18} />
+          </SentientIOB>
+          <SentientIOB href="https://x.com" as="a" hoverScale={1} {...createTooltipHandlers('x / twitter')}>
+            <TbBrandX size={18} />
+          </SentientIOB>
+          <SentientIOB href="https://linkedin.com" as="a" hoverScale={1} {...createTooltipHandlers('linkedin')}>
+            <TbBrandLinkedin size={18} />
+          </SentientIOB>
+          <SentientIOB href="https://github.com/Etheko" as="a" hoverScale={1} {...createTooltipHandlers('github')}>
+            <TbBrandGithub size={18} />
+          </SentientIOB>
+        </div>
       </div>
     </div>
   );
