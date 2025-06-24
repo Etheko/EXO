@@ -1,3 +1,10 @@
+@font-face {
+    font-family: 'Space Grotesk Regular';
+    src: url('/fonts/SpaceGrotesk-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+  }
+
 .navbar-container {
     position: fixed;
     top: 0;
@@ -133,4 +140,29 @@
 
 .navbar-socials a:hover {
     color: #a0a0a0;
+}
+
+/* ----- Center Tooltip Section ----- */
+.navbar-center-section {
+    flex-grow: 1;
+    display: flex;
+    justify-content: center;
+    pointer-events: none; /* Ensure clicks pass through */
+}
+
+.tooltip-texts {
+    font-family: 'Space Grotesk Regular', sans-serif;
+    font-weight: 400;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.4);
+    user-select: none;
+    -webkit-user-select: none;
+    white-space: nowrap;
+}
+
+/* Hide tooltip on narrow viewports */
+@media (max-width: 768px) {
+    .navbar-center-section {
+        display: none;
+    }
 } 

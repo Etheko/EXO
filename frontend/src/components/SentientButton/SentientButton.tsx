@@ -9,6 +9,10 @@ interface SentientButtonProps {
     className?: string;
     as?: 'a' | 'button' | 'div' | 'span';
     onClick?: (e: MouseEvent<HTMLElement>) => void;
+    onMouseEnter?: (e: MouseEvent<HTMLElement>) => void;
+    onMouseLeave?: (e: MouseEvent<HTMLElement>) => void;
+    onTouchStart?: (e: React.TouchEvent<HTMLElement>) => void;
+    onTouchEnd?: (e: React.TouchEvent<HTMLElement>) => void;
     type?: 'button' | 'submit' | 'reset';
     disabled?: boolean;
     style?: React.CSSProperties;
@@ -22,6 +26,10 @@ const SentientButton: React.FC<SentientButtonProps> = ({
     className,
     as = 'a',
     onClick,
+    onMouseEnter: externalMouseEnter,
+    onMouseLeave: externalMouseLeave,
+    onTouchStart: externalTouchStart,
+    onTouchEnd: externalTouchEnd,
     type = 'button',
     disabled = false,
     style: externalStyle = {}
@@ -83,14 +91,16 @@ const SentientButton: React.FC<SentientButtonProps> = ({
         }, 300);
     }, []);
 
-    const handleMouseEnter = useCallback(() => {
+    const handleMouseEnter = useCallback((e: MouseEvent<HTMLElement>) => {
         setCursorState('hovering');
-    }, [setCursorState]);
+        externalMouseEnter?.(e);
+    }, [setCursorState, externalMouseEnter]);
 
-    const handleMouseLeaveComplete = useCallback(() => {
+    const handleMouseLeaveComplete = useCallback((e: MouseEvent<HTMLElement>) => {
         handleMouseLeave();
         setCursorState('default');
-    }, [handleMouseLeave, setCursorState]);
+        externalMouseLeave?.(e);
+    }, [handleMouseLeave, setCursorState, externalMouseLeave]);
 
     const handleClick = useCallback((e: MouseEvent<HTMLElement>) => {
         // Reset cursor state to default when clicking
@@ -115,6 +125,12 @@ const SentientButton: React.FC<SentientButtonProps> = ({
         onMouseEnter: handleMouseEnter,
         onMouseLeave: handleMouseLeaveComplete,
         onClick: handleClick,
+        onTouchStart: (e: React.TouchEvent<HTMLElement>) => {
+            externalTouchStart?.(e);
+        },
+        onTouchEnd: (e: React.TouchEvent<HTMLElement>) => {
+            externalTouchEnd?.(e);
+        },
     };
 
     // Render different element types based on the 'as' prop

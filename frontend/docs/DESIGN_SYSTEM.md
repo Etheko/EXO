@@ -101,6 +101,27 @@ IOBs are compact, square buttons whose primary (and often only) content is an ic
 -   **Sizing**
     -   Container dimensions are fixed (e.g., **40 × 40 px**). The housing pseudo-element scales from `0.6` ➜ `1` on hover using the elastic cubic-bezier curve (`0.175, 0.885, 0.32, 1.275`).
 
+-   **Tooltip System**
+    -   IOBs that lack descriptive text MUST include a tooltip to provide context about their function.
+    -   **Tooltip Display**: Tooltips appear in a dedicated center section of the navbar (desktop only, viewport ≥ 768px).
+    -   **Animation**: Tooltips use a terminal-style typing/deletion animation with a "> " prefix.
+    -   **Font**: Space Grotesk Regular (`font-weight: 400`).
+    -   **Color**: Semi-transparent white (`rgba(255, 255, 255, 0.4)`).
+    -   **Implementation**: Use the `createTooltipHandlers(text)` function to generate mouse/touch event handlers:
+        ```tsx
+        const createTooltipHandlers = (text: string) => ({
+          onMouseEnter: () => setHoveredTooltip(text),
+          onMouseLeave: () => setHoveredTooltip(null),
+          onTouchStart: () => setHoveredTooltip(text),
+          onTouchEnd: () => setHoveredTooltip(null),
+        });
+        
+        <SentientIOB {...createTooltipHandlers('tooltip text')}>
+          <IconComponent />
+        </SentientIOB>
+        ```
+    -   **Responsive Behavior**: Tooltips are automatically hidden on mobile devices (viewport < 768px) to maintain clean mobile UI.
+
 This specification ensures that icon-only controls like the navbar **chevron back button** look minimalist by default yet remain perfectly consistent with SABs when hovered, maintaining a cohesive visual language throughout the application.
 
 ### Generic Styling and Behavior

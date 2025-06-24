@@ -5,7 +5,7 @@ import {
   TbBrandX,
   TbChevronLeft,
 } from 'react-icons/tb';
-import { useRef, useState, useCallback } from 'react';
+import { useRef, useState, useCallback, useEffect } from 'react';
 import { useSpring, animated } from '@react-spring/web';
 import './Navbar.css';
 import AnimatedNavbarChar from './AnimatedNavbarChar';
@@ -36,10 +36,116 @@ const Navbar = ({
   // Shaking animation spring
   const [shakeIntensity, setShakeIntensity] = useState(0);
   
+  // Tooltip state definitions
+  const [hoveredTooltip, setHoveredTooltip] = useState<string | null>(null);
+  const [displayedTooltip, setDisplayedTooltip] = useState<string>('');
+  const animationRef = useRef<number | null>(null);
+  const currentTextRef = useRef<string>(''); // Track current text without triggering re-renders
+
   const { transform } = useSpring({
     transform: `translateX(${showBackButton ? 44 : 0}px) translateX(${Math.sin(Date.now() * 0.05) * shakeIntensity * 0.5}px) translateY(${Math.cos(Date.now() * 0.03) * shakeIntensity * 0.3}px)`,
     config: { mass: 0.1, tension: 800, friction: 5 },
     immediate: shakeIntensity === 0, // Disable spring when not shaking for performance
+  });
+
+  // Animation utilities
+  const clearAnimation = useCallback(() => {
+    if (animationRef.current) {
+      cancelAnimationFrame(animationRef.current);
+      animationRef.current = null;
+    }
+  }, []);
+
+  const updateDisplayText = useCallback((text: string) => {
+    setDisplayedTooltip(text);
+    currentTextRef.current = text;
+  }, []);
+
+  const animateTyping = useCallback((targetText: string, onComplete?: () => void) => {
+    let currentIndex = 0;
+    let lastTime = 0;
+    const TYPING_SPEED = 50; // ms per character
+    
+    const animate = (currentTime: number) => {
+      if (currentTime - lastTime >= TYPING_SPEED) {
+        if (currentIndex < targetText.length) {
+          currentIndex++;
+          const displayText = `> ${targetText.slice(0, currentIndex)}`;
+          updateDisplayText(displayText);
+          lastTime = currentTime;
+          animationRef.current = requestAnimationFrame(animate);
+        } else {
+          animationRef.current = null;
+          onComplete?.();
+        }
+      } else {
+        animationRef.current = requestAnimationFrame(animate);
+      }
+    };
+    
+    animationRef.current = requestAnimationFrame(animate);
+  }, [updateDisplayText]);
+
+  const animateDeletion = useCallback((onComplete?: () => void) => {
+    let currentLength = currentTextRef.current.replace(/^>\s?/, '').length;
+    let lastTime = 0;
+    const DELETION_SPEED = 30; // ms per character
+    
+    if (currentLength === 0) {
+      onComplete?.();
+      return;
+    }
+    
+    const animate = (currentTime: number) => {
+      if (currentTime - lastTime >= DELETION_SPEED) {
+        if (currentLength > 0) {
+          currentLength--;
+          const newText = currentTextRef.current.replace(/^>\s?/, '').slice(0, currentLength);
+          const displayText = newText ? `> ${newText}` : '';
+          updateDisplayText(displayText);
+          lastTime = currentTime;
+          animationRef.current = requestAnimationFrame(animate);
+        } else {
+          animationRef.current = null;
+          onComplete?.();
+        }
+      } else {
+        animationRef.current = requestAnimationFrame(animate);
+      }
+    };
+    
+    animationRef.current = requestAnimationFrame(animate);
+  }, [updateDisplayText]);
+
+  // Effect: animate typing / deleting for tooltip
+  useEffect(() => {
+    // Only run on desktop view (min-width 768px)
+    if (window.innerWidth < 768) return;
+
+    clearAnimation();
+
+    if (hoveredTooltip) {
+      // If there's currently displayed text, delete it first before typing new text
+      if (currentTextRef.current && currentTextRef.current.replace(/^>\s?/, '').length > 0) {
+        animateDeletion(() => animateTyping(hoveredTooltip));
+      } else {
+        // No current text, start typing immediately
+        animateTyping(hoveredTooltip);
+      }
+    } else {
+      // Deleting animation when no tooltip is hovered
+      animateDeletion();
+    }
+
+    return clearAnimation;
+  }, [hoveredTooltip, clearAnimation, animateTyping, animateDeletion]);
+
+  // Helper functions for tooltip hover
+  const createTooltipHandlers = (text: string) => ({
+    onMouseEnter: () => setHoveredTooltip(text),
+    onMouseLeave: () => setHoveredTooltip(null),
+    onTouchStart: () => setHoveredTooltip(text),
+    onTouchEnd: () => setHoveredTooltip(null),
   });
 
   const handleBrandClick = useCallback(() => {
@@ -146,17 +252,20 @@ const Navbar = ({
           </SentientIOB>
         </div>
       </div>
+      <div className="navbar-center-section">
+        {displayedTooltip && <span className="tooltip-texts">{displayedTooltip}</span>}
+      </div>
       <div className="navbar-socials">
-        <SentientIOB href="https://instagram.com" as="a" hoverScale={1}>
+        <SentientIOB href="https://instagram.com" as="a" hoverScale={1} {...createTooltipHandlers('instagram')}>
           <TbBrandInstagram size={18} />
         </SentientIOB>
-        <SentientIOB href="https://x.com" as="a" hoverScale={1}>
+        <SentientIOB href="https://x.com" as="a" hoverScale={1} {...createTooltipHandlers('x / twitter')}>
           <TbBrandX size={18} />
         </SentientIOB>
-        <SentientIOB href="https://linkedin.com" as="a" hoverScale={1}>
+        <SentientIOB href="https://linkedin.com" as="a" hoverScale={1} {...createTooltipHandlers('linkedin')}>
           <TbBrandLinkedin size={18} />
         </SentientIOB>
-        <SentientIOB href="https://github.com/Etheko" as="a" hoverScale={1}>
+        <SentientIOB href="https://github.com/Etheko" as="a" hoverScale={1} {...createTooltipHandlers('github')}>
           <TbBrandGithub size={18} />
         </SentientIOB>
       </div>

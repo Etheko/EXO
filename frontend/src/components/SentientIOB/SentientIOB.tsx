@@ -9,6 +9,10 @@ interface SentientIOBProps {
     className?: string;
     as?: 'a' | 'button' | 'div' | 'span';
     onClick?: (e: MouseEvent<HTMLElement>) => void;
+    onMouseEnter?: (e: React.MouseEvent<HTMLElement>) => void;
+    onMouseLeave?: (e: React.MouseEvent<HTMLElement>) => void;
+    onTouchStart?: (e: React.TouchEvent<HTMLElement>) => void;
+    onTouchEnd?: (e: React.TouchEvent<HTMLElement>) => void;
     type?: 'button' | 'submit' | 'reset';
     disabled?: boolean;
     /**
@@ -32,6 +36,10 @@ const SentientIOB: React.FC<SentientIOBProps> = ({
     className = '',
     as = 'button',
     onClick,
+    onMouseEnter,
+    onMouseLeave,
+    onTouchStart,
+    onTouchEnd,
     type = 'button',
     disabled = false,
     hoverScale = 0.9,
@@ -51,6 +59,10 @@ const SentientIOB: React.FC<SentientIOBProps> = ({
             className={mergedClass}
             as={as}
             onClick={onClick}
+            onMouseEnter={onMouseEnter as any}
+            onMouseLeave={onMouseLeave as any}
+            onTouchStart={onTouchStart as any}
+            onTouchEnd={onTouchEnd as any}
             type={type}
             disabled={disabled}
             style={style}
