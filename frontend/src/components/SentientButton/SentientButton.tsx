@@ -93,11 +93,14 @@ const SentientButton: React.FC<SentientButtonProps> = ({
     }, [handleMouseLeave, setCursorState]);
 
     const handleClick = useCallback((e: MouseEvent<HTMLElement>) => {
+        // Reset cursor state to default when clicking
+        setCursorState('default');
+        
         if (onClick) {
             onClick(e);
         }
         e.stopPropagation();
-    }, [onClick]);
+    }, [onClick, setCursorState]);
 
     const commonProps = {
         ref: buttonRef as any,
