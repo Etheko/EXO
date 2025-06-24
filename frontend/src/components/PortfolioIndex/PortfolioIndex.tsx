@@ -4,6 +4,7 @@ import sectionService from '../../services/SectionService';
 import type { Section } from '../../types/Section';
 import { useError } from '../../hooks/useError';
 import { ERROR_CODES } from '../../utils/errorCodes';
+import LoadingSpinner from '../LoadingSpinner';
 
 interface PortfolioIndexProps {
   onSectionSelected: (sectionId: number, componentType?: string) => void;
@@ -133,7 +134,7 @@ const PortfolioIndex = ({ onSectionSelected }: PortfolioIndexProps) => {
       <div className="portfolio-index-component">
         <main className="portfolio-index-content">
           <div className="portfolio-index-list">
-            <div>Loading sections...</div>
+            <LoadingSpinner fullViewport={false} />
           </div>
         </main>
       </div>

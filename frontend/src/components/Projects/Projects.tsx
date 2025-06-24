@@ -5,6 +5,7 @@ import './Projects.css';
 import TechnologyIcon from './TechnologyIcon';
 import { TbBrandGithub, TbExternalLink } from 'react-icons/tb';
 import SentientButton from '../SentientButton';
+import LoadingSpinner from '../LoadingSpinner';
 
 interface ProjectsProps {
     onProjectSelected: (project: Project) => void;
@@ -34,7 +35,7 @@ const Projects = ({ onProjectSelected, onBackToIndex }: ProjectsProps) => {
     }, []);
 
     if (loading) {
-        return <div className="text-center py-8">Loading projects...</div>;
+        return <LoadingSpinner fullViewport={false} />;
     }
 
     if (error) {

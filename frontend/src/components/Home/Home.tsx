@@ -11,6 +11,7 @@ import { Project } from '../../types/Project';
 import ProjectView from '../Projects/ProjectView';
 import { ErrorCode, ERROR_CODES } from '../../utils/errorCodes';
 import { ErrorProvider } from '../../hooks/useError';
+import LoadingSpinner from '../LoadingSpinner';
 
 type AnimationState = 'text' | 'camera-to-grid' | 'mainframe' | 'camera-to-text';
 type MainFrameView = 'portfolioIndex' | 'projects' | 'projectView' | 'about' | 'tech-stack' | 'design' | 'cyber-logs' | 'devops' | 'blog' | 'contact' | 'certificates' | 'error';
@@ -249,7 +250,7 @@ const Home = () => {
           {mainFrameView === 'design' && <div>Design Component - Coming Soon</div>}
           {mainFrameView === 'cyber-logs' && <div>Cyber Logs Component - Coming Soon</div>}
           {mainFrameView === 'devops' && <div>DevOps Component - Coming Soon</div>}
-          {mainFrameView === 'blog' && <div>Blog Component - Coming Soon</div>}
+          {mainFrameView === 'blog' && <LoadingSpinner fullViewport={true} />}
           {mainFrameView === 'contact' && <div>Contact Component - Coming Soon</div>}
           {mainFrameView === 'certificates' && <div>Certificates Component - Coming Soon</div>}
           {mainFrameView === 'error' && errorState && (
