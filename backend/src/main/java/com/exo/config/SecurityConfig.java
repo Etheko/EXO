@@ -33,7 +33,7 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(auth -> auth
                 // Public endpoints - accessible to everyone
-                .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/api/auth/login").permitAll()
                 .requestMatchers("/api/test/**").permitAll()
                 .requestMatchers("/api/sections/**").permitAll()
                 .requestMatchers("/api/projects/**").permitAll()

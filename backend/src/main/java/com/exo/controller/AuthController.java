@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -22,7 +23,8 @@ public class AuthController {
     private final AuthenticationService authenticationService;
 
     @PostMapping("/signup")
-    @Operation(summary = "Sign up a new user", description = "Creates a new user account.")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Sign up a new user", description = "Creates a new user account. (Admin only)")
     public ResponseEntity<?> signup(@RequestBody SignUpRequest request) {
         try {
             return ResponseEntity.ok(authenticationService.signup(request));
