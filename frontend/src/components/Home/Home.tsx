@@ -7,6 +7,7 @@ import Projects from '../Projects';
 import PortfolioIndex from '../PortfolioIndex';
 import ScrollIndicator from './ScrollIndicator';
 import Error from '../Error';
+import LoginWindow from '../LoginWindow';
 import { Project } from '../../types/Project';
 import ProjectView from '../Projects/ProjectView';
 import { ErrorCode, ERROR_CODES } from '../../utils/errorCodes';
@@ -25,6 +26,7 @@ const Home = () => {
   const [isInitialTextAnimationComplete, setIsInitialTextAnimationComplete] = useState(false);
   const [isScrollIndicatorForceHidden, setIsScrollIndicatorForceHidden] = useState(false);
   const [errorState, setErrorState] = useState<{ code: ErrorCode; message?: string } | null>(null);
+  const [isLoginVisible, setIsLoginVisible] = useState(false);
   const mainFrameRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -212,6 +214,20 @@ const Home = () => {
     setMainFrameView('portfolioIndex');
   };
 
+  const handleLoginTrigger = () => {
+    setIsLoginVisible(true);
+  };
+
+  const handleLoginClose = () => {
+    setIsLoginVisible(false);
+  };
+
+  const handleLoginSuccess = () => {
+    // Handle successful login - could update UI state, show admin features, etc.
+    console.log('Login successful!');
+    setIsLoginVisible(false);
+  };
+
   return (
     <div className="home-container">
       <Navbar 
@@ -219,6 +235,7 @@ const Home = () => {
         onBrandClick={handleBrandClick}
         showBackButton={showBackButton}
         onBackClick={handleNavbarBackClick}
+        onLoginTrigger={handleLoginTrigger}
       />
       <div className="scene-container">
         <Scene3D 
@@ -263,6 +280,11 @@ const Home = () => {
         </ErrorProvider>
       </MainFrame>
       <ScrollIndicator isVisible={isScrollIndicatorVisible} />
+      <LoginWindow 
+        isVisible={isLoginVisible}
+        onClose={handleLoginClose}
+        onLoginSuccess={handleLoginSuccess}
+      />
     </div>
   );
 };
