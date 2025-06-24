@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -43,7 +44,8 @@ public class CourseController {
     }
 
     @PostMapping
-    @Operation(summary = "Create new course", description = "Create a new course")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Create new course", description = "Create a new course (Admin only)")
     public ResponseEntity<Course> createCourse(@RequestBody Course course) {
         try {
             return ResponseEntity.ok(courseService.saveCourse(course));
@@ -53,7 +55,8 @@ public class CourseController {
     }
 
     @PutMapping("/{id}")
-    @Operation(summary = "Update course", description = "Update an existing course")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Update course", description = "Update an existing course (Admin only)")
     public ResponseEntity<Course> updateCourse(
             @Parameter(description = "Course ID") @PathVariable Long id,
             @RequestBody Course course) {
@@ -70,7 +73,8 @@ public class CourseController {
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "Delete course", description = "Delete a course by ID")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Delete course", description = "Delete a course by ID (Admin only)")
     public ResponseEntity<Void> deleteCourse(
             @Parameter(description = "Course ID") @PathVariable Long id) {
         return courseService.findById(id)
@@ -113,7 +117,8 @@ public class CourseController {
      */
 
     @PostMapping("/create")
-    @Operation(summary = "Create course with details", description = "Create a new course with all details")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Create course with details", description = "Create a new course with all details (Admin only)")
     public ResponseEntity<Course> createCourseWithDetails(
             @Parameter(description = "Course title") @RequestParam String title,
             @Parameter(description = "Course provider") @RequestParam String provider,
@@ -144,7 +149,8 @@ public class CourseController {
     }
 
     @PutMapping("/{id}/update")
-    @Operation(summary = "Update course with details", description = "Update an existing course with all details")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Update course with details", description = "Update an existing course with all details (Admin only)")
     public ResponseEntity<Course> updateCourseWithDetails(
             @Parameter(description = "Course ID") @PathVariable Long id,
             @Parameter(description = "Course title") @RequestParam String title,
@@ -181,7 +187,8 @@ public class CourseController {
      */
 
     @PostMapping("/{id}/topics")
-    @Operation(summary = "Add topic to course", description = "Add a new topic/skill to a course")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Add topic to course", description = "Add a new topic/skill to a course (Admin only)")
     public ResponseEntity<Course> addTopic(
             @Parameter(description = "Course ID") @PathVariable Long id,
             @Parameter(description = "Topic to add") @RequestParam String topic) {
@@ -190,7 +197,8 @@ public class CourseController {
     }
 
     @DeleteMapping("/{id}/topics")
-    @Operation(summary = "Remove topic from course", description = "Remove a topic/skill from a course")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Remove topic from course", description = "Remove a topic/skill from a course (Admin only)")
     public ResponseEntity<Course> removeTopic(
             @Parameter(description = "Course ID") @PathVariable Long id,
             @Parameter(description = "Topic to remove") @RequestParam String topic) {

@@ -1,5 +1,6 @@
 package com.exo.service;
 
+import com.exo.exception.UnauthorizedAccessException;
 import com.exo.model.Section;
 import com.exo.repository.SectionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,12 +15,18 @@ public class SectionService {
     @Autowired
     private SectionRepository sectionRepository;
 
+    @Autowired
+    private SecurityService securityService;
+
     /* ==========================
      *      BASIC CRUD
      * ==========================
      */
 
     public Section saveSection(Section section) {
+        if (!securityService.isCurrentUserAdmin()) {
+            throw new UnauthorizedAccessException("Only administrators can save sections");
+        }
         return sectionRepository.save(section);
     }
 
@@ -32,6 +39,9 @@ public class SectionService {
     }
 
     public void deleteById(Long id) {
+        if (!securityService.isCurrentUserAdmin()) {
+            throw new UnauthorizedAccessException("Only administrators can delete sections");
+        }
         sectionRepository.deleteById(id);
     }
 
@@ -42,6 +52,10 @@ public class SectionService {
 
     public Section createSection(String slug, String title, String description, 
                                 String content, Integer displayOrder, Boolean published, String componentType) {
+        if (!securityService.isCurrentUserAdmin()) {
+            throw new UnauthorizedAccessException("Only administrators can create sections");
+        }
+        
         Section section = new Section();
         section.setSlug(slug);
         section.setTitle(title);
@@ -55,6 +69,10 @@ public class SectionService {
 
     public Section updateSection(Long id, String slug, String title, String description,
                                 String content, Integer displayOrder, Boolean published, String componentType) {
+        if (!securityService.isCurrentUserAdmin()) {
+            throw new UnauthorizedAccessException("Only administrators can update sections");
+        }
+        
         Optional<Section> optional = sectionRepository.findById(id);
         if (optional.isPresent()) {
             Section section = optional.get();
@@ -76,6 +94,10 @@ public class SectionService {
      */
 
     public Section publishSection(Long id) {
+        if (!securityService.isCurrentUserAdmin()) {
+            throw new UnauthorizedAccessException("Only administrators can publish sections");
+        }
+        
         Optional<Section> optional = sectionRepository.findById(id);
         if (optional.isPresent()) {
             Section section = optional.get();
@@ -86,6 +108,10 @@ public class SectionService {
     }
 
     public Section unpublishSection(Long id) {
+        if (!securityService.isCurrentUserAdmin()) {
+            throw new UnauthorizedAccessException("Only administrators can unpublish sections");
+        }
+        
         Optional<Section> optional = sectionRepository.findById(id);
         if (optional.isPresent()) {
             Section section = optional.get();
@@ -109,6 +135,10 @@ public class SectionService {
     }
 
     public List<Section> getDraftSections() {
+        if (!securityService.isCurrentUserAdmin()) {
+            throw new UnauthorizedAccessException("Only administrators can access draft sections");
+        }
+        
         List<Section> allSections = sectionRepository.findAll();
         return allSections.stream()
                 .filter(section -> !section.getPublished())
@@ -132,6 +162,10 @@ public class SectionService {
      */
 
     public Section updateDisplayOrder(Long id, Integer newOrder) {
+        if (!securityService.isCurrentUserAdmin()) {
+            throw new UnauthorizedAccessException("Only administrators can update section display order");
+        }
+        
         Optional<Section> optional = sectionRepository.findById(id);
         if (optional.isPresent()) {
             Section section = optional.get();
@@ -142,6 +176,10 @@ public class SectionService {
     }
 
     public List<Section> reorderSections(List<Long> sectionIds) {
+        if (!securityService.isCurrentUserAdmin()) {
+            throw new UnauthorizedAccessException("Only administrators can reorder sections");
+        }
+        
         List<Section> sections = sectionRepository.findAllById(sectionIds);
         for (int i = 0; i < sections.size(); i++) {
             sections.get(i).setDisplayOrder(i);
@@ -155,6 +193,10 @@ public class SectionService {
      */
 
     public Section updateContent(Long id, String content) {
+        if (!securityService.isCurrentUserAdmin()) {
+            throw new UnauthorizedAccessException("Only administrators can update section content");
+        }
+        
         Optional<Section> optional = sectionRepository.findById(id);
         if (optional.isPresent()) {
             Section section = optional.get();
@@ -165,6 +207,10 @@ public class SectionService {
     }
 
     public Section updateTitle(Long id, String title) {
+        if (!securityService.isCurrentUserAdmin()) {
+            throw new UnauthorizedAccessException("Only administrators can update section title");
+        }
+        
         Optional<Section> optional = sectionRepository.findById(id);
         if (optional.isPresent()) {
             Section section = optional.get();
@@ -175,6 +221,10 @@ public class SectionService {
     }
 
     public Section updateDescription(Long id, String description) {
+        if (!securityService.isCurrentUserAdmin()) {
+            throw new UnauthorizedAccessException("Only administrators can update section description");
+        }
+        
         Optional<Section> optional = sectionRepository.findById(id);
         if (optional.isPresent()) {
             Section section = optional.get();

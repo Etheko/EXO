@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -40,13 +41,15 @@ public class SectionController {
     }
 
     @PostMapping
-    @Operation(summary = "Create new section", description = "Create a new section")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Create new section", description = "Create a new section (Admin only)")
     public ResponseEntity<Section> createSection(@RequestBody Section section) {
         return ResponseEntity.ok(sectionService.saveSection(section));
     }
 
     @PutMapping("/{id}")
-    @Operation(summary = "Update section", description = "Update an existing section")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Update section", description = "Update an existing section (Admin only)")
     public ResponseEntity<Section> updateSection(
             @Parameter(description = "Section ID") @PathVariable Long id,
             @RequestBody Section section) {
@@ -59,7 +62,8 @@ public class SectionController {
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "Delete section", description = "Delete a section by ID")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Delete section", description = "Delete a section by ID (Admin only)")
     public ResponseEntity<Void> deleteSection(
             @Parameter(description = "Section ID") @PathVariable Long id) {
         return sectionService.findById(id)
@@ -76,7 +80,8 @@ public class SectionController {
      */
 
     @PostMapping("/create")
-    @Operation(summary = "Create section with details", description = "Create a new section with all details")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Create section with details", description = "Create a new section with all details (Admin only)")
     public ResponseEntity<Section> createSectionWithDetails(
             @Parameter(description = "Section slug") @RequestParam String slug,
             @Parameter(description = "Section title") @RequestParam String title,
@@ -90,7 +95,8 @@ public class SectionController {
     }
 
     @PutMapping("/{id}/update")
-    @Operation(summary = "Update section with details", description = "Update an existing section with all details")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Update section with details", description = "Update an existing section with all details (Admin only)")
     public ResponseEntity<Section> updateSectionWithDetails(
             @Parameter(description = "Section ID") @PathVariable Long id,
             @Parameter(description = "Section slug") @RequestParam(required = false) String slug,
@@ -110,7 +116,8 @@ public class SectionController {
      */
 
     @PutMapping("/{id}/publish")
-    @Operation(summary = "Publish section", description = "Publish a draft section")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Publish section", description = "Publish a draft section (Admin only)")
     public ResponseEntity<Section> publishSection(
             @Parameter(description = "Section ID") @PathVariable Long id) {
         Section section = sectionService.publishSection(id);
@@ -118,7 +125,8 @@ public class SectionController {
     }
 
     @PutMapping("/{id}/unpublish")
-    @Operation(summary = "Unpublish section", description = "Unpublish a published section")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Unpublish section", description = "Unpublish a published section (Admin only)")
     public ResponseEntity<Section> unpublishSection(
             @Parameter(description = "Section ID") @PathVariable Long id) {
         Section section = sectionService.unpublishSection(id);
@@ -145,7 +153,8 @@ public class SectionController {
     }
 
     @GetMapping("/drafts")
-    @Operation(summary = "Get draft sections", description = "Retrieve all draft sections")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Get draft sections", description = "Retrieve all draft sections (Admin only)")
     public ResponseEntity<List<Section>> getDraftSections() {
         return ResponseEntity.ok(sectionService.getDraftSections());
     }
@@ -162,7 +171,8 @@ public class SectionController {
      */
 
     @PutMapping("/{id}/order")
-    @Operation(summary = "Update display order", description = "Update the display order of a section")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Update display order", description = "Update the display order of a section (Admin only)")
     public ResponseEntity<Section> updateDisplayOrder(
             @Parameter(description = "Section ID") @PathVariable Long id,
             @Parameter(description = "New display order") @RequestParam Integer newOrder) {
@@ -171,7 +181,8 @@ public class SectionController {
     }
 
     @PutMapping("/reorder")
-    @Operation(summary = "Reorder sections", description = "Reorder multiple sections by providing their IDs in the desired order")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Reorder sections", description = "Reorder multiple sections by providing their IDs in the desired order (Admin only)")
     public ResponseEntity<List<Section>> reorderSections(
             @Parameter(description = "Section IDs in desired order") @RequestBody List<Long> sectionIds) {
         List<Section> sections = sectionService.reorderSections(sectionIds);
@@ -184,7 +195,8 @@ public class SectionController {
      */
 
     @PutMapping("/{id}/content")
-    @Operation(summary = "Update section content", description = "Update just the content of a section")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Update section content", description = "Update just the content of a section (Admin only)")
     public ResponseEntity<Section> updateContent(
             @Parameter(description = "Section ID") @PathVariable Long id,
             @Parameter(description = "New content") @RequestParam String content) {
@@ -193,7 +205,8 @@ public class SectionController {
     }
 
     @PutMapping("/{id}/title")
-    @Operation(summary = "Update section title", description = "Update just the title of a section")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Update section title", description = "Update just the title of a section (Admin only)")
     public ResponseEntity<Section> updateTitle(
             @Parameter(description = "Section ID") @PathVariable Long id,
             @Parameter(description = "New title") @RequestParam String title) {
@@ -202,7 +215,8 @@ public class SectionController {
     }
 
     @PutMapping("/{id}/description")
-    @Operation(summary = "Update section description", description = "Update just the description of a section")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Update section description", description = "Update just the description of a section (Admin only)")
     public ResponseEntity<Section> updateDescription(
             @Parameter(description = "Section ID") @PathVariable Long id,
             @Parameter(description = "New description") @RequestParam String description) {

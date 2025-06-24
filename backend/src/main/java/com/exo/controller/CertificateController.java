@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -43,7 +44,8 @@ public class CertificateController {
     }
 
     @PostMapping
-    @Operation(summary = "Create new certificate", description = "Create a new certificate")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Create new certificate", description = "Create a new certificate (Admin only)")
     public ResponseEntity<Certificate> createCertificate(@RequestBody Certificate certificate) {
         try {
             return ResponseEntity.ok(certificateService.saveCertificate(certificate));
@@ -53,7 +55,8 @@ public class CertificateController {
     }
 
     @PutMapping("/{id}")
-    @Operation(summary = "Update certificate", description = "Update an existing certificate")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Update certificate", description = "Update an existing certificate (Admin only)")
     public ResponseEntity<Certificate> updateCertificate(
             @Parameter(description = "Certificate ID") @PathVariable Long id,
             @RequestBody Certificate certificate) {
@@ -70,7 +73,8 @@ public class CertificateController {
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "Delete certificate", description = "Delete a certificate by ID")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Delete certificate", description = "Delete a certificate by ID (Admin only)")
     public ResponseEntity<Void> deleteCertificate(
             @Parameter(description = "Certificate ID") @PathVariable Long id) {
         return certificateService.findById(id)
@@ -106,7 +110,8 @@ public class CertificateController {
      */
 
     @PostMapping("/create")
-    @Operation(summary = "Create certificate with details", description = "Create a new certificate with all details")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Create certificate with details", description = "Create a new certificate with all details (Admin only)")
     public ResponseEntity<Certificate> createCertificateWithDetails(
             @Parameter(description = "Certificate title") @RequestParam String title,
             @Parameter(description = "Issuing organization") @RequestParam String issuer,
@@ -130,7 +135,8 @@ public class CertificateController {
     }
 
     @PutMapping("/{id}/update")
-    @Operation(summary = "Update certificate with details", description = "Update an existing certificate with all details")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Update certificate with details", description = "Update an existing certificate with all details (Admin only)")
     public ResponseEntity<Certificate> updateCertificateWithDetails(
             @Parameter(description = "Certificate ID") @PathVariable Long id,
             @Parameter(description = "Certificate title") @RequestParam String title,

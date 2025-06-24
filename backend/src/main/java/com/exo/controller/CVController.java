@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -42,7 +43,8 @@ public class CVController {
     }
 
     @PostMapping
-    @Operation(summary = "Create new CV", description = "Create a new CV")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Create new CV", description = "Create a new CV (Admin only)")
     public ResponseEntity<CV> createCV(@RequestBody CV cv) {
         try {
             return ResponseEntity.ok(cvService.saveCV(cv));
@@ -52,7 +54,8 @@ public class CVController {
     }
 
     @PutMapping("/{id}")
-    @Operation(summary = "Update CV", description = "Update an existing CV")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Update CV", description = "Update an existing CV (Admin only)")
     public ResponseEntity<CV> updateCV(
             @Parameter(description = "CV ID") @PathVariable Long id,
             @RequestBody CV cv) {
@@ -69,7 +72,8 @@ public class CVController {
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "Delete CV", description = "Delete a CV by ID")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Delete CV", description = "Delete a CV by ID (Admin only)")
     public ResponseEntity<Void> deleteCV(
             @Parameter(description = "CV ID") @PathVariable Long id) {
         return cvService.findById(id)
@@ -86,7 +90,8 @@ public class CVController {
      */
 
     @PostMapping("/create")
-    @Operation(summary = "Create CV with details", description = "Create a new CV with file details")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Create CV with details", description = "Create a new CV with file details (Admin only)")
     public ResponseEntity<CV> createCVWithDetails(
             @Parameter(description = "CV title") @RequestParam String title,
             @Parameter(description = "File path") @RequestParam(required = false) String filePath,
@@ -100,7 +105,8 @@ public class CVController {
     }
 
     @PutMapping("/{id}/update")
-    @Operation(summary = "Update CV with details", description = "Update an existing CV with file details")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Update CV with details", description = "Update an existing CV with file details (Admin only)")
     public ResponseEntity<CV> updateCVWithDetails(
             @Parameter(description = "CV ID") @PathVariable Long id,
             @Parameter(description = "CV title") @RequestParam String title,
@@ -133,7 +139,8 @@ public class CVController {
     }
 
     @PutMapping("/{id}/file")
-    @Operation(summary = "Update CV file", description = "Update just the PDF file of a CV")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Update CV file", description = "Update just the PDF file of a CV (Admin only)")
     public ResponseEntity<CV> updateCVFile(
             @Parameter(description = "CV ID") @PathVariable Long id,
             @Parameter(description = "New file path") @RequestParam String newFilePath) {

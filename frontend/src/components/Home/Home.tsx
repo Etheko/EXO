@@ -120,9 +120,9 @@ const Home = () => {
       default:
         console.warn(`No component handler for type: ${componentType}`);
         // Fallback to projects for backward compatibility
-        if (sectionId === 1 || sectionId === 2) {
-          setMainFrameView('projects');
-        }
+    if (sectionId === 1 || sectionId === 2) {
+      setMainFrameView('projects');
+    }
     }
   };
 

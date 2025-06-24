@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -47,7 +48,8 @@ public class PostController {
     }
 
     @PostMapping
-    @Operation(summary = "Create new post", description = "Create a new blog post")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Create new post", description = "Create a new blog post (Admin only)")
     public ResponseEntity<Post> createPost(@RequestBody Post post) {
         try {
             return ResponseEntity.ok(postService.savePost(post));
@@ -57,7 +59,8 @@ public class PostController {
     }
 
     @PutMapping("/{id}")
-    @Operation(summary = "Update post", description = "Update an existing blog post")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Update post", description = "Update an existing blog post (Admin only)")
     public ResponseEntity<Post> updatePost(
             @Parameter(description = "Post ID") @PathVariable Long id,
             @RequestBody Post post) {
@@ -74,7 +77,8 @@ public class PostController {
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "Delete post", description = "Delete a blog post by ID")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Delete post", description = "Delete a blog post by ID (Admin only)")
     public ResponseEntity<Void> deletePost(
             @Parameter(description = "Post ID") @PathVariable Long id) {
         return postService.findById(id)
@@ -91,7 +95,8 @@ public class PostController {
      */
 
     @PostMapping("/create")
-    @Operation(summary = "Create post with details", description = "Create a new blog post with all details")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Create post with details", description = "Create a new blog post with all details (Admin only)")
     public ResponseEntity<Post> createPostWithDetails(
             @Parameter(description = "Post title") @RequestParam String title,
             @Parameter(description = "Post slug") @RequestParam String slug,
@@ -121,7 +126,8 @@ public class PostController {
     }
 
     @PutMapping("/{id}/update")
-    @Operation(summary = "Update post with details", description = "Update an existing blog post with all details")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Update post with details", description = "Update an existing blog post with all details (Admin only)")
     public ResponseEntity<Post> updatePostWithDetails(
             @Parameter(description = "Post ID") @PathVariable Long id,
             @Parameter(description = "Post title") @RequestParam String title,
@@ -151,7 +157,8 @@ public class PostController {
      */
 
     @PutMapping("/{id}/publish")
-    @Operation(summary = "Publish post", description = "Publish a draft post")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Publish post", description = "Publish a draft post (Admin only)")
     public ResponseEntity<Post> publishPost(
             @Parameter(description = "Post ID") @PathVariable Long id) {
         Post post = postService.publishPost(id);
@@ -159,7 +166,8 @@ public class PostController {
     }
 
     @PutMapping("/{id}/unpublish")
-    @Operation(summary = "Unpublish post", description = "Unpublish a published post")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Unpublish post", description = "Unpublish a published post (Admin only)")
     public ResponseEntity<Post> unpublishPost(
             @Parameter(description = "Post ID") @PathVariable Long id) {
         Post post = postService.unpublishPost(id);
@@ -193,7 +201,8 @@ public class PostController {
     }
 
     @GetMapping("/drafts")
-    @Operation(summary = "Get draft posts", description = "Retrieve all draft posts")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Get draft posts", description = "Retrieve all draft posts (Admin only)")
     public ResponseEntity<List<Post>> getDraftPosts() {
         return ResponseEntity.ok(postService.getDraftPosts());
     }
@@ -204,7 +213,8 @@ public class PostController {
      */
 
     @PostMapping("/{id}/tags")
-    @Operation(summary = "Add tag to post", description = "Add a new tag to a post")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Add tag to post", description = "Add a new tag to a post (Admin only)")
     public ResponseEntity<Post> addTag(
             @Parameter(description = "Post ID") @PathVariable Long id,
             @Parameter(description = "Tag to add") @RequestParam String tag) {
@@ -213,7 +223,8 @@ public class PostController {
     }
 
     @DeleteMapping("/{id}/tags")
-    @Operation(summary = "Remove tag from post", description = "Remove a tag from a post")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Remove tag from post", description = "Remove a tag from a post (Admin only)")
     public ResponseEntity<Post> removeTag(
             @Parameter(description = "Post ID") @PathVariable Long id,
             @Parameter(description = "Tag to remove") @RequestParam String tag) {
@@ -227,7 +238,8 @@ public class PostController {
      */
 
     @PostMapping("/{id}/gallery")
-    @Operation(summary = "Add image to gallery", description = "Add an image to the post gallery")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Add image to gallery", description = "Add an image to the post gallery (Admin only)")
     public ResponseEntity<Post> addGalleryImage(
             @Parameter(description = "Post ID") @PathVariable Long id,
             @Parameter(description = "Image path") @RequestParam String imagePath) {
@@ -240,7 +252,8 @@ public class PostController {
     }
 
     @DeleteMapping("/{id}/gallery")
-    @Operation(summary = "Remove image from gallery", description = "Remove an image from the post gallery")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Remove image from gallery", description = "Remove an image from the post gallery (Admin only)")
     public ResponseEntity<Post> removeGalleryImage(
             @Parameter(description = "Post ID") @PathVariable Long id,
             @Parameter(description = "Image index") @RequestParam int index) {

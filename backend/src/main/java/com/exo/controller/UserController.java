@@ -16,6 +16,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -38,7 +39,8 @@ public class UserController {
      */
 
     @PostMapping
-    @Operation(summary = "Create a new user", description = "Creates a new user profile with all required information")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Create a new user", description = "Creates a new user profile with all required information (Admin only)")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "201", description = "User created successfully",
                     content = @Content(schema = @Schema(implementation = User.class))),
@@ -95,7 +97,8 @@ public class UserController {
     }
 
     @PutMapping("/{username}")
-    @Operation(summary = "Update user", description = "Updates an existing user profile")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Update user", description = "Updates an existing user profile (Admin only)")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "User updated successfully",
                     content = @Content(schema = @Schema(implementation = User.class))),
@@ -114,7 +117,8 @@ public class UserController {
     }
 
     @DeleteMapping("/{username}")
-    @Operation(summary = "Delete user", description = "Deletes a user profile and all associated data")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Delete user", description = "Deletes a user profile and all associated data (Admin only)")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "204", description = "User deleted successfully"),
         @ApiResponse(responseCode = "404", description = "User not found")
@@ -160,7 +164,8 @@ public class UserController {
      */
 
     @PutMapping("/{username}/profile-picture")
-    @Operation(summary = "Update profile picture", description = "Updates the user's profile picture")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Update profile picture", description = "Updates the user's profile picture (Admin only)")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Profile picture updated successfully",
                     content = @Content(schema = @Schema(implementation = User.class))),
@@ -181,7 +186,8 @@ public class UserController {
     }
 
     @PutMapping("/{username}/basic-info")
-    @Operation(summary = "Update basic information", description = "Updates the user's basic personal information")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Update basic information", description = "Updates the user's basic personal information (Admin only)")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Basic info updated successfully",
                     content = @Content(schema = @Schema(implementation = User.class))),
@@ -203,7 +209,8 @@ public class UserController {
     }
 
     @PutMapping("/{username}/social-links")
-    @Operation(summary = "Update social links", description = "Updates the user's social media links")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Update social links", description = "Updates the user's social media links (Admin only)")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Social links updated successfully",
                     content = @Content(schema = @Schema(implementation = User.class))),
@@ -231,7 +238,8 @@ public class UserController {
      */
 
     @PostMapping("/{username}/gallery")
-    @Operation(summary = "Add gallery image", description = "Adds a new image to the user's gallery")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Add gallery image", description = "Adds a new image to the user's gallery (Admin only)")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Image added successfully",
                     content = @Content(schema = @Schema(implementation = User.class))),
@@ -252,7 +260,8 @@ public class UserController {
     }
 
     @DeleteMapping("/{username}/gallery/{index}")
-    @Operation(summary = "Remove gallery image", description = "Removes an image from the user's gallery by index")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Remove gallery image", description = "Removes an image from the user's gallery by index (Admin only)")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Image removed successfully",
                     content = @Content(schema = @Schema(implementation = User.class))),
@@ -273,7 +282,8 @@ public class UserController {
      */
 
     @PostMapping("/{username}/projects")
-    @Operation(summary = "Add project", description = "Adds a new project to the user's portfolio")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Add project", description = "Adds a new project to the user's portfolio (Admin only)")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Project added successfully",
                     content = @Content(schema = @Schema(implementation = User.class))),
@@ -288,7 +298,8 @@ public class UserController {
     }
 
     @DeleteMapping("/{username}/projects/{projectId}")
-    @Operation(summary = "Remove project", description = "Removes a project from the user's portfolio")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Remove project", description = "Removes a project from the user's portfolio (Admin only)")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Project removed successfully",
                     content = @Content(schema = @Schema(implementation = User.class))),
@@ -309,7 +320,8 @@ public class UserController {
      */
 
     @PostMapping("/{username}/certificates")
-    @Operation(summary = "Add certificate", description = "Adds a new certificate to the user's profile")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Add certificate", description = "Adds a new certificate to the user's profile (Admin only)")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Certificate added successfully",
                     content = @Content(schema = @Schema(implementation = User.class))),
@@ -324,7 +336,8 @@ public class UserController {
     }
 
     @DeleteMapping("/{username}/certificates/{certificateId}")
-    @Operation(summary = "Remove certificate", description = "Removes a certificate from the user's profile")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Remove certificate", description = "Removes a certificate from the user's profile (Admin only)")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Certificate removed successfully",
                     content = @Content(schema = @Schema(implementation = User.class))),
@@ -345,7 +358,8 @@ public class UserController {
      */
 
     @PostMapping("/{username}/courses")
-    @Operation(summary = "Add course", description = "Adds a new course to the user's profile")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Add course", description = "Adds a new course to the user's profile (Admin only)")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Course added successfully",
                     content = @Content(schema = @Schema(implementation = User.class))),
@@ -360,7 +374,8 @@ public class UserController {
     }
 
     @DeleteMapping("/{username}/courses/{courseId}")
-    @Operation(summary = "Remove course", description = "Removes a course from the user's profile")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Remove course", description = "Removes a course from the user's profile (Admin only)")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Course removed successfully",
                     content = @Content(schema = @Schema(implementation = User.class))),
@@ -381,7 +396,8 @@ public class UserController {
      */
 
     @PutMapping("/{username}/cv")
-    @Operation(summary = "Update CV", description = "Updates the user's CV")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Update CV", description = "Updates the user's CV (Admin only)")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "CV updated successfully",
                     content = @Content(schema = @Schema(implementation = User.class))),
@@ -401,7 +417,8 @@ public class UserController {
      */
 
     @PostMapping("/{username}/likes")
-    @Operation(summary = "Add like", description = "Adds a new like to the user's preferences")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Add like", description = "Adds a new like to the user's preferences (Admin only)")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Like added successfully",
                     content = @Content(schema = @Schema(implementation = User.class))),
@@ -417,7 +434,8 @@ public class UserController {
     }
 
     @DeleteMapping("/{username}/likes/{like}")
-    @Operation(summary = "Remove like", description = "Removes a like from the user's preferences")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Remove like", description = "Removes a like from the user's preferences (Admin only)")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Like removed successfully",
                     content = @Content(schema = @Schema(implementation = User.class))),
@@ -433,7 +451,8 @@ public class UserController {
     }
 
     @PostMapping("/{username}/dislikes")
-    @Operation(summary = "Add dislike", description = "Adds a new dislike to the user's preferences")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Add dislike", description = "Adds a new dislike to the user's preferences (Admin only)")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Dislike added successfully",
                     content = @Content(schema = @Schema(implementation = User.class))),
@@ -449,7 +468,8 @@ public class UserController {
     }
 
     @DeleteMapping("/{username}/dislikes/{dislike}")
-    @Operation(summary = "Remove dislike", description = "Removes a dislike from the user's preferences")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Remove dislike", description = "Removes a dislike from the user's preferences (Admin only)")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Dislike removed successfully",
                     content = @Content(schema = @Schema(implementation = User.class))),
