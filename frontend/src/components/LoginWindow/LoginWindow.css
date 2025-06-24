@@ -61,6 +61,7 @@
   overflow: hidden;
   color: white;
   font-family: 'Outfit', sans-serif;
+  transform-origin: center;
 }
 
 .login-window-header {
