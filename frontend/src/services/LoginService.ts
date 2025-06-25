@@ -182,6 +182,15 @@ class LoginService {
         return !this.isTokenExpired(token);
     }
 
+    isCurrentUserAdmin(): boolean {
+        const token = this.getAccessToken();
+        if (!token) {
+            return false;
+        }
+        const user = this.getUserFromToken(token);
+        return user?.roles?.includes('ADMIN') ?? false;
+    }
+
     // Refresh token (placeholder for future implementation)
     async refreshToken(): Promise<boolean> {
         const refreshToken = this.getRefreshToken();

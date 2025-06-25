@@ -14,6 +14,7 @@ import ProjectView from '../Projects/ProjectView';
 import { ErrorCode, ERROR_CODES } from '../../utils/errorCodes';
 import { ErrorProvider } from '../../hooks/useError';
 import LoadingSpinner from '../LoadingSpinner';
+import loginService from '../../services/LoginService';
 
 type AnimationState = 'text' | 'camera-to-grid' | 'mainframe' | 'camera-to-text';
 type MainFrameView = 'portfolioIndex' | 'projects' | 'projectView' | 'about' | 'tech-stack' | 'design' | 'cyber-logs' | 'devops' | 'blog' | 'contact' | 'certificates' | 'error';
@@ -229,6 +230,8 @@ const Home = () => {
     // Handle successful login - could update UI state, show admin features, etc.
     console.log('Login successful!');
     setIsLoginVisible(false);
+    const isAdmin = loginService.isCurrentUserAdmin();
+    console.log(`User is admin: ${isAdmin}`);
   }, []);
 
   return (
