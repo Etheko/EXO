@@ -129,6 +129,23 @@ const About = () => {
         return age;
     };
 
+    // Function to generate a random past date for citation
+    const getRandomPastDate = () => {
+        const today = new Date();
+        const pastYears = Math.floor(Math.random() * 5) + 1; // 1-5 years ago
+        const pastMonths = Math.floor(Math.random() * 12);
+        const pastDays = Math.floor(Math.random() * 28) + 1;
+        
+        const randomDate = new Date(today.getFullYear() - pastYears, today.getMonth() - pastMonths, today.getDate() - pastDays);
+        
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const month = months[randomDate.getMonth()];
+        const day = randomDate.getDate();
+        const year = randomDate.getFullYear();
+        
+        return `${month} ${day}, ${year}`;
+    };
+
     // Function to format social media URLs properly
     const formatSocialUrl = (platform: string, username: string | null | undefined): string | null => {
         if (!username) return null;
@@ -289,6 +306,23 @@ const About = () => {
                     </SentientButton>
                 </div>
 
+                {user.description && (
+                    <div className="description-wrapper">
+                        {/* Section title */}
+                        <div className="section-subtitle-container">
+                            <h3 className="section-subtitle">Description</h3>
+                        </div>
+                        {/* Single description card */}
+                        <div className="description-card">
+                            {user.description.split('\n').map((line, index) => (
+                                <p key={index} className="description-text">
+                                    {line}
+                                </p>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
                 {(user.likes?.length || user.dislikes?.length) && (
                     <div className="preferences-wrapper">
                         {/* Section title */}
@@ -324,15 +358,11 @@ const About = () => {
                         </div>
                     </div>
                 )}
-
-                {user.email && (
-                    <div className="contact-section">
-                        <h3 className="section-subtitle">Contact</h3>
-                        <p className="contact-email">
-                            <a href={`mailto:${user.email}`} className="email-link">
-                                {user.email}
-                            </a>
-                        </p>
+                {/* Distinctive Phrase */}
+                {user.distinctivePhrase && (
+                    <div className="distinctive-phrase-wrapper">
+                        <p className="distinctive-phrase">{user.distinctivePhrase}</p>
+                        <p className="distinctive-phrase-citation">—{user.nick || user.username}. {getRandomPastDate()}</p>
                     </div>
                 )}
             </main>

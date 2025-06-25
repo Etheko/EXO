@@ -113,10 +113,9 @@ public class UserInitializer {
         user.setDateOfBirth(LocalDate.of(2003, 3, 23));
         user.setRealName("Ethan");
         user.setFirstSurname("Ruiz");
-        user.setSecondSurname("Ballesteros");
         user.setGenderIdentity("he/him");
         user.setDistinctivePhrase("i wanna go to bed...");
-        user.setDescription("🐾 hi fren! i'm Etheko (aka izan but make it ✨aesthetic✨).\ni'm a ✨software engineer✨.\ni build web things (mostly angular+springboot) and make 'em look ✨shiny✨ with pixels, animations, and sometimes cursed 3D stuff.\ncertified code gremlin, part-time UI sorcerer, full-time neko enjoyer.\ni break things so you don't have to (probably).\nnow scroll around. touch things. see what breaks.");
+        user.setDescription("🐾 hi fren! i'm Etheko (aka ethan but make it ✨aesthetic✨).\ni'm a ✨software engineer✨.\ni build web things (mostly angular+springboot) and make 'em look ✨shiny✨ with cool designs, animations, and sometimes cursed 3D stuff.\ncertified code gremlin, part-time UI sorcerer, full-time neko enjoyer.\ni break things so you don't have to (probably).\nnow scroll around. touch things. see what breaks.");
         user.setGithub("Etheko");
         user.setLinkedIn("izan-ruiz-ballesteros-890a28297");
         
