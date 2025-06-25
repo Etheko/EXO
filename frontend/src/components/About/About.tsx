@@ -1,5 +1,6 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import userService from '../../services/UserService';
+import LoginService from '../../services/LoginService';
 import { User } from '../../types/User';
 import './About.css';
 import { 
@@ -16,6 +17,9 @@ import {
     TbMail,
     TbCalendar,
     TbGenderMale,
+    TbEdit,
+    TbX,
+    TbCheck,
 } from 'react-icons/tb';
 import SentientIOB from '../SentientIOB';
 import SentientButton from '../SentientButton';
@@ -23,6 +27,7 @@ import LoadingSpinner from '../LoadingSpinner';
 import Error from '../Error';
 import { useError } from '../../hooks/useError';
 import { ERROR_CODES } from '../../utils/errorCodes';
+import SocialEditWindow from './SocialEditWindow';
 
 // Utility: create tooltip handlers that broadcast tooltip text to Navbar
 const createTooltipHandlers = (text: string) => ({
@@ -33,12 +38,105 @@ const createTooltipHandlers = (text: string) => ({
 });
 
 const About = () => {
+    const [isAdmin, setIsAdmin] = useState<boolean>(LoginService.isCurrentUserAdmin());
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
     const [imageLoading, setImageLoading] = useState(true);
     const [imageError, setImageError] = useState(false);
     const timeoutRef = useRef<number | null>(null);
     const { showError } = useError();
+
+    /* ==========================
+     *  ADMIN / EDIT STATE LOGIC
+     * ==========================
+     */
+    type SectionKey = 'profile' | 'description' | 'preferences';
+    const [editingSection, setEditingSection] = useState<SectionKey | null>(null);
+    const [hoverSection, setHoverSection] = useState<SectionKey | null>(null);
+
+    // Local editable copy of user during editing
+    const [draftUser, setDraftUser] = useState<User | null>(null);
+
+    // Social edit modal state
+    const [socialModal, setSocialModal] = useState<{ key: string; visible: boolean }>({ key: '', visible: false });
+
+    // Listen to login status changes so About reflects admin status dynamically
+    useEffect(() => {
+        const handleLoginStatusChange = (event: CustomEvent) => {
+            setIsAdmin(LoginService.isCurrentUserAdmin());
+        };
+        window.addEventListener('loginStatusChanged', handleLoginStatusChange as EventListener);
+        return () => window.removeEventListener('loginStatusChanged', handleLoginStatusChange as EventListener);
+    }, []);
+
+    const handleSave = useCallback(async (section: SectionKey) => {
+        if (section === 'profile' && draftUser) {
+            try {
+                const updated = await userService.updateBasicInfo(draftUser.username, {
+                    realName: draftUser.realName,
+                    firstSurname: draftUser.firstSurname,
+                    secondSurname: draftUser.secondSurname,
+                    nick: draftUser.nick,
+                    email: draftUser.email,
+                    genderIdentity: draftUser.genderIdentity,
+                    distinctivePhrase: draftUser.distinctivePhrase,
+                    description: draftUser.description,
+                });
+
+                await userService.updateSocialLinks(draftUser.username, {
+                    github: draftUser.github ?? null,
+                    instagram: draftUser.instagram ?? null,
+                    facebook: draftUser.facebook ?? null,
+                    xUsername: draftUser.xUsername ?? null,
+                    mastodon: draftUser.mastodon ?? null,
+                    bluesky: draftUser.bluesky ?? null,
+                    tiktok: draftUser.tiktok ?? null,
+                    linkedIn: draftUser.linkedIn ?? null,
+                });
+
+                // Refresh user data from backend to ensure we have the latest state
+                const refreshedUser = await userService.getUserByUsername(draftUser.username);
+                setUser(refreshedUser);
+            } catch (e) {
+                console.error('Failed to save user', e);
+            }
+        }
+        setEditingSection(null);
+        setDraftUser(null);
+    }, [draftUser]);
+
+    const renderEditControls = (section: SectionKey) => {
+        if (!isAdmin) return null;
+
+        const commonProps = { as: 'button', hoverScale: 1 } as const;
+        const isEditing = editingSection === section;
+
+        return (
+            <div className="edit-controls">
+                {isEditing ? (
+                    <>
+                        <SentientIOB {...commonProps} onClick={() => setEditingSection(null)} {...createTooltipHandlers('cancel')}>
+                            <TbX size={18} />
+                        </SentientIOB>
+                        <SentientIOB {...commonProps} onClick={() => handleSave(section)} {...createTooltipHandlers('save')}>
+                            <TbCheck size={18} />
+                        </SentientIOB>
+                    </>
+                ) : (
+                    hoverSection === section && (
+                        <SentientIOB {...commonProps} onClick={() => {
+                            if (section === 'profile' && user) {
+                                setDraftUser({ ...user });
+                            }
+                            setEditingSection(section);
+                        }} {...createTooltipHandlers('edit')}>
+                            <TbEdit size={18} />
+                        </SentientIOB>
+                    )
+                )}
+            </div>
+        );
+    };
 
     useEffect(() => {
         const fetchUser = async () => {
@@ -196,6 +294,25 @@ const About = () => {
         { key: 'tiktok', url: formatSocialUrl('tiktok', user.tiktok), icon: TbBrandTiktok, label: 'TikTok' },
     ];
 
+    const mapKeyToProp = (k: string): keyof User => {
+        switch (k) {
+            case 'x':
+            case 'twitter':
+                return 'xUsername' as keyof User;
+            case 'linkedin':
+                return 'linkedIn' as keyof User;
+            default:
+                return k as keyof User;
+        }
+    };
+
+    // Helper function to conditionally apply editable-section class only for admin users
+    const getEditableSectionClass = (baseClass: string, section: SectionKey) => {
+        const editingClass = editingSection === section ? 'editing' : '';
+        const editableClass = isAdmin ? 'editable-section' : '';
+        return `${baseClass} ${editableClass} ${editingClass}`.trim();
+    };
+
     return (
         <div className="about-component">
             <header className="about-header">
@@ -205,15 +322,29 @@ const About = () => {
             </header>
             <main className="about-content">
                 <div className="about-profile-section">
-                    <div className="profile-info-wrapper">
-                        {/* Top text section */}
+                    <div
+                        className={getEditableSectionClass('profile-info-wrapper', 'profile')}
+                        onMouseEnter={() => isAdmin && setHoverSection('profile')}
+                        onMouseLeave={() => isAdmin && setHoverSection(null)}
+                    >
+                        {renderEditControls('profile')}
                         <div className="profile-info">
                             <div className="profile-info-item">
                                 <div className="profile-info-label">
                                     <TbUser className="profile-info-icon" size={20} />
                                     <span>Name:</span>
                                 </div>
-                                <div className="profile-info-value">{getFullName()}</div>
+                                {editingSection === 'profile' ? (
+                                    <input
+                                      className="login-input"
+                                      style={{ width: '100%' }}
+                                      value={draftUser?.realName ?? ''}
+                                      placeholder="Full name"
+                                      onChange={e => setDraftUser(prev => ({ ...prev!, realName: e.target.value }))}
+                                    />
+                                  ) : (
+                                    <div className="profile-info-value">{getFullName()}</div>
+                                  )}
                             </div>
 
                             {/* Nick */}
@@ -223,7 +354,17 @@ const About = () => {
                                         <TbAt className="profile-info-icon" size={20} />
                                         <span>Nick:</span>
                                     </div>
-                                    <div className="profile-info-value">{user.nick}</div>
+                                    {editingSection === 'profile' ? (
+                                      <input
+                                        className="login-input"
+                                        style={{ width: '100%' }}
+                                        value={draftUser?.nick ?? ''}
+                                        placeholder="Nick"
+                                        onChange={e => setDraftUser(prev => ({ ...prev!, nick: e.target.value }))}
+                                      />
+                                    ) : (
+                                      <div className="profile-info-value">{user.nick}</div>
+                                    )}
                                 </div>
                             )}
 
@@ -245,7 +386,17 @@ const About = () => {
                                         <TbGenderMale className="profile-info-icon" size={20} />
                                         <span>Pronouns:</span>
                                     </div>
-                                    <div className="profile-info-value">{user.genderIdentity}</div>
+                                    {editingSection === 'profile' ? (
+                                      <input
+                                        className="login-input"
+                                        style={{ width: '100%' }}
+                                        value={draftUser?.genderIdentity ?? ''}
+                                        placeholder="Pronouns"
+                                        onChange={e => setDraftUser(prev => ({ ...prev!, genderIdentity: e.target.value }))}
+                                      />
+                                    ) : (
+                                      <div className="profile-info-value">{user.genderIdentity}</div>
+                                    )}
                                 </div>
                             )}
 
@@ -256,7 +407,17 @@ const About = () => {
                                         <TbMail className="profile-info-icon" size={20} />
                                         <span>Email:</span>
                                     </div>
-                                    <div className="profile-info-value">{user.email}</div>
+                                    {editingSection === 'profile' ? (
+                                      <input
+                                        className="login-input"
+                                        style={{ width: '100%' }}
+                                        value={draftUser?.email ?? ''}
+                                        placeholder="Email"
+                                        onChange={e => setDraftUser(prev => ({ ...prev!, email: e.target.value }))}
+                                      />
+                                    ) : (
+                                      <div className="profile-info-value">{user.email}</div>
+                                    )}
                                 </div>
                             )}
                         </div>
@@ -264,6 +425,23 @@ const About = () => {
                         {/* Bottom social icons section */}
                         <div className="profile-social-icons">
                             {profileSocials.map(({ key, url, icon: IconCmp, label }) => {
+                                const userProp = mapKeyToProp(key);
+                                const isActive = editingSection === 'profile'
+                                    ? Boolean(draftUser?.[userProp])
+                                    : Boolean(user[userProp as keyof User]);
+                                if (editingSection === 'profile') {
+                                    return (
+                                        <SentientIOB
+                                            key={key}
+                                            as="button"
+                                            className={isActive ? 'social-icon-active' : ''}
+                                            onClick={() => setSocialModal({ key, visible: true })}
+                                            {...createTooltipHandlers(label.toLowerCase())}
+                                        >
+                                            <IconCmp size={20} />
+                                        </SentientIOB>
+                                    );
+                                }
                                 if (url) {
                                     return (
                                         <SentientIOB 
@@ -313,7 +491,12 @@ const About = () => {
                             <h3 className="section-subtitle">Description</h3>
                         </div>
                         {/* Single description card */}
-                        <div className="description-card">
+                        <div
+                            className={getEditableSectionClass('description-card', 'description')}
+                            onMouseEnter={() => isAdmin && setHoverSection('description')}
+                            onMouseLeave={() => isAdmin && setHoverSection(null)}
+                        >
+                            {renderEditControls('description')}
                             {user.description.split('\n').map((line, index) => (
                                 <p key={index} className="description-text">
                                     {line}
@@ -330,7 +513,12 @@ const About = () => {
                             <h3 className="section-subtitle">Preferences</h3>
                         </div>
                         {/* Grid with two vertical cards */}
-                        <div className="preferences-grid">
+                        <div
+                            className={getEditableSectionClass('preferences-grid', 'preferences')}
+                            onMouseEnter={() => isAdmin && setHoverSection('preferences')}
+                            onMouseLeave={() => isAdmin && setHoverSection(null)}
+                        >
+                            {renderEditControls('preferences')}
                             {user.likes?.length && (
                                 <div className="preference-card">
                                     <h4 className="preference-title">Likes</h4>
@@ -366,6 +554,18 @@ const About = () => {
                     </div>
                 )}
             </main>
+            <SocialEditWindow
+                isVisible={socialModal.visible}
+                socialKey={socialModal.key}
+                currentValue={(draftUser ?? user)?.[mapKeyToProp(socialModal.key)] as string | undefined}
+                onSave={(value) => {
+                    if (editingSection === 'profile' && draftUser) {
+                        const prop = mapKeyToProp(socialModal.key);
+                        setDraftUser(prev => ({ ...prev!, [prop]: value } as any));
+                    }
+                }}
+                onClose={() => setSocialModal({ key: '', visible: false })}
+            />
         </div>
     );
 };

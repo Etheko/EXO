@@ -188,7 +188,9 @@ class LoginService {
             return false;
         }
         const user = this.getUserFromToken(token);
-        return user?.roles?.includes('ADMIN') ?? false;
+        if (!user || !Array.isArray(user.roles)) return false;
+        // eslint-disable-next-line prefer-nullish-coalescing
+        return user.roles.includes('ADMIN') || user.roles.includes('ROLE_ADMIN');
     }
 
     // Refresh token (placeholder for future implementation)

@@ -1,4 +1,5 @@
 import axios from 'axios';
+import LoginService from './LoginService';
 
 const API_BASE_URL = 'http://localhost:8080/api';
 
@@ -8,6 +9,36 @@ const api = axios.create({
         'Content-Type': 'application/json',
     },
 });
+
+// Request interceptor to add auth token
+api.interceptors.request.use(
+    (config) => {
+        const token = LoginService.getAccessToken();
+        if (token && LoginService.isCurrentTokenValid()) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+        return config;
+    },
+    (error) => {
+        return Promise.reject(error);
+    }
+);
+
+// Response interceptor to handle authentication errors
+api.interceptors.response.use(
+    (response) => {
+        return response;
+    },
+    async (error) => {
+        // If we get a 401 Unauthorized, the token might be expired
+        if (error.response?.status === 401) {
+            // Logout the user since we don't have refresh token implemented yet
+            LoginService.performLogout();
+        }
+        
+        return Promise.reject(error);
+    }
+);
 
 export const testApi = {
     healthCheck: async () => {
