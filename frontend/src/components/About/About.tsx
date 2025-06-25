@@ -18,6 +18,7 @@ import {
     TbGenderMale,
 } from 'react-icons/tb';
 import SentientIOB from '../SentientIOB';
+import SentientButton from '../SentientButton';
 import LoadingSpinner from '../LoadingSpinner';
 import Error from '../Error';
 import { useError } from '../../hooks/useError';
@@ -128,15 +129,54 @@ const About = () => {
         return age;
     };
 
+    // Function to format social media URLs properly
+    const formatSocialUrl = (platform: string, username: string | null | undefined): string | null => {
+        if (!username) return null;
+        
+        // Remove any existing protocol or domain
+        const cleanUsername = username.replace(/^https?:\/\//, '').replace(/^www\./, '');
+        
+        switch (platform) {
+            case 'instagram':
+                return `https://instagram.com/${cleanUsername}`;
+            case 'x':
+            case 'twitter':
+                return `https://x.com/${cleanUsername}`;
+            case 'linkedin':
+                // LinkedIn URLs can be complex, check if it's already a full URL
+                if (cleanUsername.includes('linkedin.com')) {
+                    return `https://${cleanUsername}`;
+                }
+                return `https://linkedin.com/in/${cleanUsername}`;
+            case 'github':
+                return `https://github.com/${cleanUsername}`;
+            case 'bluesky':
+                return `https://bsky.app/profile/${cleanUsername}`;
+            case 'facebook':
+                return `https://facebook.com/${cleanUsername}`;
+            case 'mastodon':
+                // Mastodon URLs need the instance domain
+                if (cleanUsername.includes('@')) {
+                    const [user, domain] = cleanUsername.split('@');
+                    return `https://${domain}/@${user}`;
+                }
+                return `https://mastodon.social/@${cleanUsername}`;
+            case 'tiktok':
+                return `https://tiktok.com/@${cleanUsername}`;
+            default:
+                return null;
+        }
+    };
+
     const profileSocials = [
-        { key: 'instagram', url: user.instagram, icon: TbBrandInstagram, label: 'Instagram' },
-        { key: 'x', url: user.xUsername, icon: TbBrandX, label: 'X / Twitter' },
-        { key: 'linkedin', url: user.linkedIn, icon: TbBrandLinkedin, label: 'LinkedIn' },
-        { key: 'github', url: user.github, icon: TbBrandGithub, label: 'GitHub' },
-        { key: 'bluesky', url: user.bluesky, icon: TbBrandBluesky, label: 'Bluesky' },
-        { key: 'facebook', url: user.facebook, icon: TbBrandFacebook, label: 'Facebook' },
-        { key: 'mastodon', url: user.mastodon, icon: TbBrandMastodon, label: 'Mastodon' },
-        { key: 'tiktok', url: user.tiktok, icon: TbBrandTiktok, label: 'TikTok' },
+        { key: 'instagram', url: formatSocialUrl('instagram', user.instagram), icon: TbBrandInstagram, label: 'Instagram' },
+        { key: 'x', url: formatSocialUrl('x', user.xUsername), icon: TbBrandX, label: 'X / Twitter' },
+        { key: 'linkedin', url: formatSocialUrl('linkedin', user.linkedIn), icon: TbBrandLinkedin, label: 'LinkedIn' },
+        { key: 'github', url: formatSocialUrl('github', user.github), icon: TbBrandGithub, label: 'GitHub' },
+        { key: 'bluesky', url: formatSocialUrl('bluesky', user.bluesky), icon: TbBrandBluesky, label: 'Bluesky' },
+        { key: 'facebook', url: formatSocialUrl('facebook', user.facebook), icon: TbBrandFacebook, label: 'Facebook' },
+        { key: 'mastodon', url: formatSocialUrl('mastodon', user.mastodon), icon: TbBrandMastodon, label: 'Mastodon' },
+        { key: 'tiktok', url: formatSocialUrl('tiktok', user.tiktok), icon: TbBrandTiktok, label: 'TikTok' },
     ];
 
     return (
@@ -229,7 +269,12 @@ const About = () => {
                     </div>
 
                     {/* Profile picture */}
-                    <div className="profile-image-container">
+                    <SentientButton
+                        as="div"
+                        className="profile-image-container"
+                        intensity={0.05}
+                        scaleIntensity={1.02}
+                    >
                         {imageLoading && <LoadingSpinner fullViewport={false} />}
                         {imageError && <Error fullViewport={false} errorCode={ERROR_CODES.INTERNAL.IMAGE_LOAD_TIMEOUT} />}
                         {!imageLoading && !imageError && (
@@ -241,7 +286,7 @@ const About = () => {
                                 onError={handleImageError}
                             />
                         )}
-                    </div>
+                    </SentientButton>
                 </div>
 
                 {(user.likes?.length || user.dislikes?.length) && (
