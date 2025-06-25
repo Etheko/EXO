@@ -21,7 +21,7 @@ const Projects = ({ onProjectSelected, onBackToIndex }: ProjectsProps) => {
         const fetchProjects = async () => {
             try {
                 const data = await projectService.getAllProjects();
-                setProjects(data);
+                setProjects(data.content);
                 setError(null);
             } catch (err) {
                 setError('Failed to fetch projects');
@@ -68,14 +68,14 @@ const Projects = ({ onProjectSelected, onBackToIndex }: ProjectsProps) => {
                                 ))}
                             </div>
                             <div className="project-links">
-                                {project.githubUrl && (
-                                    <SentientButton href={project.githubUrl} className="project-button" as="a">
+                                {project.github && (
+                                    <SentientButton href={project.github} className="project-button" as="a">
                                         <TbBrandGithub size={20} />
                                         <span>GitHub</span>
                                     </SentientButton>
                                 )}
-                                {project.liveUrl && (
-                                    <SentientButton href={project.liveUrl} className="project-button" as="a">
+                                {project.liveDemoUrl && (
+                                    <SentientButton href={project.liveDemoUrl} className="project-button" as="a">
                                         <TbExternalLink size={20} />
                                         <span>Live Demo</span>
                                     </SentientButton>
