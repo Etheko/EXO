@@ -78,7 +78,7 @@ public class UserService implements UserDetailsService {
 
     public User updateBasicInfo(String username, String realName, String firstSurname, 
                                String secondSurname, String nick, String email, 
-                               String distinctivePhrase, String description) {
+                               String genderIdentity, String distinctivePhrase, String description) {
         User user = userRepository.findByUsername(username);
         if (user != null) {
             user.setRealName(realName);
@@ -86,6 +86,7 @@ public class UserService implements UserDetailsService {
             user.setSecondSurname(secondSurname);
             user.setNick(nick);
             user.setEmail(email);
+            user.setGenderIdentity(genderIdentity);
             user.setDistinctivePhrase(distinctivePhrase);
             user.setDescription(description);
             return userRepository.save(user);

@@ -1,10 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import './Error.css';
 
 interface ErrorProps {
   errorCode?: string;
   errorMessage?: string;
   onBack?: () => void;
+  /**
+   * When true, the component takes the full viewport space.
+   * When false, it adapts to its container's dimensions.
+   */
+  fullViewport?: boolean;
+  /**
+   * Optional custom className for additional styling.
+   */
+  className?: string;
 }
 
 const CUTE_ERROR_MESSAGES = [
@@ -38,7 +47,9 @@ const CUTE_ERROR_MESSAGES = [
 const Error: React.FC<ErrorProps> = ({ 
   errorCode = 'UNKNOWN_ERROR', 
   errorMessage = 'sumthin happnd...',
-  onBack 
+  onBack,
+  fullViewport = false,
+  className = ''
 }) => {
   const [randomMessage, setRandomMessage] = useState<string>('sumthin happnd...');
 
@@ -48,8 +59,14 @@ const Error: React.FC<ErrorProps> = ({
     setRandomMessage(CUTE_ERROR_MESSAGES[randomIndex]);
   }, []);
 
+  // Memoize container class
+  const containerClass = useMemo(() => 
+    `error-container ${fullViewport ? 'full-viewport' : 'dynamic'} ${className}`.trim(),
+    [fullViewport, className]
+  );
+
   return (
-    <div className="error-container">
+    <div className={containerClass}>
       <div className="error-content">
         <div className="error-emoji">qwq</div>
         <div className="error-message">{randomMessage}</div>

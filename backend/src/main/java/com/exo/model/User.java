@@ -27,6 +27,7 @@ import java.util.Objects;
 @Setter
 @Getter
 @Entity
+@Table(name = "users")
 public class User implements UserDetails {
 
     /*
@@ -82,6 +83,9 @@ public class User implements UserDetails {
 
     @JsonView(BasicInfo.class)
     private LocalDate dateOfBirth;
+
+    @JsonView(BasicInfo.class)
+    private String genderIdentity;
 
     /* ==========================
      *      PROFILE PICTURE
@@ -163,9 +167,11 @@ public class User implements UserDetails {
      */
 
     @JsonView(BasicInfo.class)
+    @Column(length = 1000)
     private String distinctivePhrase;
 
     @JsonView(BasicInfo.class)
+    @Column(length = 2000)
     private String description;
 
     @ElementCollection(fetch = FetchType.EAGER)

@@ -5,6 +5,7 @@ import Navbar from './Navbar';
 import MainFrame from './MainFrame';
 import Projects from '../Projects';
 import PortfolioIndex from '../PortfolioIndex';
+import About from '../About';
 import ScrollIndicator from './ScrollIndicator';
 import Error from '../Error';
 import LoginWindow from '../LoginWindow';
@@ -153,6 +154,8 @@ const Home = () => {
       handleBackToProjects();
     } else if (mainFrameView === 'projects') {
       handleBackToIndex();
+    } else if (mainFrameView === 'about') {
+      handleBackToIndex();
     } else if (mainFrameView === 'error') {
       // Go back to the previous view before error
       handleBackToIndex();
@@ -262,7 +265,7 @@ const Home = () => {
           {mainFrameView === 'projectView' && selectedProject && (
             <ProjectView project={selectedProject} onBack={handleBackToProjects} />
           )}
-          {mainFrameView === 'about' && <div>About Component - Coming Soon</div>}
+          {mainFrameView === 'about' && <About />}
           {mainFrameView === 'tech-stack' && <div>Tech Stack Component - Coming Soon</div>}
           {mainFrameView === 'design' && <div>Design Component - Coming Soon</div>}
           {mainFrameView === 'cyber-logs' && <div>Cyber Logs Component - Coming Soon</div>}

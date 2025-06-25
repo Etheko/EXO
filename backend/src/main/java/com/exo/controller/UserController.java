@@ -27,7 +27,6 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api/users")
 @Tag(name = "User Management", description = "APIs for managing user profiles, gallery, projects, certificates, courses, and CV")
-@CrossOrigin(origins = "*")
 public class UserController {
 
     @Autowired
@@ -201,10 +200,11 @@ public class UserController {
             @Parameter(description = "Second surname") @RequestParam String secondSurname,
             @Parameter(description = "Nickname") @RequestParam String nick,
             @Parameter(description = "Email address") @RequestParam String email,
+            @Parameter(description = "Gender identity") @RequestParam String genderIdentity,
             @Parameter(description = "Distinctive phrase") @RequestParam String distinctivePhrase,
             @Parameter(description = "Description") @RequestParam String description) {
         User updatedUser = userService.updateBasicInfo(username, realName, firstSurname, 
-                                                     secondSurname, nick, email, distinctivePhrase, description);
+                                                     secondSurname, nick, email, genderIdentity, distinctivePhrase, description);
         return updatedUser != null ? ResponseEntity.ok(updatedUser) : ResponseEntity.notFound().build();
     }
 

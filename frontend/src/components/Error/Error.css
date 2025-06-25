@@ -23,15 +23,25 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+/* Full viewport layout - takes entire available space */
+.error-container.full-viewport {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  width: 100%;
-  height: 100%;
   padding: 2rem;
   box-sizing: border-box;
+}
+
+/* Dynamic layout - adapts to container */
+.error-container.dynamic {
+  position: relative;
+  min-height: 100px; /* Minimum height for dynamic layout */
 }
 
 .error-content {
@@ -72,8 +82,12 @@
   text-transform: uppercase;
 }
 
-/* Responsive adjustments */
+/* Responsive adjustments for full viewport */
 @media (max-width: 768px) {
+  .error-container.full-viewport {
+    padding: 1.5rem;
+  }
+  
   .error-emoji {
     font-size: 6rem;
   }
@@ -88,6 +102,10 @@
 }
 
 @media (max-width: 480px) {
+  .error-container.full-viewport {
+    padding: 1rem;
+  }
+  
   .error-emoji {
     font-size: 4rem;
   }

@@ -71,6 +71,7 @@ export const ERROR_CODES = {
     RENDER_ERROR: '2301',
     ANIMATION_ERROR: '2302',
     LAYOUT_ERROR: '2303',
+    IMAGE_LOAD_TIMEOUT: '2304',
     
     // Configuration errors
     CONFIG_ERROR: '2401',
@@ -118,6 +119,7 @@ export const getErrorMessage = (errorCode: ErrorCode): string => {
     '2301': 'Render error occurred',
     '2302': 'Animation error occurred',
     '2303': 'Layout error occurred',
+    '2304': 'Image load timeout',
     '2401': 'Configuration error',
     '2402': 'Environment variable missing',
   };
