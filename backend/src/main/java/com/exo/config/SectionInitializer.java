@@ -32,7 +32,7 @@ public class SectionInitializer {
         
         // Define the expected sections with their data
         List<Section> expectedSections = Arrays.asList(
-            createSection("init-etheko", "INIT::Etheko()", "// Who am I?", "", 0, false, "about"),
+            createSection("init-etheko", "INIT::Etheko()", "// Who am I?", "", 0, true, "about"),
             createSection("build-stream", "BUILD_STREAM[]", "// Current Projects", "", 1, true, "projects"),
             createSection("retro-log", "RETRO_LOG{}", "// Past Projects", "", 2, true, "projects"),
             createSection("modules-loaded", "MODULES_LOADED", "// Tech Stack", "", 3, false, "tech-stack"),

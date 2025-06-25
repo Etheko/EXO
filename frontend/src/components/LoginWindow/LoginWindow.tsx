@@ -219,7 +219,7 @@ const LoginWindow: React.FC<LoginWindowProps> = ({
 
               {error && (
                 <motion.div
-                  className="error-message"
+                  className="login-error-message"
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
