@@ -118,6 +118,7 @@
     font-size: 1rem;
     color: rgba(255, 255, 255, 0.7);
     min-width: 80px;
+    width: 120px;
 }
 
 .profile-info-icon {
@@ -381,7 +382,7 @@
 /* Row of social IOBs */
 .profile-social-icons {
     display: flex;
-    gap: 0.75rem;
+    gap: 3px;
     margin-top: auto; /* Pushes icons to the bottom of wrapper */
     justify-content: center;
 }

@@ -77,6 +77,19 @@ const Navbar = ({
     };
   }, []);
 
+  // Listen for global tooltipHover events dispatched from other components (e.g., About.tsx)
+  useEffect(() => {
+    const handleTooltipHover = (event: Event) => {
+      const customEvent = event as CustomEvent<{ text: string | null }>;
+      setHoveredTooltip(customEvent.detail?.text || null);
+    };
+
+    window.addEventListener('tooltipHover', handleTooltipHover as EventListener);
+    return () => {
+      window.removeEventListener('tooltipHover', handleTooltipHover as EventListener);
+    };
+  }, []);
+
   const { transform } = useSpring({
     transform: `translateX(${showBackButton ? 44 : 0}px) translateX(${Math.sin(Date.now() * 0.05) * shakeIntensity * 0.5}px) translateY(${Math.cos(Date.now() * 0.03) * shakeIntensity * 0.3}px)`,
     config: { mass: 0.1, tension: 800, friction: 5 },

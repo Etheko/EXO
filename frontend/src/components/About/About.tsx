@@ -23,6 +23,14 @@ import Error from '../Error';
 import { useError } from '../../hooks/useError';
 import { ERROR_CODES } from '../../utils/errorCodes';
 
+// Utility: create tooltip handlers that broadcast tooltip text to Navbar
+const createTooltipHandlers = (text: string) => ({
+    onMouseEnter: () => window.dispatchEvent(new CustomEvent('tooltipHover', { detail: { text } })),
+    onMouseLeave: () => window.dispatchEvent(new CustomEvent('tooltipHover', { detail: { text: null } })),
+    onTouchStart: () => window.dispatchEvent(new CustomEvent('tooltipHover', { detail: { text } })),
+    onTouchEnd: () => window.dispatchEvent(new CustomEvent('tooltipHover', { detail: { text: null } })),
+});
+
 const About = () => {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
@@ -205,6 +213,7 @@ const About = () => {
                                             key={key}
                                             href={url}
                                             as="a"
+                                            {...createTooltipHandlers(label.toLowerCase())}
                                         >
                                             <IconCmp size={20} />
                                         </SentientIOB>
