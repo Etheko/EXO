@@ -290,11 +290,15 @@ const About = () => {
                 </div>
 
                 {(user.likes?.length || user.dislikes?.length) && (
-                    <div className="preferences-section">
-                        <h3 className="section-subtitle">Preferences</h3>
+                    <div className="preferences-wrapper">
+                        {/* Section title */}
+                        <div className="section-subtitle-container">
+                            <h3 className="section-subtitle">Preferences</h3>
+                        </div>
+                        {/* Grid with two vertical cards */}
                         <div className="preferences-grid">
                             {user.likes?.length && (
-                                <div className="preference-group">
+                                <div className="preference-card">
                                     <h4 className="preference-title">Likes</h4>
                                     <div className="preference-tags">
                                         {user.likes.map((like, index) => (
@@ -306,7 +310,7 @@ const About = () => {
                                 </div>
                             )}
                             {user.dislikes?.length && (
-                                <div className="preference-group">
+                                <div className="preference-card">
                                     <h4 className="preference-title">Dislikes</h4>
                                     <div className="preference-tags">
                                         {user.dislikes.map((dislike, index) => (
