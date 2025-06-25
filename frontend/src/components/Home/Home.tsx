@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import Scene3D from './Scene3D';
 import './Home.css';
 import Navbar from './Navbar';
@@ -31,7 +31,7 @@ const Home = () => {
   const mainFrameRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
-  const handleWheel = (e: WheelEvent) => {
+  const handleWheel = useCallback((e: WheelEvent) => {
     // Ignore scroll events until initial text animation is complete
     if (!isInitialTextAnimationComplete) return;
     
@@ -50,7 +50,7 @@ const Home = () => {
       // isMainFrameVisible will become false
       setAnimationState('camera-to-text');
     }
-  };
+  }, [isInitialTextAnimationComplete, isAnimationInProgress, animationState]);
   
   useEffect(() => {
     const mainFrameElement = mainFrameRef.current;
@@ -73,30 +73,30 @@ const Home = () => {
     };
   }, []);
 
-  const handleTextDisappearAnimationComplete = () => {
+  const handleTextDisappearAnimationComplete = useCallback(() => {
     // Now that text is hidden, we can proceed to show the mainframe
     setAnimationState('mainframe');
     setIsAnimationInProgress(false);
-  };
+  }, []);
   
-  const handleCameraToTextAnimationComplete = () => {
+  const handleCameraToTextAnimationComplete = useCallback(() => {
     setAnimationState('text');
     setIsAnimationInProgress(false);
-  };
+  }, []);
 
-  const handleCameraAlmostAtText = () => {
+  const handleCameraAlmostAtText = useCallback(() => {
     setIsTextReady(true);
-  };
+  }, []);
 
-  const handleInitialTextAnimationComplete = () => {
+  const handleInitialTextAnimationComplete = useCallback(() => {
     setIsInitialTextAnimationComplete(true);
-  };
+  }, []);
 
-  const handleTextAppearAnimationComplete = () => {
+  const handleTextAppearAnimationComplete = useCallback(() => {
     setIsScrollIndicatorForceHidden(false);
-  };
+  }, []);
 
-  const handleSectionSelected = (sectionId: number, componentType?: string) => {
+  const handleSectionSelected = useCallback((sectionId: number, componentType?: string) => {
     switch (componentType) {
       case 'projects':
         setMainFrameView('projects');
@@ -132,24 +132,24 @@ const Home = () => {
       setMainFrameView('projects');
     }
     }
-  };
+  }, []);
 
-  const handleProjectSelected = (project: Project) => {
+  const handleProjectSelected = useCallback((project: Project) => {
     setSelectedProject(project);
     setMainFrameView('projectView');
-  };
+  }, []);
 
-  const handleBackToProjects = () => {
+  const handleBackToProjects = useCallback(() => {
     setSelectedProject(null);
     setMainFrameView('projects');
-  };
+  }, []);
 
-  const handleBackToIndex = () => {
+  const handleBackToIndex = useCallback(() => {
     setSelectedProject(null);
     setMainFrameView('portfolioIndex');
-  };
+  }, []);
 
-  const handleNavbarBackClick = () => {
+  const handleNavbarBackClick = useCallback(() => {
     if (mainFrameView === 'projectView') {
       handleBackToProjects();
     } else if (mainFrameView === 'projects') {
@@ -160,9 +160,9 @@ const Home = () => {
       // Go back to the previous view before error
       handleBackToIndex();
     }
-  };
+  }, [mainFrameView, handleBackToProjects, handleBackToIndex]);
 
-  const handleBrandClick = () => {
+  const handleBrandClick = useCallback(() => {
     // Only trigger if we're in mainframe state and no animation is in progress
     if (animationState === 'mainframe' && !isAnimationInProgress) {
       // First, scroll the Dynamic Viewport to the top
@@ -179,7 +179,7 @@ const Home = () => {
         setAnimationState('camera-to-text');
       }, 300); // Wait for scroll animation to complete
     }
-  };
+  }, [animationState, isAnimationInProgress]);
 
   const isMainFrameVisible = animationState === 'mainframe';
   const focusOnGrid = animationState === 'mainframe' || animationState === 'camera-to-grid';
@@ -206,30 +206,30 @@ const Home = () => {
   const currentViewId = viewIdMap[mainFrameView];
 
   // Function to show error
-  const showError = (errorCode: ErrorCode, message?: string) => {
+  const showError = useCallback((errorCode: ErrorCode, message?: string) => {
     setErrorState({ code: errorCode, message });
     setMainFrameView('error');
-  };
+  }, []);
 
   // Function to clear error and return to previous view
-  const clearError = () => {
+  const clearError = useCallback(() => {
     setErrorState(null);
     setMainFrameView('portfolioIndex');
-  };
+  }, []);
 
-  const handleLoginTrigger = () => {
+  const handleLoginTrigger = useCallback(() => {
     setIsLoginVisible(true);
-  };
+  }, []);
 
-  const handleLoginClose = () => {
+  const handleLoginClose = useCallback(() => {
     setIsLoginVisible(false);
-  };
+  }, []);
 
-  const handleLoginSuccess = () => {
+  const handleLoginSuccess = useCallback(() => {
     // Handle successful login - could update UI state, show admin features, etc.
     console.log('Login successful!');
     setIsLoginVisible(false);
-  };
+  }, []);
 
   return (
     <div className="home-container">
