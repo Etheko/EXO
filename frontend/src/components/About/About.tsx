@@ -200,7 +200,7 @@ const About = () => {
         <div className="about-component">
             <header className="about-header">
                 <div className="about-header-content">
-                    <h1 className="about-title">About Me</h1>
+                    <h1 className="about-title">Who am I?</h1>
                 </div>
             </header>
             <main className="about-content">
