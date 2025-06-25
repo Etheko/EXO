@@ -1,6 +1,7 @@
 import { PropsWithChildren, RefObject, useEffect, useRef, useState, useCallback } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import './MainFrame.css';
+import { useCursor } from '../../contexts/CursorContext';
 
 /**
  * MainFrame: The Dynamic Viewport
@@ -51,6 +52,15 @@ const MainFrame = ({
   onMouseLeave,
   viewId,
 }: MainFrameProps) => {
+  const { setCursorState } = useCursor();
+
+  // Reset cursor when mainframe is hidden to prevent dangling states
+  useEffect(() => {
+    if (!isVisible) {
+      setCursorState('default');
+    }
+  }, [isVisible, setCursorState]);
+
   // Keep track of the previously rendered view so we can determine navigation direction
   const previousViewId = useRef<number>(viewId);
   // Keep live reference of the current view id for event listeners
