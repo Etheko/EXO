@@ -3,6 +3,7 @@ import userService from '../../services/UserService';
 import LoginService from '../../services/LoginService';
 import { User } from '../../types/User';
 import './About.css';
+import '../LoginWindow/LoginWindow.css';
 import { 
     TbBrandGithub,
     TbBrandInstagram,
@@ -45,6 +46,7 @@ const About = () => {
     const [imageError, setImageError] = useState(false);
     const timeoutRef = useRef<number | null>(null);
     const { showError } = useError();
+    const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
     /* ==========================
      *  ADMIN / EDIT STATE LOGIC
@@ -107,8 +109,21 @@ const About = () => {
     // Local editable copy of user during editing
     const [draftUser, setDraftUser] = useState<User | null>(null);
 
+    // Separate state for the full name input field
+    const [fullNameInput, setFullNameInput] = useState<string>('');
+
+    // Separate state for the description input field
+    const [descriptionInput, setDescriptionInput] = useState<string>('');
+
     // Social edit modal state
     const [socialModal, setSocialModal] = useState<{ key: string; visible: boolean }>({ key: '', visible: false });
+
+    // Auto-resize textarea when entering description edit mode or content changes
+    useEffect(() => {
+        if (editingSection === 'description' && textareaRef.current) {
+            autoResizeTextarea(textareaRef.current);
+        }
+    }, [editingSection, descriptionInput]);
 
     // Listen to login status changes so About reflects admin status dynamically
     useEffect(() => {
@@ -122,10 +137,13 @@ const About = () => {
     const handleSave = useCallback(async (section: SectionKey) => {
         if (section === 'profile' && draftUser) {
             try {
+                // Split the full name input into the three components
+                const { realName, firstSurname, secondSurname } = splitFullName(fullNameInput);
+                
                 const updated = await userService.updateBasicInfo(draftUser.username, {
-                    realName: draftUser.realName,
-                    firstSurname: draftUser.firstSurname,
-                    secondSurname: draftUser.secondSurname,
+                    realName: realName,
+                    firstSurname: firstSurname,
+                    secondSurname: secondSurname,
                     nick: draftUser.nick,
                     email: draftUser.email,
                     genderIdentity: draftUser.genderIdentity,
@@ -150,10 +168,32 @@ const About = () => {
             } catch (e) {
                 console.error('Failed to save user', e);
             }
+        } else if (section === 'description' && user) {
+            try {
+                // Update the description with proper newline management
+                const updated = await userService.updateBasicInfo(user.username, {
+                    realName: user.realName,
+                    firstSurname: user.firstSurname,
+                    secondSurname: user.secondSurname,
+                    nick: user.nick,
+                    email: user.email,
+                    genderIdentity: user.genderIdentity,
+                    distinctivePhrase: user.distinctivePhrase,
+                    description: descriptionInput, // Use the description input with newlines preserved
+                });
+
+                // Refresh user data from backend to ensure we have the latest state
+                const refreshedUser = await userService.getUserByUsername(user.username);
+                setUser(refreshedUser);
+            } catch (e) {
+                console.error('Failed to save description', e);
+            }
         }
         setEditingSection(null);
         setDraftUser(null);
-    }, [draftUser]);
+        setFullNameInput(''); // Reset the full name input
+        setDescriptionInput(''); // Reset the description input
+    }, [draftUser, fullNameInput, descriptionInput, user]);
 
     const renderEditControls = (section: SectionKey) => {
         if (!isAdmin) return null;
@@ -176,7 +216,11 @@ const About = () => {
             >
                 {isEditing ? (
                     <>
-                        <SentientIOB {...commonProps} onClick={() => setEditingSection(null)} {...createTooltipHandlers('cancel')}>
+                        <SentientIOB {...commonProps} onClick={() => {
+                            setEditingSection(null);
+                            setFullNameInput(''); // Reset the full name input
+                            setDescriptionInput(''); // Reset the description input
+                        }} {...createTooltipHandlers('cancel')}>
                             <TbX size={18} />
                         </SentientIOB>
                         <SentientIOB {...commonProps} onClick={() => handleSave(section)} {...createTooltipHandlers('save')}>
@@ -188,6 +232,12 @@ const About = () => {
                         <SentientIOB {...commonProps} onClick={() => {
                             if (section === 'profile' && user) {
                                 setDraftUser({ ...user });
+                                // Initialize the full name input with the current full name
+                                const currentFullName = [user.realName, user.firstSurname, user.secondSurname].filter(Boolean).join(' ');
+                                setFullNameInput(currentFullName);
+                            } else if (section === 'description' && user) {
+                                // Initialize the description input with the current description
+                                setDescriptionInput(user.description || '');
                             }
                             setEditingSection(section);
                         }} {...createTooltipHandlers('edit')}>
@@ -273,6 +323,28 @@ const About = () => {
     const getFullName = () => {
         const parts = [user.realName, user.firstSurname, user.secondSurname].filter(Boolean);
         return parts.join(' ');
+    };
+
+    // Function to split a full name into realName, firstSurname, and secondSurname
+    const splitFullName = (fullName: string): { realName: string; firstSurname: string; secondSurname: string } => {
+        const words = fullName.trim().split(/\s+/).filter(word => word.length > 0);
+        
+        return {
+            realName: words[0] || '',
+            firstSurname: words[1] || '',
+            secondSurname: words[2] || ''
+        };
+    };
+
+    // Function to get the combined full name for editing
+    const getFullNameForEditing = () => {
+        return fullNameInput;
+    };
+
+    // Function to auto-resize textarea based on content
+    const autoResizeTextarea = (element: HTMLTextAreaElement) => {
+        element.style.height = 'auto';
+        element.style.height = element.scrollHeight + 'px';
     };
 
     const getAge = () => {
@@ -403,9 +475,9 @@ const About = () => {
                                     <input
                                       className="login-input"
                                       style={{ width: '100%' }}
-                                      value={draftUser?.realName ?? ''}
+                                      value={getFullNameForEditing()}
                                       placeholder="Full name"
-                                      onChange={e => setDraftUser(prev => ({ ...prev!, realName: e.target.value }))}
+                                      onChange={e => setFullNameInput(e.target.value)}
                                     />
                                   ) : (
                                     <div className="profile-info-value">{getFullName()}</div>
@@ -549,7 +621,7 @@ const About = () => {
                     </SentientButton>
                 </div>
 
-                {user.description && (
+                {(user.description || editingSection === 'description') && (
                     <div className="description-wrapper">
                         {/* Section title */}
                         <div className="section-subtitle-container">
@@ -566,11 +638,28 @@ const About = () => {
                             onMouseMove={(e) => handleMouseMove(e, 'description')}
                         >
                             {renderEditControls('description')}
-                            {user.description.split('\n').map((line, index) => (
-                                <p key={index} className="description-text">
-                                    {line}
-                                </p>
-                            ))}
+                            {editingSection === 'description' ? (
+                                <textarea
+                                    ref={textareaRef}
+                                    className="login-input"
+                                    value={descriptionInput}
+                                    placeholder="Enter your description..."
+                                    onChange={e => setDescriptionInput(e.target.value)}
+                                    onInput={e => autoResizeTextarea(e.target as HTMLTextAreaElement)}
+                                />
+                            ) : (
+                                user.description ? (
+                                    user.description.split('\n').map((line, index) => (
+                                        <p key={index} className="description-text">
+                                            {line}
+                                        </p>
+                                    ))
+                                ) : (
+                                    <p className="description-text" style={{ color: 'rgba(255, 255, 255, 0.4)', fontStyle: 'italic' }}>
+                                        No description available.
+                                    </p>
+                                )
+                            )}
                         </div>
                     </div>
                 )}
