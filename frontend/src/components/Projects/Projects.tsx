@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
-import ProjectService from '../../services/ProjectService.ts';
-import { Project } from '../../types/Project';
+import ProjectService from '../../services/ProjectsService';
 import './Projects.css';
 import TechnologyIcon from './TechnologyIcon';
 import { TbBrandGithub, TbExternalLink } from 'react-icons/tb';
 import SentientButton from '../SentientButton';
 import LoadingSpinner from '../LoadingSpinner';
+import { Project } from '../../types/Project';
 
 interface ProjectsProps {
     onProjectSelected: (project: Project) => void;
