@@ -556,17 +556,20 @@
 
 .edit-controls {
     position: absolute;
-    top: 8px;
-    right: 8px;
+    top: 6px;
+    right: 6px;
     display: flex;
     gap: 4px;
     opacity: 0;
     transform: scale(0.8);
     transition: opacity 0.2s ease, transform 0.2s ease;
     z-index: 5;
+    border-radius: 12px;
+    padding: 6px;
+    background-color: rgba(0, 0, 0, 0.9);
+    box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.5);
 }
 
-.editable-section:hover .edit-controls,
 .editable-section.editing .edit-controls {
     opacity: 1;
     transform: scale(1);

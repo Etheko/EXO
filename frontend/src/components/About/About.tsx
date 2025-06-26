@@ -54,6 +54,56 @@ const About = () => {
     const [editingSection, setEditingSection] = useState<SectionKey | null>(null);
     const [hoverSection, setHoverSection] = useState<SectionKey | null>(null);
 
+    /**
+     * Dynamic opacity handling for edit controls
+     * -------------------------------------------------
+     * We keep a per-section opacity value and update it
+     * according to the distance between the cursor and
+     * the centre of the corresponding edit-controls div.
+     */
+    const [editControlsOpacity, setEditControlsOpacity] = useState<Record<SectionKey, number>>({
+        profile: 0,
+        description: 0,
+        preferences: 0,
+    });
+
+    const editControlsRefs = useRef<Partial<Record<SectionKey, HTMLDivElement | null>>>({});
+
+    const MAX_DISTANCE = 200; // px at which opacity reaches 0
+
+    const updateOpacityForSection = (section: SectionKey, mouseX: number, mouseY: number) => {
+        const ref = editControlsRefs.current[section];
+        if (!ref) return;
+        const rect = ref.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+        const dx = mouseX - cx;
+        const dy = mouseY - cy;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        // Compute opacity: 1 at distance 0, 0 at >= MAX_DISTANCE
+        const opacity = Math.max(0, Math.min(1, 1 - distance / MAX_DISTANCE));
+
+        setEditControlsOpacity(prev => (prev[section] === opacity ? prev : { ...prev, [section]: opacity }));
+    };
+
+    const handleMouseMove = (event: React.MouseEvent, section: SectionKey) => {
+        if (!isAdmin) return;
+        updateOpacityForSection(section, event.clientX, event.clientY);
+    };
+
+    const handleMouseLeaveSection = (section: SectionKey) => {
+        if (!isAdmin) return;
+        setEditControlsOpacity(prev => ({ ...prev, [section]: 0 }));
+    };
+
+    // Ensure controls are visible upon entering edit mode
+    useEffect(() => {
+        if (editingSection) {
+            setEditControlsOpacity(prev => ({ ...prev, [editingSection]: 1 }));
+        }
+    }, [editingSection]);
+
     // Local editable copy of user during editing
     const [draftUser, setDraftUser] = useState<User | null>(null);
 
@@ -111,8 +161,19 @@ const About = () => {
         const commonProps = { as: 'button', hoverScale: 1 } as const;
         const isEditing = editingSection === section;
 
+        const opacity = editControlsOpacity[section] ?? 0;
+        const scale = 0.8 + (0.2 * opacity);
+
         return (
-            <div className="edit-controls">
+            <div
+                className="edit-controls"
+                ref={el => {
+                    if (el) {
+                        editControlsRefs.current[section] = el;
+                    }
+                }}
+                style={{ opacity, transform: `scale(${scale})` }}
+            >
                 {isEditing ? (
                     <>
                         <SentientIOB {...commonProps} onClick={() => setEditingSection(null)} {...createTooltipHandlers('cancel')}>
@@ -325,7 +386,11 @@ const About = () => {
                     <div
                         className={getEditableSectionClass('profile-info-wrapper', 'profile')}
                         onMouseEnter={() => isAdmin && setHoverSection('profile')}
-                        onMouseLeave={() => isAdmin && setHoverSection(null)}
+                        onMouseLeave={() => {
+                            isAdmin && setHoverSection(null);
+                            handleMouseLeaveSection('profile');
+                        }}
+                        onMouseMove={(e) => handleMouseMove(e, 'profile')}
                     >
                         {renderEditControls('profile')}
                         <div className="profile-info">
@@ -494,7 +559,11 @@ const About = () => {
                         <div
                             className={getEditableSectionClass('description-card', 'description')}
                             onMouseEnter={() => isAdmin && setHoverSection('description')}
-                            onMouseLeave={() => isAdmin && setHoverSection(null)}
+                            onMouseLeave={() => {
+                                isAdmin && setHoverSection(null);
+                                handleMouseLeaveSection('description');
+                            }}
+                            onMouseMove={(e) => handleMouseMove(e, 'description')}
                         >
                             {renderEditControls('description')}
                             {user.description.split('\n').map((line, index) => (
@@ -516,7 +585,11 @@ const About = () => {
                         <div
                             className={getEditableSectionClass('preferences-grid', 'preferences')}
                             onMouseEnter={() => isAdmin && setHoverSection('preferences')}
-                            onMouseLeave={() => isAdmin && setHoverSection(null)}
+                            onMouseLeave={() => {
+                                isAdmin && setHoverSection(null);
+                                handleMouseLeaveSection('preferences');
+                            }}
+                            onMouseMove={(e) => handleMouseMove(e, 'preferences')}
                         >
                             {renderEditControls('preferences')}
                             {user.likes?.length && (

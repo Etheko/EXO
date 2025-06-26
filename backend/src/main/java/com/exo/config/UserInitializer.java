@@ -126,13 +126,13 @@ public class UserInitializer {
             "🍎 apple thingies",
             "🎮 gaming",
             "🍄 nintendo fanboy",
-            "⛏ minecraft",
-            "✏ drawing",
+            "⛏️ minecraft",
+            "✏️ drawing",
             "🎶 making music",
             "💖 cute stuff",
             "🐾 furry!",
             "📺 anime",
-            "🛡 cybersecurity",
+            "🛡️ cybersecurity",
             "🕺 agile methodologies",
             "🌐 web dev"
         );
