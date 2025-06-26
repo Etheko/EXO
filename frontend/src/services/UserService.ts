@@ -109,6 +109,18 @@ class UserService {
     const response = await api.delete<User>(`/users/${username}/dislikes/${encodeURIComponent(dislike)}`);
     return response.data;
   }
+
+  async updateProfilePicture(username: string, pfp: File): Promise<User> {
+    const formData = new FormData();
+    formData.append('pfp', pfp);
+
+    const response = await api.put(`/users/${username}/pfp`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  }
 }
 
 const userService = new UserService();

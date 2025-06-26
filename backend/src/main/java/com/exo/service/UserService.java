@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.sql.Blob;
@@ -65,6 +66,16 @@ public class UserService implements UserDetailsService {
      *      PROFILE MANAGEMENT
      * ==========================
      */
+
+    public User uploadProfilePicture(String username, MultipartFile file) throws IOException, SQLException {
+        User user = userRepository.findByUsername(username);
+        if (user != null) {
+            user.setPfp(new javax.sql.rowset.serial.SerialBlob(file.getBytes()));
+            user.setPfpString("/api/users/" + username + "/pfp");
+            return userRepository.save(user);
+        }
+        return null;
+    }
 
     public User updateProfilePicture(String username, String imagePath) throws IOException, SQLException {
         User user = userRepository.findByUsername(username);

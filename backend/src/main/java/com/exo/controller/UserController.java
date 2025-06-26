@@ -14,12 +14,18 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.MediaTypeFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.net.URLConnection;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
@@ -162,6 +168,41 @@ public class UserController {
      * ==========================
      */
 
+    /**
+     * Upload a NEW profile picture by sending the raw image bytes.
+     * 
+     * front-end flow: user selects an image file – browser sends a multipart/form-data
+     * request whose body contains the file part named pfp.
+     * Expected header: Content-Type: multipart/form-data.
+     */
+    @PutMapping(path = "/{username}/pfp", consumes = { "multipart/form-data" })
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Upload profile picture", description = "Uploads a new profile picture for the user (Admin only)")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Profile picture uploaded successfully",
+                    content = @Content(schema = @Schema(implementation = User.class))),
+        @ApiResponse(responseCode = "404", description = "User not found"),
+        @ApiResponse(responseCode = "400", description = "Invalid image file")
+    })
+    public ResponseEntity<User> uploadProfilePicture(
+            @Parameter(description = "Username of the user")
+            @PathVariable String username,
+            @Parameter(description = "Profile picture file")
+            @RequestPart("pfp") MultipartFile pfpFile) {
+        try {
+            User updatedUser = userService.uploadProfilePicture(username, pfpFile);
+            return updatedUser != null ? ResponseEntity.ok(updatedUser) : ResponseEntity.notFound().build();
+        } catch (IOException | SQLException e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    /**
+     * Set the profile picture by specifying a server-side image path/URL.
+     * 
+     * Useful for admin scripts or initial data seeding where the file already
+     * exists on disk. Accepts a simple imagePath query parameter.
+     */
     @PutMapping("/{username}/profile-picture")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Update profile picture", description = "Updates the user's profile picture (Admin only)")
@@ -230,6 +271,37 @@ public class UserController {
         User updatedUser = userService.updateSocialLinks(username, github, instagram, facebook, 
                                                        xUsername, mastodon, bluesky, tiktok, linkedIn);
         return updatedUser != null ? ResponseEntity.ok(updatedUser) : ResponseEntity.notFound().build();
+    }
+
+    /**
+     * Retrieve the raw bytes of the user's profile picture (as stored in the DB).
+     * This is used by the front-end when pfpString contains `/api/users/{username}/pfp`.
+     */
+    @GetMapping(path = "/{username}/pfp")
+    @Operation(summary = "Get profile picture", description = "Returns the user's profile picture bytes")
+    public ResponseEntity<byte[]> getProfilePicture(@PathVariable String username) {
+        Optional<User> userOpt = userService.findByUsername(username);
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        User user = userOpt.get();
+        try {
+            if (user.getPfp() == null) {
+                return ResponseEntity.notFound().build();
+            }
+            byte[] bytes = user.getPfp().getBytes(1, (int) user.getPfp().length());
+
+            HttpHeaders headers = new HttpHeaders();
+            String ct;
+            try (ByteArrayInputStream bis = new ByteArrayInputStream(bytes)) {
+                ct = URLConnection.guessContentTypeFromStream(bis);
+            }
+            headers.setContentType(ct != null ? MediaType.parseMediaType(ct) : MediaType.APPLICATION_OCTET_STREAM);
+            headers.setCacheControl("no-cache, no-store, must-revalidate");
+            return new ResponseEntity<>(bytes, headers, HttpStatus.OK);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
     }
 
     /* ==========================

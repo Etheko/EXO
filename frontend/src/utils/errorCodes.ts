@@ -62,6 +62,7 @@ export const ERROR_CODES = {
     DATA_FETCH_FAILED: '2101',
     CACHE_ERROR: '2102',
     PARSING_ERROR: '2103',
+    DATA_UPDATE_FAILED: '2104',
     
     // State management errors
     STATE_ERROR: '2201',
@@ -114,6 +115,7 @@ export const getErrorMessage = (errorCode: ErrorCode): string => {
     '2101': 'Failed to fetch data',
     '2102': 'Cache error occurred',
     '2103': 'Data parsing error',
+    '2104': 'Failed to update data',
     '2201': 'State management error',
     '2202': 'Context error occurred',
     '2301': 'Render error occurred',

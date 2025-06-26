@@ -1,7 +1,9 @@
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import userService from '../../services/UserService';
 import LoginService from '../../services/LoginService';
+import SectionService from '../../services/SectionService';
 import { User } from '../../types/User';
+import { Section } from '../../types/Section';
 import './About.css';
 import '../LoginWindow/LoginWindow.css';
 import { 
@@ -22,6 +24,7 @@ import {
     TbX,
     TbCheck,
     TbPlus,
+    TbUpload,
 } from 'react-icons/tb';
 import SentientIOB from '../SentientIOB';
 import SentientButton from '../SentientButton';
@@ -45,9 +48,12 @@ const About = () => {
     const [loading, setLoading] = useState(true);
     const [imageLoading, setImageLoading] = useState(true);
     const [imageError, setImageError] = useState(false);
+    const [section, setSection] = useState<Section | null>(null);
+    const [sectionLoading, setSectionLoading] = useState(true);
     const timeoutRef = useRef<number | null>(null);
     const { showError } = useError();
     const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     /* ==========================
      *  ADMIN / EDIT STATE LOGIC
@@ -56,6 +62,8 @@ const About = () => {
     type SectionKey = 'profile' | 'description' | 'preferences' | 'distinctivePhrase';
     const [editingSection, setEditingSection] = useState<SectionKey | null>(null);
     const [hoverSection, setHoverSection] = useState<SectionKey | null>(null);
+    const [newProfilePic, setNewProfilePic] = useState<{ file: File; previewUrl: string } | null>(null);
+    const [isHoveringPfp, setIsHoveringPfp] = useState(false);
 
     /**
      * Dynamic opacity handling for edit controls
@@ -282,6 +290,28 @@ const About = () => {
         setNewDislikeInput('');
     }, [draftUser, fullNameInput, descriptionInput, distinctivePhraseInput, user, draftLikes, draftDislikes]);
 
+    const handleSaveProfilePic = async () => {
+        if (!newProfilePic || !user) return;
+        try {
+            const updatedUser = await userService.updateProfilePicture(user.username, newProfilePic.file);
+            setUser(updatedUser);
+            if (newProfilePic) {
+                URL.revokeObjectURL(newProfilePic.previewUrl);
+            }
+            setNewProfilePic(null); 
+        } catch (error) {
+            console.error("Failed to upload profile picture", error);
+            showError(ERROR_CODES.INTERNAL.DATA_UPDATE_FAILED, 'Failed to upload profile picture.');
+        }
+    };
+
+    const handleCancelProfilePic = () => {
+        if (newProfilePic) {
+            URL.revokeObjectURL(newProfilePic.previewUrl);
+        }
+        setNewProfilePic(null);
+    };
+
     const renderEditControls = (section: SectionKey) => {
         if (!isAdmin) return null;
 
@@ -365,6 +395,24 @@ const About = () => {
         fetchUser();
     }, [showError]);
 
+    // Fetch section data for the about section
+    useEffect(() => {
+        const fetchSection = async () => {
+            try {
+                setSectionLoading(true);
+                const sectionData = await SectionService.getSectionBySlug('init-etheko');
+                setSection(sectionData);
+            } catch (err) {
+                console.error('Error fetching section:', err);
+                showError(ERROR_CODES.INTERNAL.DATA_FETCH_FAILED, 'Failed to load section data');
+            } finally {
+                setSectionLoading(false);
+            }
+        };
+
+        fetchSection();
+    }, [showError]);
+
     // Start image timeout when user data is loaded
     useEffect(() => {
         if (user && imageLoading) {
@@ -411,13 +459,43 @@ const About = () => {
         };
     }, []);
 
-    if (loading) {
+    // Cleanup for profile pic object URL
+    useEffect(() => {
+        return () => {
+            if (newProfilePic) {
+                URL.revokeObjectURL(newProfilePic.previewUrl);
+            }
+        };
+    }, [newProfilePic]);
+
+    if (loading || sectionLoading) {
         return <LoadingSpinner fullViewport={false} />;
     }
 
     if (!user) {
         return null;
     }
+
+    const handleProfilePicClick = () => {
+        if (isAdmin) {
+            fileInputRef.current?.click();
+        }
+    };
+
+    const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file) {
+            if (newProfilePic) {
+                URL.revokeObjectURL(newProfilePic.previewUrl);
+            }
+            setNewProfilePic({
+                file,
+                previewUrl: URL.createObjectURL(file),
+            });
+            // Reset input so selecting the same file again triggers change event
+            event.target.value = '';
+        }
+    };
 
     const getFullName = () => {
         const parts = [user.realName, user.firstSurname, user.secondSurname].filter(Boolean);
@@ -562,11 +640,15 @@ const About = () => {
         return `${baseClass} ${editableClass} ${editingClass}`.trim();
     };
 
+    const showUploadOverlay = isAdmin && isHoveringPfp && !newProfilePic;
+
+    const backendBase = (import.meta as any).env.VITE_BACKEND_URL || 'http://localhost:8080';
+
     return (
         <div className="about-component">
             <header className="about-header">
                 <div className="about-header-content">
-                    <h1 className="about-title">Who am I?</h1>
+                    <h1 className="about-title">{section?.title || 'Who am I?'}</h1>
                 </div>
             </header>
             <main className="about-content">
@@ -722,19 +804,55 @@ const About = () => {
                         className="profile-image-container"
                         intensity={0.05}
                         scaleIntensity={1.02}
+                        onClick={handleProfilePicClick}
+                        onMouseEnter={() => isAdmin && setIsHoveringPfp(true)}
+                        onMouseLeave={() => isAdmin && setIsHoveringPfp(false)}
                     >
-                        {imageLoading && <LoadingSpinner fullViewport={false} />}
-                        {imageError && <Error fullViewport={false} errorCode={ERROR_CODES.INTERNAL.IMAGE_LOAD_TIMEOUT} />}
-                        {!imageLoading && !imageError && (
-                            <img
-                                src={user.pfpString || '/assets/defaultProfilePicture.png'}
-                                alt="Profile"
-                                className="profile-image"
-                                onLoad={handleImageLoad}
-                                onError={handleImageError}
-                            />
+                        {newProfilePic ? (
+                            <>
+                                <img
+                                    src={newProfilePic.previewUrl}
+                                    alt="New Profile Preview"
+                                    className="profile-image"
+                                />
+                                <div className="edit-controls pfp-edit-controls">
+                                    <SentientIOB as="button" hoverScale={1} onClick={(e) => { e.stopPropagation(); handleCancelProfilePic(); }} {...createTooltipHandlers('cancel')}>
+                                        <TbX size={18} />
+                                    </SentientIOB>
+                                    <SentientIOB as="button" hoverScale={1} onClick={(e) => { e.stopPropagation(); handleSaveProfilePic(); }} {...createTooltipHandlers('save')}>
+                                        <TbCheck size={18} />
+                                    </SentientIOB>
+                                </div>
+                            </>
+                        ) : (
+                            <>
+                                {imageLoading && <LoadingSpinner fullViewport={false} />}
+                                {imageError && <Error fullViewport={false} errorCode={ERROR_CODES.INTERNAL.IMAGE_LOAD_TIMEOUT} />}
+                                <img
+                                    src={user.pfpString ? (user.pfpString.startsWith('/api') ? `${backendBase}${user.pfpString}` : user.pfpString) : '/assets/defaultProfilePicture.png'}
+                                    alt="Profile"
+                                    className="profile-image"
+                                    style={{ display: imageError ? 'none' : 'block' }}
+                                    onLoad={handleImageLoad}
+                                    onError={handleImageError}
+                                />
+                                {showUploadOverlay && (
+                                    <div className="pfp-upload-overlay">
+                                        <TbUpload size={48} />
+                                        <span>Upload a pic</span>
+                                    </div>
+                                )}
+                            </>
                         )}
                     </SentientButton>
+                    <input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handleFileSelect}
+                        style={{ display: 'none' }}
+                        accept="image/*"
+                        aria-label="Profile picture upload"
+                    />
                 </div>
 
                 {(user.description || editingSection === 'description') && (
