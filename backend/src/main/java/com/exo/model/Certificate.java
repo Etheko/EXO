@@ -14,6 +14,7 @@ import java.sql.Blob;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 @Setter
 @Getter
@@ -104,26 +105,37 @@ public class Certificate {
      */
 
     public Blob localImageToBlob(String imgPath) throws IOException, SQLException {
-        imgPath = imgPath.replace("/assets", "backend/src/main/resources/static/assets");
-        String onDocker = System.getenv("RUNNING_IN_DOCKER");
-        Blob imgBlob;
-
-        if (onDocker != null && onDocker.equals("true")) {
-            try (InputStream imgStream = getClass()
-                    .getResourceAsStream(imgPath.replace("backend/src/main/resources/static", "/static"))) {
-                if (imgStream == null) {
-                    throw new IOException("Image not found");
-                }
-                imgBlob = new SerialBlob(imgStream.readAllBytes());
-            }
-        } else {
-            String baseDir = System.getProperty("user.dir").replace("\\", "/").replace("/backend", "");
-            File imgFile = new File(baseDir + "/" + imgPath);
-            if (!imgFile.exists() || !imgFile.canRead()) {
-                throw new IOException("Cannot access image file: " + imgFile.getAbsolutePath());
-            }
-            imgBlob = new SerialBlob(Files.readAllBytes(imgFile.toPath()));
+        // This path should start with a "/" to be read from the root of the classpath.
+        // e.g., /static/assets/my-image.png
+        String resourcePath = imgPath.replaceFirst("/assets", "/static/assets");
+        if (!resourcePath.startsWith("/")) {
+            resourcePath = "/" + resourcePath;
         }
-        return imgBlob;
+
+        try (InputStream imgStream = getClass().getResourceAsStream(resourcePath)) {
+            if (imgStream == null) {
+                // If the primary path fails, try to load a default image as a fallback.
+                try (InputStream defaultStream = getClass().getResourceAsStream("/static/assets/defaultCertificateImage.png")) {
+                    if (defaultStream == null) {
+                        throw new IOException("Default certificate image not found at /static/assets/defaultCertificateImage.png");
+                    }
+                    return new SerialBlob(defaultStream.readAllBytes());
+                }
+            }
+            return new SerialBlob(imgStream.readAllBytes());
+        }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Certificate that = (Certificate) o;
+        return id.equals(that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
     }
 }

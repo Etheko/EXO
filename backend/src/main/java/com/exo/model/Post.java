@@ -185,32 +185,53 @@ public class Post {
     }
 
     public Blob localImageToBlob(String imgPath) throws IOException, SQLException {
-        imgPath = imgPath.replace("/assets", "backend/src/main/resources/static/assets");
-        String onDocker = System.getenv("RUNNING_IN_DOCKER");
-        Blob imgBlob;
-
-        if (onDocker != null && onDocker.equals("true")) {
-            try (InputStream imgStream = getClass()
-                    .getResourceAsStream(imgPath.replace("backend/src/main/resources/static", "/static"))) {
-                if (imgStream == null) {
-                    throw new IOException("Image not found");
-                }
-                imgBlob = new SerialBlob(imgStream.readAllBytes());
-            }
-        } else {
-            String baseDir = System.getProperty("user.dir").replace("\\", "/").replace("/backend", "");
-            File imgFile = new File(baseDir + "/" + imgPath);
-            if (!imgFile.exists() || !imgFile.canRead()) {
-                throw new IOException("Cannot access image file: " + imgFile.getAbsolutePath());
-            }
-            imgBlob = new SerialBlob(Files.readAllBytes(imgFile.toPath()));
+        // This path should start with a "/" to be read from the root of the classpath.
+        // e.g., /static/assets/my-image.png
+        String resourcePath = imgPath.replaceFirst("/assets", "/static/assets");
+        if (!resourcePath.startsWith("/")) {
+            resourcePath = "/" + resourcePath;
         }
-        return imgBlob;
+
+        try (InputStream imgStream = getClass().getResourceAsStream(resourcePath)) {
+            if (imgStream == null) {
+                // If the primary path fails, try to load a default image as a fallback.
+                try (InputStream defaultStream = getClass().getResourceAsStream("/static/assets/defaultPostCover.png")) {
+                    if (defaultStream == null) {
+                        throw new IOException("Default post image not found at /static/assets/defaultPostCover.png");
+                    }
+                    return new SerialBlob(defaultStream.readAllBytes());
+                }
+            }
+            return new SerialBlob(imgStream.readAllBytes());
+        }
     }
 
     private int estimateReadingMinutes(String text) {
         if (text == null || text.isBlank()) return 0;
         int words = text.trim().split("\\s+").length;
         return Math.max(1, words / 200); // Roughly 200 wpm
+    }
+
+    @Override
+    public String toString() {
+        return "Post{" +
+                "id=" + id +
+                ", title='" + title + '\'' +
+                ", slug='" + slug + '\'' +
+                ", excerpt='" + excerpt + '\'' +
+                ", content='" + content + '\'' +
+                ", coverImagePath='" + coverImagePath + '\'' +
+                ", coverImageBlob=" + coverImageBlob +
+                ", tags=" + tags +
+                ", gallery=" + gallery +
+                ", likes=" + likes +
+                ", views=" + views +
+                ", readingMinutes=" + readingMinutes +
+                ", createdAt=" + createdAt +
+                ", updatedAt=" + updatedAt +
+                ", publishedAt=" + publishedAt +
+                ", published=" + published +
+                ", author=" + author +
+                '}';
     }
 }
