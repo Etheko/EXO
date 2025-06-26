@@ -571,54 +571,15 @@ const About = () => {
         return age;
     };
 
-    // Function to format social media URLs properly
-    const formatSocialUrl = (platform: string, username: string | null | undefined): string | null => {
-        if (!username) return null;
-        
-        // Remove any existing protocol or domain
-        const cleanUsername = username.replace(/^https?:\/\//, '').replace(/^www\./, '');
-        
-        switch (platform) {
-            case 'instagram':
-                return `https://instagram.com/${cleanUsername}`;
-            case 'x':
-            case 'twitter':
-                return `https://x.com/${cleanUsername}`;
-            case 'linkedin':
-                // LinkedIn URLs can be complex, check if it's already a full URL
-                if (cleanUsername.includes('linkedin.com')) {
-                    return `https://${cleanUsername}`;
-                }
-                return `https://linkedin.com/in/${cleanUsername}`;
-            case 'github':
-                return `https://github.com/${cleanUsername}`;
-            case 'bluesky':
-                return `https://bsky.app/profile/${cleanUsername}`;
-            case 'facebook':
-                return `https://facebook.com/${cleanUsername}`;
-            case 'mastodon':
-                // Mastodon URLs need the instance domain
-                if (cleanUsername.includes('@')) {
-                    const [user, domain] = cleanUsername.split('@');
-                    return `https://${domain}/@${user}`;
-                }
-                return `https://mastodon.social/@${cleanUsername}`;
-            case 'tiktok':
-                return `https://tiktok.com/@${cleanUsername}`;
-            default:
-                return null;
-        }
-    };
-
     const profileSocials = [
-        { key: 'instagram', url: formatSocialUrl('instagram', user.instagram), icon: TbBrandInstagram, label: 'Instagram' },
-        { key: 'x', url: formatSocialUrl('x', user.xUsername), icon: TbBrandX, label: 'X / Twitter' },
-        { key: 'linkedin', url: formatSocialUrl('linkedin', user.linkedIn), icon: TbBrandLinkedin, label: 'LinkedIn' },
-        { key: 'github', url: formatSocialUrl('github', user.github), icon: TbBrandGithub, label: 'GitHub' },
-        { key: 'bluesky', url: formatSocialUrl('bluesky', user.bluesky), icon: TbBrandBluesky, label: 'Bluesky' },
-        { key: 'facebook', url: formatSocialUrl('facebook', user.facebook), icon: TbBrandFacebook, label: 'Facebook' },
-        { key: 'mastodon', url: formatSocialUrl('mastodon', user.mastodon), icon: TbBrandMastodon, label: 'Mastodon' },
-        { key: 'tiktok', url: formatSocialUrl('tiktok', user.tiktok), icon: TbBrandTiktok, label: 'TikTok' },
+        { key: 'instagram', url: user.instagram, icon: TbBrandInstagram, label: 'Instagram' },
+        { key: 'x', url: user.xUsername, icon: TbBrandX, label: 'X / Twitter' },
+        { key: 'linkedin', url: user.linkedIn, icon: TbBrandLinkedin, label: 'LinkedIn' },
+        { key: 'github', url: user.github, icon: TbBrandGithub, label: 'GitHub' },
+        { key: 'bluesky', url: user.bluesky, icon: TbBrandBluesky, label: 'Bluesky' },
+        { key: 'facebook', url: user.facebook, icon: TbBrandFacebook, label: 'Facebook' },
+        { key: 'mastodon', url: user.mastodon, icon: TbBrandMastodon, label: 'Mastodon' },
+        { key: 'tiktok', url: user.tiktok, icon: TbBrandTiktok, label: 'TikTok' },
     ];
 
     const mapKeyToProp = (k: string): keyof User => {
@@ -630,6 +591,40 @@ const About = () => {
                 return 'linkedIn' as keyof User;
             default:
                 return k as keyof User;
+        }
+    };
+
+    // Function to extract username from social media URL
+    const extractUsernameFromUrl = (platform: string, url: string | null | undefined): string => {
+        if (!url) return '';
+        
+        // Remove protocol and domain to get just the username
+        const cleanUrl = url.replace(/^https?:\/\//, '').replace(/^www\./, '');
+        
+        switch (platform) {
+            case 'instagram':
+                return cleanUrl.replace('instagram.com/', '').replace(/\/$/, '');
+            case 'x':
+            case 'twitter':
+                return cleanUrl.replace('x.com/', '').replace('twitter.com/', '').replace(/\/$/, '');
+            case 'linkedin':
+                return cleanUrl.replace('linkedin.com/in/', '').replace('www.linkedin.com/in/', '').replace(/\/$/, '');
+            case 'github':
+                return cleanUrl.replace('github.com/', '').replace(/\/$/, '');
+            case 'bluesky':
+                return cleanUrl.replace('bsky.app/profile/', '').replace(/\/$/, '');
+            case 'facebook':
+                return cleanUrl.replace('facebook.com/', '').replace(/\/$/, '');
+            case 'mastodon':
+                // Handle Mastodon's format: domain/@username
+                if (cleanUrl.includes('/@')) {
+                    return cleanUrl.split('/@')[1].replace(/\/$/, '');
+                }
+                return cleanUrl.replace('mastodon.social/@', '').replace(/\/$/, '');
+            case 'tiktok':
+                return cleanUrl.replace('tiktok.com/@', '').replace(/\/$/, '');
+            default:
+                return url;
         }
     };
 
@@ -1080,7 +1075,7 @@ const About = () => {
             <SocialEditWindow
                 isVisible={socialModal.visible}
                 socialKey={socialModal.key}
-                currentValue={(draftUser ?? user)?.[mapKeyToProp(socialModal.key)] as string | undefined}
+                currentValue={extractUsernameFromUrl(socialModal.key, (draftUser ?? user)?.[mapKeyToProp(socialModal.key)] as string | undefined)}
                 onSave={(value) => {
                     if (editingSection === 'profile' && draftUser) {
                         const prop = mapKeyToProp(socialModal.key);
