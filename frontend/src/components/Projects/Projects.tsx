@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import projectService from '../../services/ProjectService.js';
+import ProjectService from '../../services/ProjectService.ts';
 import { Project } from '../../types/Project';
 import './Projects.css';
 import TechnologyIcon from './TechnologyIcon';
@@ -20,7 +20,7 @@ const Projects = ({ onProjectSelected, onBackToIndex }: ProjectsProps) => {
     useEffect(() => {
         const fetchProjects = async () => {
             try {
-                const data = await projectService.getAllProjects();
+                const data = await ProjectService.getAllProjects();
                 setProjects(data.content);
                 setError(null);
             } catch (err) {
