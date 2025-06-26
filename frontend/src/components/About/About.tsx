@@ -21,6 +21,7 @@ import {
     TbEdit,
     TbX,
     TbCheck,
+    TbPlus,
 } from 'react-icons/tb';
 import SentientIOB from '../SentientIOB';
 import SentientButton from '../SentientButton';
@@ -115,6 +116,12 @@ const About = () => {
     // Separate state for the description input field
     const [descriptionInput, setDescriptionInput] = useState<string>('');
 
+    // Preferences edit state
+    const [draftLikes, setDraftLikes] = useState<string[]>([]);
+    const [draftDislikes, setDraftDislikes] = useState<string[]>([]);
+    const [newLikeInput, setNewLikeInput] = useState<string>('');
+    const [newDislikeInput, setNewDislikeInput] = useState<string>('');
+
     // Social edit modal state
     const [socialModal, setSocialModal] = useState<{ key: string; visible: boolean }>({ key: '', visible: false });
 
@@ -188,12 +195,50 @@ const About = () => {
             } catch (e) {
                 console.error('Failed to save description', e);
             }
+        } else if (section === 'preferences' && user) {
+            try {
+                // Handle likes changes
+                const originalLikes = user.likes || [];
+                const likesToAdd = draftLikes.filter(like => !originalLikes.includes(like));
+                const likesToRemove = originalLikes.filter(like => !draftLikes.includes(like));
+
+                // Handle dislikes changes
+                const originalDislikes = user.dislikes || [];
+                const dislikesToAdd = draftDislikes.filter(dislike => !originalDislikes.includes(dislike));
+                const dislikesToRemove = originalDislikes.filter(dislike => !draftDislikes.includes(dislike));
+
+                // Make API calls for likes
+                for (const like of likesToAdd) {
+                    await userService.addLike(user.username, like);
+                }
+                for (const like of likesToRemove) {
+                    await userService.removeLike(user.username, like);
+                }
+
+                // Make API calls for dislikes
+                for (const dislike of dislikesToAdd) {
+                    await userService.addDislike(user.username, dislike);
+                }
+                for (const dislike of dislikesToRemove) {
+                    await userService.removeDislike(user.username, dislike);
+                }
+
+                // Refresh user data from backend to ensure we have the latest state
+                const refreshedUser = await userService.getUserByUsername(user.username);
+                setUser(refreshedUser);
+            } catch (e) {
+                console.error('Failed to save preferences', e);
+            }
         }
         setEditingSection(null);
         setDraftUser(null);
         setFullNameInput(''); // Reset the full name input
         setDescriptionInput(''); // Reset the description input
-    }, [draftUser, fullNameInput, descriptionInput, user]);
+        setDraftLikes([]); // Reset draft preferences
+        setDraftDislikes([]);
+        setNewLikeInput(''); // Reset input fields
+        setNewDislikeInput('');
+    }, [draftUser, fullNameInput, descriptionInput, user, draftLikes, draftDislikes]);
 
     const renderEditControls = (section: SectionKey) => {
         if (!isAdmin) return null;
@@ -220,6 +265,10 @@ const About = () => {
                             setEditingSection(null);
                             setFullNameInput(''); // Reset the full name input
                             setDescriptionInput(''); // Reset the description input
+                            setDraftLikes([]); // Reset draft preferences
+                            setDraftDislikes([]);
+                            setNewLikeInput(''); // Reset input fields
+                            setNewDislikeInput('');
                         }} {...createTooltipHandlers('cancel')}>
                             <TbX size={18} />
                         </SentientIOB>
@@ -238,6 +287,10 @@ const About = () => {
                             } else if (section === 'description' && user) {
                                 // Initialize the description input with the current description
                                 setDescriptionInput(user.description || '');
+                            } else if (section === 'preferences' && user) {
+                                // Initialize the preferences with current likes and dislikes
+                                setDraftLikes([...(user.likes || [])]);
+                                setDraftDislikes([...(user.dislikes || [])]);
                             }
                             setEditingSection(section);
                         }} {...createTooltipHandlers('edit')}>
@@ -345,6 +398,40 @@ const About = () => {
     const autoResizeTextarea = (element: HTMLTextAreaElement) => {
         element.style.height = 'auto';
         element.style.height = element.scrollHeight + 'px';
+    };
+
+    // Helper functions for preferences management
+    const addLike = () => {
+        if (newLikeInput.trim()) {
+            setDraftLikes(prev => [...prev, newLikeInput.trim()]);
+            setNewLikeInput('');
+        }
+    };
+
+    const removeLike = (likeToRemove: string) => {
+        setDraftLikes(prev => prev.filter(like => like !== likeToRemove));
+    };
+
+    const addDislike = () => {
+        if (newDislikeInput.trim()) {
+            setDraftDislikes(prev => [...prev, newDislikeInput.trim()]);
+            setNewDislikeInput('');
+        }
+    };
+
+    const removeDislike = (dislikeToRemove: string) => {
+        setDraftDislikes(prev => prev.filter(dislike => dislike !== dislikeToRemove));
+    };
+
+    const handleKeyPress = (e: React.KeyboardEvent, type: 'like' | 'dislike') => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            if (type === 'like') {
+                addLike();
+            } else {
+                addDislike();
+            }
+        }
     };
 
     const getAge = () => {
@@ -664,7 +751,7 @@ const About = () => {
                     </div>
                 )}
 
-                {(user.likes?.length || user.dislikes?.length) && (
+                {(user.likes?.length || user.dislikes?.length || editingSection === 'preferences') && (
                     <div className="preferences-wrapper">
                         {/* Section title */}
                         <div className="section-subtitle-container">
@@ -681,27 +768,134 @@ const About = () => {
                             onMouseMove={(e) => handleMouseMove(e, 'preferences')}
                         >
                             {renderEditControls('preferences')}
-                            {user.likes?.length && (
+                            {(editingSection === 'preferences' ? draftLikes.length > 0 : user.likes?.length) && (
                                 <div className="preference-card">
                                     <h4 className="preference-title">Likes</h4>
                                     <div className="preference-tags">
-                                        {user.likes.map((like, index) => (
+                                        {(editingSection === 'preferences' ? draftLikes : user.likes || []).map((like, index) => (
                                             <span key={index} className="preference-tag like">
                                                 {like}
+                                                {editingSection === 'preferences' && (
+                                                    <button
+                                                        className="preference-tag-remove"
+                                                        onClick={() => removeLike(like)}
+                                                        {...createTooltipHandlers('remove')}
+                                                    >
+                                                        <TbX size={12} />
+                                                    </button>
+                                                )}
                                             </span>
                                         ))}
                                     </div>
+                                    {editingSection === 'preferences' && (
+                                        <div className="preference-input-container">
+                                            <input
+                                                className="login-input"
+                                                value={newLikeInput}
+                                                onChange={(e) => setNewLikeInput(e.target.value)}
+                                                onKeyPress={(e) => handleKeyPress(e, 'like')}
+                                                placeholder="Add a new like..."
+                                            />
+                                            <SentientIOB
+                                                as="button"
+                                                onClick={addLike}
+                                                disabled={!newLikeInput.trim()}
+                                                {...createTooltipHandlers('add')}
+                                            >
+                                                <TbPlus size={16} />
+                                            </SentientIOB>
+                                        </div>
+                                    )}
                                 </div>
                             )}
-                            {user.dislikes?.length && (
+                            {(editingSection === 'preferences' ? draftDislikes.length > 0 : user.dislikes?.length) && (
                                 <div className="preference-card">
                                     <h4 className="preference-title">Dislikes</h4>
                                     <div className="preference-tags">
-                                        {user.dislikes.map((dislike, index) => (
+                                        {(editingSection === 'preferences' ? draftDislikes : user.dislikes || []).map((dislike, index) => (
                                             <span key={index} className="preference-tag dislike">
                                                 {dislike}
+                                                {editingSection === 'preferences' && (
+                                                    <button
+                                                        className="preference-tag-remove"
+                                                        onClick={() => removeDislike(dislike)}
+                                                        {...createTooltipHandlers('remove')}
+                                                    >
+                                                        <TbX size={12} />
+                                                    </button>
+                                                )}
                                             </span>
                                         ))}
+                                    </div>
+                                    {editingSection === 'preferences' && (
+                                        <div className="preference-input-container">
+                                            <input
+                                                className="login-input"
+                                                value={newDislikeInput}
+                                                onChange={(e) => setNewDislikeInput(e.target.value)}
+                                                onKeyPress={(e) => handleKeyPress(e, 'dislike')}
+                                                placeholder="Add a new dislike..."
+                                            />
+                                            <SentientIOB
+                                                as="button"
+                                                onClick={addDislike}
+                                                disabled={!newDislikeInput.trim()}
+                                                {...createTooltipHandlers('add')}
+                                            >
+                                                <TbPlus size={16} />
+                                            </SentientIOB>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                            {/* Show empty cards when in edit mode and no preferences exist */}
+                            {editingSection === 'preferences' && draftLikes.length === 0 && (
+                                <div className="preference-card">
+                                    <h4 className="preference-title">Likes</h4>
+                                    <div className="preference-tags">
+                                        <span className="preference-tag-empty">No likes yet</span>
+                                    </div>
+                                    <div className="preference-input-container">
+                                        <input
+                                            className="login-input"
+                                            value={newLikeInput}
+                                            onChange={(e) => setNewLikeInput(e.target.value)}
+                                            onKeyPress={(e) => handleKeyPress(e, 'like')}
+                                            placeholder="Add a new like..."
+                                        />
+                                        <SentientIOB
+                                            as="button"
+                                            onClick={addLike}
+                                            disabled={!newLikeInput.trim()}
+                                            {...createTooltipHandlers('add')}
+                                        >
+                                            <TbPlus size={16} />
+                                        </SentientIOB>
+                                    </div>
+                                </div>
+                            )}
+                            {editingSection === 'preferences' && draftDislikes.length === 0 && (
+                                <div className="preference-card">
+                                    <h4 className="preference-title">Dislikes</h4>
+                                    <div className="preference-tags">
+                                        <span className="preference-tag-empty">No dislikes yet</span>
+                                    </div>
+                                    <div className="preference-input-container">
+                                        <input
+                                            className="login-input"
+                                            value={newDislikeInput}
+                                            onChange={(e) => setNewDislikeInput(e.target.value)}
+                                            onKeyPress={(e) => handleKeyPress(e, 'dislike')}
+                                            placeholder="Add a new dislike..."
+                                        />
+                                        <SentientIOB
+                                            as="button"
+                                            onClick={addDislike}
+                                            disabled={!newDislikeInput.trim()}
+                                            {...createTooltipHandlers('add')}
+                                        >
+                                            <TbPlus size={16} />
+                                        </SentientIOB>
                                     </div>
                                 </div>
                             )}

@@ -80,6 +80,35 @@ class UserService {
     const response = await api.put<User>(`/users/${username}/social-links?${params.toString()}`);
     return response.data;
   }
+
+  /* ==========================
+   *      LIKES/DISLIKES MANAGEMENT
+   * ==========================
+   */
+
+  async addLike(username: string, like: string): Promise<User> {
+    const params = new URLSearchParams();
+    params.append('like', like);
+    const response = await api.post<User>(`/users/${username}/likes?${params.toString()}`);
+    return response.data;
+  }
+
+  async removeLike(username: string, like: string): Promise<User> {
+    const response = await api.delete<User>(`/users/${username}/likes/${encodeURIComponent(like)}`);
+    return response.data;
+  }
+
+  async addDislike(username: string, dislike: string): Promise<User> {
+    const params = new URLSearchParams();
+    params.append('dislike', dislike);
+    const response = await api.post<User>(`/users/${username}/dislikes?${params.toString()}`);
+    return response.data;
+  }
+
+  async removeDislike(username: string, dislike: string): Promise<User> {
+    const response = await api.delete<User>(`/users/${username}/dislikes/${encodeURIComponent(dislike)}`);
+    return response.data;
+  }
 }
 
 const userService = new UserService();
