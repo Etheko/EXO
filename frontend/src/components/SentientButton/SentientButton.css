@@ -1,0 +1,25 @@
+.sentient-button {
+    position: relative;
+    overflow: var(--button-overflow, visible); /* Allow icon scaling by default */
+    /* Default glow variables – easily overridden per button or globally */
+    --glow-color: rgba(255, 255, 255, 0.12);
+    --glow-radius: 90%;
+}
+
+.sentient-button::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+    background: radial-gradient(circle at var(--glow-x) var(--glow-y), var(--glow-color) 0%, transparent var(--glow-radius));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+.sentient-button:hover::after {
+    opacity: 1;
+} 

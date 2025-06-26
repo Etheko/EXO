@@ -10,7 +10,7 @@
     align-items: center;
     justify-content: center;
     transition: color 0.3s ease;
-    overflow: visible;
+    --button-overflow: hidden; /* Contain glow effect for icon-only buttons */
 }
 
 .sentient-iob::before {

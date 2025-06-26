@@ -1,5 +1,6 @@
 import React, { useRef, MouseEvent, useCallback } from 'react';
 import { useCursor } from '../../contexts/CursorContext';
+import './SentientButton.css';
 
 interface SentientButtonProps {
     href?: string;
@@ -61,6 +62,12 @@ const SentientButton: React.FC<SentientButtonProps> = ({
             button.style.setProperty('--translate-y', `${translateY}px`);
             button.style.setProperty('--scale', scaleIntensity.toString());
             button.style.transform = `translate3d(var(--translate-x, 0), var(--translate-y, 0), 0) scale(var(--scale, 1))`;
+
+            // Set glow position for the fluent design glow effect
+            const glowX = e.clientX - rect.left;
+            const glowY = e.clientY - rect.top;
+            button.style.setProperty('--glow-x', `${glowX}px`);
+            button.style.setProperty('--glow-y', `${glowY}px`);
         });
     }, [intensity, scaleIntensity]);
 
@@ -112,9 +119,11 @@ const SentientButton: React.FC<SentientButtonProps> = ({
         e.stopPropagation();
     }, [onClick, setCursorState]);
 
+    const mergedClassName = ['sentient-button', className].filter(Boolean).join(' ');
+
     const commonProps = {
         ref: buttonRef as any,
-        className: `${className}`,
+        className: mergedClassName,
         style: {
             // default styles
             transition: 'transform 0.1s ease-out',
