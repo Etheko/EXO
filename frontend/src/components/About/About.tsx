@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import userService from '../../services/UserService';
 import LoginService from '../../services/LoginService';
 import { User } from '../../types/User';
@@ -53,7 +53,7 @@ const About = () => {
      *  ADMIN / EDIT STATE LOGIC
      * ==========================
      */
-    type SectionKey = 'profile' | 'description' | 'preferences';
+    type SectionKey = 'profile' | 'description' | 'preferences' | 'distinctivePhrase';
     const [editingSection, setEditingSection] = useState<SectionKey | null>(null);
     const [hoverSection, setHoverSection] = useState<SectionKey | null>(null);
 
@@ -68,6 +68,7 @@ const About = () => {
         profile: 0,
         description: 0,
         preferences: 0,
+        distinctivePhrase: 0,
     });
 
     const editControlsRefs = useRef<Partial<Record<SectionKey, HTMLDivElement | null>>>({});
@@ -116,6 +117,9 @@ const About = () => {
     // Separate state for the description input field
     const [descriptionInput, setDescriptionInput] = useState<string>('');
 
+    // Separate state for the distinctive phrase input field
+    const [distinctivePhraseInput, setDistinctivePhraseInput] = useState<string>('');
+
     // Preferences edit state
     const [draftLikes, setDraftLikes] = useState<string[]>([]);
     const [draftDislikes, setDraftDislikes] = useState<string[]>([]);
@@ -124,6 +128,23 @@ const About = () => {
 
     // Social edit modal state
     const [socialModal, setSocialModal] = useState<{ key: string; visible: boolean }>({ key: '', visible: false });
+
+    // Memoize the random date to prevent it from changing on every render
+    const memoizedRandomDate = useMemo(() => {
+        const today = new Date();
+        const pastYears = Math.floor(Math.random() * 5) + 1; // 1-5 years ago
+        const pastMonths = Math.floor(Math.random() * 12);
+        const pastDays = Math.floor(Math.random() * 28) + 1;
+        
+        const randomDate = new Date(today.getFullYear() - pastYears, today.getMonth() - pastMonths, today.getDate() - pastDays);
+        
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const month = months[randomDate.getMonth()];
+        const day = randomDate.getDate();
+        const year = randomDate.getFullYear();
+        
+        return `${month} ${day}, ${year}`;
+    }, []); // Empty dependency array means this will only be calculated once
 
     // Auto-resize textarea when entering description edit mode or content changes
     useEffect(() => {
@@ -195,6 +216,26 @@ const About = () => {
             } catch (e) {
                 console.error('Failed to save description', e);
             }
+        } else if (section === 'distinctivePhrase' && user) {
+            try {
+                // Update the distinctive phrase
+                const updated = await userService.updateBasicInfo(user.username, {
+                    realName: user.realName,
+                    firstSurname: user.firstSurname,
+                    secondSurname: user.secondSurname,
+                    nick: user.nick,
+                    email: user.email,
+                    genderIdentity: user.genderIdentity,
+                    distinctivePhrase: distinctivePhraseInput, // Use the distinctive phrase input
+                    description: user.description,
+                });
+
+                // Refresh user data from backend to ensure we have the latest state
+                const refreshedUser = await userService.getUserByUsername(user.username);
+                setUser(refreshedUser);
+            } catch (e) {
+                console.error('Failed to save distinctive phrase', e);
+            }
         } else if (section === 'preferences' && user) {
             try {
                 // Handle likes changes
@@ -234,11 +275,12 @@ const About = () => {
         setDraftUser(null);
         setFullNameInput(''); // Reset the full name input
         setDescriptionInput(''); // Reset the description input
+        setDistinctivePhraseInput(''); // Reset the distinctive phrase input
         setDraftLikes([]); // Reset draft preferences
         setDraftDislikes([]);
         setNewLikeInput(''); // Reset input fields
         setNewDislikeInput('');
-    }, [draftUser, fullNameInput, descriptionInput, user, draftLikes, draftDislikes]);
+    }, [draftUser, fullNameInput, descriptionInput, distinctivePhraseInput, user, draftLikes, draftDislikes]);
 
     const renderEditControls = (section: SectionKey) => {
         if (!isAdmin) return null;
@@ -265,6 +307,7 @@ const About = () => {
                             setEditingSection(null);
                             setFullNameInput(''); // Reset the full name input
                             setDescriptionInput(''); // Reset the description input
+                            setDistinctivePhraseInput(''); // Reset the distinctive phrase input
                             setDraftLikes([]); // Reset draft preferences
                             setDraftDislikes([]);
                             setNewLikeInput(''); // Reset input fields
@@ -287,6 +330,9 @@ const About = () => {
                             } else if (section === 'description' && user) {
                                 // Initialize the description input with the current description
                                 setDescriptionInput(user.description || '');
+                            } else if (section === 'distinctivePhrase' && user) {
+                                // Initialize the distinctive phrase input with the current distinctive phrase
+                                setDistinctivePhraseInput(user.distinctivePhrase || '');
                             } else if (section === 'preferences' && user) {
                                 // Initialize the preferences with current likes and dislikes
                                 setDraftLikes([...(user.likes || [])]);
@@ -445,23 +491,6 @@ const About = () => {
             age--;
         }
         return age;
-    };
-
-    // Function to generate a random past date for citation
-    const getRandomPastDate = () => {
-        const today = new Date();
-        const pastYears = Math.floor(Math.random() * 5) + 1; // 1-5 years ago
-        const pastMonths = Math.floor(Math.random() * 12);
-        const pastDays = Math.floor(Math.random() * 28) + 1;
-        
-        const randomDate = new Date(today.getFullYear() - pastYears, today.getMonth() - pastMonths, today.getDate() - pastDays);
-        
-        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-        const month = months[randomDate.getMonth()];
-        const day = randomDate.getDate();
-        const year = randomDate.getFullYear();
-        
-        return `${month} ${day}, ${year}`;
     };
 
     // Function to format social media URLs properly
@@ -903,10 +932,30 @@ const About = () => {
                     </div>
                 )}
                 {/* Distinctive Phrase */}
-                {user.distinctivePhrase && (
-                    <div className="distinctive-phrase-wrapper">
-                        <p className="distinctive-phrase">{user.distinctivePhrase}</p>
-                        <p className="distinctive-phrase-citation">—{user.nick || user.username}. {getRandomPastDate()}</p>
+                {(user.distinctivePhrase || editingSection === 'distinctivePhrase') && (
+                    <div
+                        className={getEditableSectionClass('distinctive-phrase-wrapper', 'distinctivePhrase')}
+                        onMouseEnter={() => isAdmin && setHoverSection('distinctivePhrase')}
+                        onMouseLeave={() => {
+                            isAdmin && setHoverSection(null);
+                            handleMouseLeaveSection('distinctivePhrase');
+                        }}
+                        onMouseMove={(e) => handleMouseMove(e, 'distinctivePhrase')}
+                    >
+                        {renderEditControls('distinctivePhrase')}
+                        {editingSection === 'distinctivePhrase' ? (
+                            <input
+                                className="login-input distinctive-phrase"
+                                style={{ textAlign: 'center', width: '100%' }}
+                                value={distinctivePhraseInput}
+                                placeholder="Enter a distinctive phrase..."
+                                onChange={e => setDistinctivePhraseInput(e.target.value)}
+                                maxLength={120}
+                            />
+                        ) : (
+                            <p className="distinctive-phrase">{user.distinctivePhrase}</p>
+                        )}
+                        <p className="distinctive-phrase-citation">—{user.nick || user.username}. {memoizedRandomDate}</p>
                     </div>
                 )}
             </main>
