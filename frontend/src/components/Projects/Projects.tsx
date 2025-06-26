@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import projectService from '../../services/ProjectService';
+import projectService from '../../services/ProjectService.ts';
 import { Project } from '../../types/Project';
 import './Projects.css';
 import TechnologyIcon from './TechnologyIcon';

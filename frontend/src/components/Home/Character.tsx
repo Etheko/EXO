@@ -1,6 +1,6 @@
 import { useMemo, useEffect, useRef } from 'react';
-import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
-import { Font } from 'three/addons/loaders/FontLoader.js';
+import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
+import { Font } from 'three/examples/jsm/loaders/FontLoader.js';
 import { useSpring, a, to } from '@react-spring/three';
 import React from 'react';
 
