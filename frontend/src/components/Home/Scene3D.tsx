@@ -5,10 +5,10 @@ import { Group, Mesh, Vector2, MeshStandardMaterial, Color } from 'three';
 import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
 import { FontLoader, Font } from 'three/examples/jsm/loaders/FontLoader.js';
 import { useSpring, a, to } from '@react-spring/three';
-import { Character } from './Character';
-import { CustomGrid } from './CustomGrid';
-import MainFrame from './MainFrame';
-import Projects from '../Projects';
+import { Character } from './Character.tsx';
+import { CustomGrid } from './CustomGrid.tsx';
+import MainFrame from './MainFrame.tsx';
+import Projects from '../Projects/index.tsx';
 
 interface CameraAnimatorProps {
   focusOnGrid: boolean;
