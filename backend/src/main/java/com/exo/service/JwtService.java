@@ -81,7 +81,7 @@ public class JwtService {
     }
 
     private SecretKey getSigningKey() {
-        byte[] keyBytes = Decoders.BASE64.decode(jwtSecretKey);
+        byte[] keyBytes = Decoders.BASE64.decode(jwtSecretKey.trim());
         return Keys.hmacShaKeyFor(keyBytes);
     }
 }
