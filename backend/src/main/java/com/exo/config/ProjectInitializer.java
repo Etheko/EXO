@@ -32,19 +32,21 @@ public class ProjectInitializer {
         
         // Define the expected projects with their data
         List<Project> expectedProjects = Arrays.asList(
-            createProject("portfolio-website", "Portfolio Website", 
-                "A modern portfolio website built with React, Spring Boot, and MySQL. Features a responsive design, dark mode, and smooth animations.",
-                true,
+            createProject("EXO", "Project EXO", 
+                "This website: The ✨Etheko Experience Online✨.",
+                false,
                 "/assets/projects/portfolio-header.jpg",
-                Arrays.asList("React", "TypeScript", "Spring Boot", "MySQL", "Tailwind CSS"),
-                "https://your-portfolio.com",
-                "https://your-portfolio.com",
-                "yourusername", null, null, null, null, null, null),
+                "/assets/projects/portfolio-icon.png",
+                Arrays.asList("React", "TypeScript", "Spring Boot", "PostgreSQL", "Tailwind CSS"),
+                null,
+                "https://etheko.dev",
+                "https://github.com/Etheko/EXO", null, null, null, null, null, null),
                 
             createProject("task-management-app", "Task Management App",
                 "A full-stack task management application with real-time updates, user authentication, and collaborative features.",
                 true,
                 "/assets/projects/task-manager-header.jpg",
+                "/assets/projects/task-manager-icon.png",
                 Arrays.asList("Angular", "Node.js", "MongoDB", "Socket.io", "Express"),
                 "https://task-manager-demo.com",
                 "https://task-manager-demo.com",
@@ -54,10 +56,21 @@ public class ProjectInitializer {
                 "A complete e-commerce solution with payment processing, inventory management, and admin dashboard.",
                 false,
                 "/assets/projects/ecommerce-header.jpg",
+                "/assets/projects/ecommerce-icon.png",
                 Arrays.asList("Vue.js", "Spring Boot", "PostgreSQL", "Stripe API", "Redis"),
                 "https://ecommerce-demo.com",
                 "https://ecommerce-demo.com",
-                "yourusername", "yourstore", "yourstore", "yourstore", null, null, "yourstore")
+                "yourusername", "yourstore", "yourstore", "yourstore", null, null, "yourstore"),
+
+        createProject("ai-chat-assistant", "AI Chat Assistant",
+            "An intelligent chatbot powered by machine learning that provides contextual responses and learns from conversations.",
+            true,
+            "/assets/projects/ai-chat-header.jpg",
+            "/assets/projects/ai-chat-icon.png",
+            Arrays.asList("Python", "TensorFlow", "Flask", "React", "PostgreSQL", "Redis"),
+            "https://ai-chat-demo.com",
+            "https://ai-chat-demo.com",
+            "yourusername", null, null, null, null, null, null)
         );
         
         // Get existing projects by title for easy lookup
@@ -142,14 +155,14 @@ public class ProjectInitializer {
         System.out.println("Project initialization completed. Total projects: " + projectRepository.count());
     }
     
-    private Project createProject(String slug, String title, String description, boolean finished, String headerPicturePath,
+    private Project createProject(String slug, String title, String description, boolean finished, String headerPicturePath, String iconPath,
                                 List<String> technologies, String liveDemoUrl, String projectWebsiteUrl,
                                 String github, String instagram, String facebook, String xUsername,
                                 String mastodon, String bluesky, String tiktok) {
         try {
             return new Project(title, description, finished, headerPicturePath, technologies, liveDemoUrl, 
                              projectWebsiteUrl, github, instagram, facebook, xUsername, 
-                             mastodon, bluesky, tiktok);
+                             mastodon, bluesky, tiktok, iconPath);
         } catch (Exception e) {
             System.err.println("Error creating project object for: " + title + " - " + e.getMessage());
             // Return a basic project without blob operations if there's an error
@@ -158,6 +171,7 @@ public class ProjectInitializer {
             project.setDescription(description);
             project.setFinished(finished);
             project.setHeaderPictureString(headerPicturePath);
+            project.setIconString(iconPath);
             project.setTechnologies(technologies);
             project.setLiveDemoUrl(liveDemoUrl);
             project.setProjectWebsiteUrl(projectWebsiteUrl);

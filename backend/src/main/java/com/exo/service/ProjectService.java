@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.sql.Blob;
@@ -179,5 +181,40 @@ public class ProjectService {
     // Projects by technology count
     public List<Project> findProjectsWithMostTechnologies(int limit) {
         return projectRepository.findProjectsByTechnologyCount(Pageable.ofSize(limit)).getContent();
+    }
+
+    /* ==========================
+     *        ICON MANAGEMENT
+     * ==========================
+     */
+
+    public byte[] getIcon(Long projectId) throws SQLException {
+        Project project = projectRepository.findById(projectId).orElse(null);
+        if (project != null && project.getIcon() != null) {
+            return project.getIcon().getBytes(1, (int) project.getIcon().length());
+        }
+        return null;
+    }
+
+    @Transactional
+    public Project uploadIcon(Long projectId, MultipartFile file) throws IOException, SQLException {
+        Project project = projectRepository.findById(projectId).orElse(null);
+        if (project != null) {
+            project.setIcon(new javax.sql.rowset.serial.SerialBlob(file.getBytes()));
+            project.setIconString("/api/projects/" + projectId + "/icon");
+            return projectRepository.save(project);
+        }
+        return null;
+    }
+
+    @Transactional
+    public Project updateIcon(Long projectId, String imagePath) throws IOException, SQLException {
+        Project project = projectRepository.findById(projectId).orElse(null);
+        if (project != null) {
+            project.setIconString(imagePath);
+            project.setIcon(project.localImageToBlob(imagePath));
+            return projectRepository.save(project);
+        }
+        return null;
     }
 } 

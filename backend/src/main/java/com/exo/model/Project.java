@@ -71,6 +71,19 @@ public class Project {
     private String headerPictureString; // Resource path for quick access
 
     /* ==========================
+     *        ICON PICTURE
+     * ==========================
+     */
+
+    @Setter
+    @JsonIgnore
+    @Lob
+    private Blob icon;
+
+    @JsonView(BasicInfo.class)
+    private String iconString; // Resource path for quick access
+
+    /* ==========================
      *          GALLERY
      * ==========================
      */
@@ -154,7 +167,7 @@ public class Project {
     public Project(String title, String description, boolean finished, String headerPicturePath,
                    List<String> technologies, String liveDemoUrl, String projectWebsiteUrl,
                    String github, String instagram, String facebook, String xUsername,
-                   String mastodon, String bluesky, String tiktok) throws IOException, SQLException {
+                   String mastodon, String bluesky, String tiktok, String iconPath) throws IOException, SQLException {
         this.title = title;
         this.description = description;
         this.finished = finished;
@@ -175,6 +188,14 @@ public class Project {
             this.headerPictureString = headerPicturePath;
         }
         this.headerPicture = localImageToBlob(this.headerPictureString);
+
+        // Icon handling
+        if (iconPath == null || iconPath.isEmpty()) {
+            this.iconString = "/assets/defaultProjectIcon.png";
+        } else {
+            this.iconString = iconPath;
+        }
+        this.icon = localImageToBlob(this.iconString);
     }
 
     /* ==========================

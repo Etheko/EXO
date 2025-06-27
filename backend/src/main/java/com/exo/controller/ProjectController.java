@@ -10,14 +10,20 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.net.URLConnection;
 
 @RestController
 @RequestMapping("/api/projects")
@@ -227,6 +233,62 @@ public class ProjectController {
         try {
             projectService.updateHeaderPicture(id, imagePath);
             return ResponseEntity.ok().build();
+        } catch (IOException | SQLException e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    /* ==========================
+     *        ICON MANAGEMENT
+     * ==========================
+     */
+
+    @GetMapping(path = "/{id}/icon")
+    @Operation(summary = "Get project icon", description = "Returns the project's icon bytes")
+    public ResponseEntity<byte[]> getProjectIcon(@PathVariable Long id) {
+        try {
+            byte[] bytes = projectService.getIcon(id);
+
+            if (bytes == null || bytes.length == 0) {
+                return ResponseEntity.notFound().build();
+            }
+
+            HttpHeaders headers = new HttpHeaders();
+            String ct;
+            try (ByteArrayInputStream bis = new ByteArrayInputStream(bytes)) {
+                ct = URLConnection.guessContentTypeFromStream(bis);
+            }
+            headers.setContentType(ct != null ? MediaType.parseMediaType(ct) : MediaType.APPLICATION_OCTET_STREAM);
+            headers.setCacheControl("no-cache, no-store, must-revalidate");
+            return new ResponseEntity<>(bytes, headers, HttpStatus.OK);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @PutMapping(path = "/{id}/icon", consumes = { "multipart/form-data" })
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Upload project icon", description = "Uploads a new icon for the project (Admin only)")
+    public ResponseEntity<Project> uploadProjectIcon(
+            @PathVariable Long id,
+            @RequestPart("icon") MultipartFile iconFile) {
+        try {
+            Project updated = projectService.uploadIcon(id, iconFile);
+            return updated != null ? ResponseEntity.ok(updated) : ResponseEntity.notFound().build();
+        } catch (IOException | SQLException e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @PutMapping("/{id}/icon-path")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Update project icon", description = "Updates the project's icon by specifying an existing path (Admin only)")
+    public ResponseEntity<Project> updateProjectIcon(
+            @PathVariable Long id,
+            @RequestParam String imagePath) {
+        try {
+            Project updated = projectService.updateIcon(id, imagePath);
+            return updated != null ? ResponseEntity.ok(updated) : ResponseEntity.notFound().build();
         } catch (IOException | SQLException e) {
             return ResponseEntity.badRequest().build();
         }

@@ -7,6 +7,8 @@ export type Project = {
     
     // Header picture
     headerPictureString?: string;
+    // Icon image
+    iconString?: string;
     
     // Gallery (paths to images)
     gallery?: string[];
@@ -38,6 +40,7 @@ export type ProjectCreateRequest = {
     description: string;
     finished: boolean;
     headerPicturePath?: string;
+    iconPath?: string;
     technologies: string[];
     liveDemoUrl?: string;
     projectWebsiteUrl?: string;
