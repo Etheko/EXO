@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -21,6 +22,7 @@ import com.exo.dto.UpdateUserBasicInfoDTO;
 import com.exo.dto.UpdateUserSocialLinksDTO;
 
 @Service
+@Transactional(readOnly = true)
 public class UserService implements UserDetailsService {
 
     @Autowired
@@ -31,6 +33,7 @@ public class UserService implements UserDetailsService {
      * ==========================
      */
 
+    @Transactional
     public User saveUser(User user) {
         return userRepository.save(user);
     }
@@ -47,6 +50,7 @@ public class UserService implements UserDetailsService {
         return userRepository.findAll();
     }
 
+    @Transactional
     public void deleteUser(String username) {
         userRepository.deleteById(username);
     }
@@ -69,6 +73,7 @@ public class UserService implements UserDetailsService {
      * ==========================
      */
 
+    @Transactional
     public User uploadProfilePicture(String username, MultipartFile file) throws IOException, SQLException {
         User user = userRepository.findByUsername(username);
         if (user != null) {
@@ -79,6 +84,7 @@ public class UserService implements UserDetailsService {
         return null;
     }
 
+    @Transactional
     public User updateProfilePicture(String username, String imagePath) throws IOException, SQLException {
         User user = userRepository.findByUsername(username);
         if (user != null) {
@@ -89,6 +95,7 @@ public class UserService implements UserDetailsService {
         return null;
     }
 
+    @Transactional
     public User updateBasicInfo(String username, UpdateUserBasicInfoDTO dto) {
         User user = userRepository.findByUsername(username);
         if (user != null) {
@@ -105,6 +112,7 @@ public class UserService implements UserDetailsService {
         return null;
     }
 
+    @Transactional
     public User updateSocialLinks(String username, UpdateUserSocialLinksDTO dto) {
         User user = userRepository.findByUsername(username);
         if (user != null) {
@@ -244,6 +252,7 @@ public class UserService implements UserDetailsService {
      * ==========================
      */
 
+    @Transactional
     public User addGalleryImage(String username, String imagePath) throws IOException, SQLException {
         User user = userRepository.findByUsername(username);
         if (user != null) {
@@ -253,6 +262,7 @@ public class UserService implements UserDetailsService {
         return null;
     }
 
+    @Transactional
     public User removeGalleryImage(String username, int index) {
         User user = userRepository.findByUsername(username);
         if (user != null) {
@@ -267,6 +277,7 @@ public class UserService implements UserDetailsService {
      * ==========================
      */
 
+    @Transactional
     public User addProject(String username, Project project) {
         User user = userRepository.findByUsername(username);
         if (user != null) {
@@ -276,6 +287,7 @@ public class UserService implements UserDetailsService {
         return null;
     }
 
+    @Transactional
     public User removeProject(String username, Long projectId) {
         User user = userRepository.findByUsername(username);
         if (user != null) {
@@ -290,6 +302,7 @@ public class UserService implements UserDetailsService {
      * ==========================
      */
 
+    @Transactional
     public User addCertificate(String username, Certificate certificate) {
         User user = userRepository.findByUsername(username);
         if (user != null) {
@@ -299,6 +312,7 @@ public class UserService implements UserDetailsService {
         return null;
     }
 
+    @Transactional
     public User removeCertificate(String username, Long certificateId) {
         User user = userRepository.findByUsername(username);
         if (user != null) {
@@ -313,6 +327,7 @@ public class UserService implements UserDetailsService {
      * ==========================
      */
 
+    @Transactional
     public User addCourse(String username, Course course) {
         User user = userRepository.findByUsername(username);
         if (user != null) {
@@ -322,6 +337,7 @@ public class UserService implements UserDetailsService {
         return null;
     }
 
+    @Transactional
     public User removeCourse(String username, Long courseId) {
         User user = userRepository.findByUsername(username);
         if (user != null) {
@@ -336,6 +352,7 @@ public class UserService implements UserDetailsService {
      * ==========================
      */
 
+    @Transactional
     public User updateCV(String username, CV cv) {
         User user = userRepository.findByUsername(username);
         if (user != null) {
@@ -350,6 +367,7 @@ public class UserService implements UserDetailsService {
      * ==========================
      */
 
+    @Transactional
     public User addLike(String username, String like) {
         User user = userRepository.findByUsername(username);
         if (user != null) {
@@ -359,6 +377,7 @@ public class UserService implements UserDetailsService {
         return null;
     }
 
+    @Transactional
     public User addDislike(String username, String dislike) {
         User user = userRepository.findByUsername(username);
         if (user != null) {
@@ -368,6 +387,7 @@ public class UserService implements UserDetailsService {
         return null;
     }
 
+    @Transactional
     public User removeLike(String username, String like) {
         User user = userRepository.findByUsername(username);
         if (user != null) {
@@ -377,6 +397,7 @@ public class UserService implements UserDetailsService {
         return null;
     }
 
+    @Transactional
     public User removeDislike(String username, String dislike) {
         User user = userRepository.findByUsername(username);
         if (user != null) {

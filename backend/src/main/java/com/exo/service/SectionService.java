@@ -5,11 +5,13 @@ import com.exo.model.Section;
 import com.exo.repository.SectionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
 
 @Service
+@Transactional(readOnly = true)
 public class SectionService {
 
     @Autowired
@@ -23,6 +25,7 @@ public class SectionService {
      * ==========================
      */
 
+    @Transactional
     public Section saveSection(Section section) {
         if (!securityService.isCurrentUserAdmin()) {
             throw new UnauthorizedAccessException("Only administrators can save sections");
@@ -38,6 +41,7 @@ public class SectionService {
         return sectionRepository.findAll();
     }
 
+    @Transactional
     public void deleteById(Long id) {
         if (!securityService.isCurrentUserAdmin()) {
             throw new UnauthorizedAccessException("Only administrators can delete sections");
@@ -50,6 +54,7 @@ public class SectionService {
      * ==========================
      */
 
+    @Transactional
     public Section createSection(String slug, String title, String description, 
                                 String content, Integer displayOrder, Boolean published, String componentType) {
         if (!securityService.isCurrentUserAdmin()) {
@@ -67,6 +72,7 @@ public class SectionService {
         return sectionRepository.save(section);
     }
 
+    @Transactional
     public Section updateSection(Long id, String slug, String title, String description,
                                 String content, Integer displayOrder, Boolean published, String componentType) {
         if (!securityService.isCurrentUserAdmin()) {
@@ -93,6 +99,7 @@ public class SectionService {
      * ==========================
      */
 
+    @Transactional
     public Section publishSection(Long id) {
         if (!securityService.isCurrentUserAdmin()) {
             throw new UnauthorizedAccessException("Only administrators can publish sections");
@@ -107,6 +114,7 @@ public class SectionService {
         return null;
     }
 
+    @Transactional
     public Section unpublishSection(Long id) {
         if (!securityService.isCurrentUserAdmin()) {
             throw new UnauthorizedAccessException("Only administrators can unpublish sections");
@@ -161,6 +169,7 @@ public class SectionService {
      * ==========================
      */
 
+    @Transactional
     public Section updateDisplayOrder(Long id, Integer newOrder) {
         if (!securityService.isCurrentUserAdmin()) {
             throw new UnauthorizedAccessException("Only administrators can update section display order");
@@ -175,6 +184,7 @@ public class SectionService {
         return null;
     }
 
+    @Transactional
     public List<Section> reorderSections(List<Long> sectionIds) {
         if (!securityService.isCurrentUserAdmin()) {
             throw new UnauthorizedAccessException("Only administrators can reorder sections");
@@ -192,6 +202,7 @@ public class SectionService {
      * ==========================
      */
 
+    @Transactional
     public Section updateContent(Long id, String content) {
         if (!securityService.isCurrentUserAdmin()) {
             throw new UnauthorizedAccessException("Only administrators can update section content");
@@ -206,6 +217,7 @@ public class SectionService {
         return null;
     }
 
+    @Transactional
     public Section updateTitle(Long id, String title) {
         if (!securityService.isCurrentUserAdmin()) {
             throw new UnauthorizedAccessException("Only administrators can update section title");
@@ -220,6 +232,7 @@ public class SectionService {
         return null;
     }
 
+    @Transactional
     public Section updateDescription(Long id, String description) {
         if (!securityService.isCurrentUserAdmin()) {
             throw new UnauthorizedAccessException("Only administrators can update section description");
