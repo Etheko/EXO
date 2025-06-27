@@ -59,13 +59,6 @@ public class UserInitializer {
                                     !Objects.equals(existingUser.getLikes(), expectedUser.getLikes()) ||
                                     !Objects.equals(existingUser.getDislikes(), expectedUser.getDislikes());
                 
-                // Always ensure pfp is not null
-                if (existingUser.getPfp() == null) {
-                    existingUser.setPfpString("/assets/defaultProfilePicture.png");
-                    existingUser.setPfp(existingUser.localImageToBlob(existingUser.getPfpString()));
-                    needsUpdate = true;
-                }
-
                 if (needsUpdate) {
                     log.info("Updating existing user 'etheko' with new data");
                     
@@ -117,12 +110,6 @@ public class UserInitializer {
         // IMPORTANT: Use a strong password in production and store it securely
         user.setPassword(passwordEncoder.encode("admin"));
         user.setRole(Role.ADMIN);
-        try {
-            user.setPfpString("/assets/defaultProfilePicture.png");
-            user.setPfp(user.localImageToBlob(user.getPfpString()));
-        } catch (Exception e) {
-            log.error("Failed to set default profile picture for etheko.", e);
-        }
         user.setDateOfBirth(LocalDate.of(2003, 3, 23));
         user.setRealName("Ethan");
         user.setFirstSurname("Ruiz");

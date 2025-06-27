@@ -45,18 +45,7 @@ class UserService {
       description?: string;
     },
   ): Promise<User> {
-    const params = new URLSearchParams();
-    // Backend expects all params (non-null)
-    params.append('realName', info.realName ?? '');
-    params.append('firstSurname', info.firstSurname ?? '');
-    params.append('secondSurname', info.secondSurname ?? '');
-    params.append('nick', info.nick ?? '');
-    params.append('email', info.email ?? '');
-    params.append('genderIdentity', info.genderIdentity ?? '');
-    params.append('distinctivePhrase', info.distinctivePhrase ?? '');
-    params.append('description', info.description ?? '');
-
-    const response = await api.put<User>(`/users/${username}/basic-info?${params.toString()}`);
+    const response = await api.put<User>(`/users/${username}/basic-info`, info);
     return response.data;
   }
 
@@ -73,11 +62,7 @@ class UserService {
       linkedIn?: string | null;
     },
   ): Promise<User> {
-    const params = new URLSearchParams();
-    Object.entries(links).forEach(([k, v]) => {
-      if (v !== undefined) params.append(k, v ?? '');
-    });
-    const response = await api.put<User>(`/users/${username}/social-links?${params.toString()}`);
+    const response = await api.put<User>(`/users/${username}/social-links`, links);
     return response.data;
   }
 

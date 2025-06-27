@@ -17,6 +17,8 @@ import java.sql.Blob;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
+import com.exo.dto.UpdateUserBasicInfoDTO;
+import com.exo.dto.UpdateUserSocialLinksDTO;
 
 @Service
 public class UserService implements UserDetailsService {
@@ -87,37 +89,33 @@ public class UserService implements UserDetailsService {
         return null;
     }
 
-    public User updateBasicInfo(String username, String realName, String firstSurname, 
-                               String secondSurname, String nick, String email, 
-                               String genderIdentity, String distinctivePhrase, String description) {
+    public User updateBasicInfo(String username, UpdateUserBasicInfoDTO dto) {
         User user = userRepository.findByUsername(username);
         if (user != null) {
-            user.setRealName(realName);
-            user.setFirstSurname(firstSurname);
-            user.setSecondSurname(secondSurname);
-            user.setNick(nick);
-            user.setEmail(email);
-            user.setGenderIdentity(genderIdentity);
-            user.setDistinctivePhrase(distinctivePhrase);
-            user.setDescription(description);
+            if (dto.getRealName() != null) user.setRealName(dto.getRealName());
+            if (dto.getFirstSurname() != null) user.setFirstSurname(dto.getFirstSurname());
+            if (dto.getSecondSurname() != null) user.setSecondSurname(dto.getSecondSurname());
+            if (dto.getNick() != null) user.setNick(dto.getNick());
+            if (dto.getEmail() != null) user.setEmail(dto.getEmail());
+            if (dto.getGenderIdentity() != null) user.setGenderIdentity(dto.getGenderIdentity());
+            if (dto.getDistinctivePhrase() != null) user.setDistinctivePhrase(dto.getDistinctivePhrase());
+            if (dto.getDescription() != null) user.setDescription(dto.getDescription());
             return userRepository.save(user);
         }
         return null;
     }
 
-    public User updateSocialLinks(String username, String github, String instagram, String facebook, 
-                                 String xUsername, String mastodon, String bluesky, String tiktok, 
-                                 String linkedIn) {
+    public User updateSocialLinks(String username, UpdateUserSocialLinksDTO dto) {
         User user = userRepository.findByUsername(username);
         if (user != null) {
-            user.setGithub(github != null ? buildGithubUrl(github) : null);
-            user.setInstagram(instagram != null ? buildInstagramUrl(instagram) : null);
-            user.setFacebook(facebook != null ? buildFacebookUrl(facebook) : null);
-            user.setXUsername(xUsername != null ? buildXUrl(xUsername) : null);
-            user.setMastodon(mastodon != null ? buildMastodonUrl(mastodon) : null);
-            user.setBluesky(bluesky != null ? buildBlueskyUrl(bluesky) : null);
-            user.setTiktok(tiktok != null ? buildTiktokUrl(tiktok) : null);
-            user.setLinkedIn(linkedIn != null ? buildLinkedInUrl(linkedIn) : null);
+            if (dto.getGithub() != null) user.setGithub(buildGithubUrl(dto.getGithub()));
+            if (dto.getInstagram() != null) user.setInstagram(buildInstagramUrl(dto.getInstagram()));
+            if (dto.getFacebook() != null) user.setFacebook(buildFacebookUrl(dto.getFacebook()));
+            if (dto.getXUsername() != null) user.setXUsername(buildXUrl(dto.getXUsername()));
+            if (dto.getMastodon() != null) user.setMastodon(buildMastodonUrl(dto.getMastodon()));
+            if (dto.getBluesky() != null) user.setBluesky(buildBlueskyUrl(dto.getBluesky()));
+            if (dto.getTiktok() != null) user.setTiktok(buildTiktokUrl(dto.getTiktok()));
+            if (dto.getLinkedIn() != null) user.setLinkedIn(buildLinkedInUrl(dto.getLinkedIn()));
             return userRepository.save(user);
         }
         return null;

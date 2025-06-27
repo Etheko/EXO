@@ -22,6 +22,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import com.exo.dto.UpdateUserBasicInfoDTO;
+import com.exo.dto.UpdateUserSocialLinksDTO;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -236,16 +238,8 @@ public class UserController {
     public ResponseEntity<User> updateBasicInfo(
             @Parameter(description = "Username of the user") 
             @PathVariable String username,
-            @Parameter(description = "Real name") @RequestParam String realName,
-            @Parameter(description = "First surname") @RequestParam String firstSurname,
-            @Parameter(description = "Second surname") @RequestParam String secondSurname,
-            @Parameter(description = "Nickname") @RequestParam String nick,
-            @Parameter(description = "Email address") @RequestParam String email,
-            @Parameter(description = "Gender identity") @RequestParam String genderIdentity,
-            @Parameter(description = "Distinctive phrase") @RequestParam String distinctivePhrase,
-            @Parameter(description = "Description") @RequestParam String description) {
-        User updatedUser = userService.updateBasicInfo(username, realName, firstSurname, 
-                                                     secondSurname, nick, email, genderIdentity, distinctivePhrase, description);
+            @RequestBody UpdateUserBasicInfoDTO basicInfoDTO) {
+        User updatedUser = userService.updateBasicInfo(username, basicInfoDTO);
         return updatedUser != null ? ResponseEntity.ok(updatedUser) : ResponseEntity.notFound().build();
     }
 
@@ -260,16 +254,8 @@ public class UserController {
     public ResponseEntity<User> updateSocialLinks(
             @Parameter(description = "Username of the user") 
             @PathVariable String username,
-            @Parameter(description = "GitHub username") @RequestParam(required = false) String github,
-            @Parameter(description = "Instagram username") @RequestParam(required = false) String instagram,
-            @Parameter(description = "Facebook profile") @RequestParam(required = false) String facebook,
-            @Parameter(description = "X (Twitter) username") @RequestParam(required = false) String xUsername,
-            @Parameter(description = "Mastodon profile") @RequestParam(required = false) String mastodon,
-            @Parameter(description = "Bluesky username") @RequestParam(required = false) String bluesky,
-            @Parameter(description = "TikTok username") @RequestParam(required = false) String tiktok,
-            @Parameter(description = "LinkedIn profile") @RequestParam(required = false) String linkedIn) {
-        User updatedUser = userService.updateSocialLinks(username, github, instagram, facebook, 
-                                                       xUsername, mastodon, bluesky, tiktok, linkedIn);
+            @RequestBody UpdateUserSocialLinksDTO socialLinksDTO) {
+        User updatedUser = userService.updateSocialLinks(username, socialLinksDTO);
         return updatedUser != null ? ResponseEntity.ok(updatedUser) : ResponseEntity.notFound().build();
     }
 

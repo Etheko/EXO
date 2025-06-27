@@ -105,7 +105,7 @@ public class User implements UserDetails {
      * ==========================
      */
 
-    @ElementCollection(fetch = FetchType.LAZY)
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "user_gallery", joinColumns = @JoinColumn(name = "username"))
     @Column(name = "image_blob")
     @Lob
@@ -147,18 +147,18 @@ public class User implements UserDetails {
      */
 
     // One user can showcase many projects
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<Project> projects = new ArrayList<>();
 
     // Certificates & Courses
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<Certificate> certificates = new ArrayList<>();
 
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<Course> courses = new ArrayList<>();
 
     // Single CV reference
-    @OneToOne(cascade = CascadeType.ALL)
+    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private CV cv;
 
     /* ==========================
