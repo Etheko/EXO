@@ -24,6 +24,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import com.exo.dto.UpdateUserBasicInfoDTO;
 import com.exo.dto.UpdateUserSocialLinksDTO;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -36,6 +38,8 @@ import java.util.Optional;
 @RequestMapping("/api/users")
 @Tag(name = "User Management", description = "APIs for managing user profiles, gallery, projects, certificates, courses, and CV")
 public class UserController {
+
+    private static final Logger logger = LoggerFactory.getLogger(UserController.class);
 
     @Autowired
     private UserService userService;
@@ -268,11 +272,13 @@ public class UserController {
     public ResponseEntity<byte[]> getProfilePicture(@PathVariable String username) {
         Optional<User> userOpt = userService.findByUsername(username);
         if (userOpt.isEmpty()) {
+            logger.warn("Profile picture requested for non-existent user: {}", username);
             return ResponseEntity.notFound().build();
         }
         User user = userOpt.get();
         try {
             if (user.getPfp() == null) {
+                logger.warn("Profile picture for user '{}' is null.", username);
                 return ResponseEntity.notFound().build();
             }
             byte[] bytes = user.getPfp().getBytes(1, (int) user.getPfp().length());
@@ -286,6 +292,8 @@ public class UserController {
             headers.setCacheControl("no-cache, no-store, must-revalidate");
             return new ResponseEntity<>(bytes, headers, HttpStatus.OK);
         } catch (Exception e) {
+            logger.error("Failed to get profile picture for user: " + username, e);
+            // Return a 500 internal server error. The client already receives this, but now we have logs.
             return ResponseEntity.internalServerError().build();
         }
     }
