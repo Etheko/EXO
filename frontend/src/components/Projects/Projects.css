@@ -138,8 +138,9 @@
     font-family: 'Outfit', sans-serif;
     font-weight: 700;
     font-size: 2.5rem;
-    color: rgba(255, 255, 255, 0.8);
+    color: rgba(255, 255, 255, 0.4);
     margin-bottom: 1rem;
+    text-align: left;
 }
 
 .project-title-card {
