@@ -270,18 +270,13 @@ public class UserController {
     @GetMapping(path = "/{username}/pfp")
     @Operation(summary = "Get profile picture", description = "Returns the user's profile picture bytes")
     public ResponseEntity<byte[]> getProfilePicture(@PathVariable String username) {
-        Optional<User> userOpt = userService.findByUsername(username);
-        if (userOpt.isEmpty()) {
-            logger.warn("Profile picture requested for non-existent user: {}", username);
-            return ResponseEntity.notFound().build();
-        }
-        User user = userOpt.get();
         try {
-            if (user.getPfp() == null) {
-                logger.warn("Profile picture for user '{}' is null.", username);
+            byte[] bytes = userService.getProfilePicture(username);
+
+            if (bytes == null || bytes.length == 0) {
+                logger.warn("Profile picture not found or is empty for user: {}", username);
                 return ResponseEntity.notFound().build();
             }
-            byte[] bytes = user.getPfp().getBytes(1, (int) user.getPfp().length());
 
             HttpHeaders headers = new HttpHeaders();
             String ct;
@@ -293,7 +288,6 @@ public class UserController {
             return new ResponseEntity<>(bytes, headers, HttpStatus.OK);
         } catch (Exception e) {
             logger.error("Failed to get profile picture for user: " + username, e);
-            // Return a 500 internal server error. The client already receives this, but now we have logs.
             return ResponseEntity.internalServerError().build();
         }
     }

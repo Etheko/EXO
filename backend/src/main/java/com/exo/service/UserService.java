@@ -69,6 +69,19 @@ public class UserService implements UserDetailsService {
     }
 
     /* ==========================
+     *      PFP MANAGEMENT
+     * ==========================
+     */
+    
+    public byte[] getProfilePicture(String username) throws SQLException {
+        User user = userRepository.findByUsername(username);
+        if (user != null && user.getPfp() != null) {
+            return user.getPfp().getBytes(1, (int) user.getPfp().length());
+        }
+        return null;
+    }
+
+    /* ==========================
      *      PROFILE MANAGEMENT
      * ==========================
      */
