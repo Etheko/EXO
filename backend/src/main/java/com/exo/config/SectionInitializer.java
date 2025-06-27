@@ -33,15 +33,14 @@ public class SectionInitializer {
         // Define the expected sections with their data
         List<Section> expectedSections = Arrays.asList(
             createSection("init-etheko", "INIT::Etheko()", "// Who am I?", "", 0, true, "about"),
-            createSection("build-stream", "BUILD_STREAM[]", "// Current Projects", "", 1, true, "projects"),
-            createSection("retro-log", "RETRO_LOG{}", "// Past Projects", "", 2, true, "projects"),
-            createSection("modules-loaded", "MODULES_LOADED", "// Tech Stack", "", 3, false, "tech-stack"),
-            createSection("ux-lab", "UX.LAB{👾}", "// Design Zone", "", 4, false, "design"),
-            createSection("sys-sec-insights", "SYS_SEC::INSIGHTS", "// Cyber Logs", "", 5, false, "cyber-logs"),
-            createSection("pipeline-workflow", "PIPELINE::WORKFLOW", "// DevOps & Agile", "", 6, false, "devops"),
-            createSection("blog", "blog.txt", "// Thoughts & Posts", "", 7, false, "blog"),
-            createSection("contact", "contact.txt", "// CV & Links", "", 8, false, "contact"),
-            createSection("certs", "CERTS.log", "// Certificates & Courses", "", 9, false, "certificates")
+            createSection("projects", "PROJECTS.log", "// On-going & Finished", "", 1, true, "projects"),
+            createSection("modules-loaded", "MODULES_LOADED", "// Tech Stack", "", 2, false, "tech-stack"),
+            createSection("ux-lab", "UX.LAB{👾}", "// Design Zone", "", 3, false, "design"),
+            createSection("sys-sec-insights", "SYS_SEC::INSIGHTS", "// Cyber Logs", "", 4, false, "cyber-logs"),
+            createSection("pipeline-workflow", "PIPELINE::WORKFLOW", "// DevOps & Agile", "", 5, false, "devops"),
+            createSection("blog", "blog.txt", "// Thoughts & Posts", "", 6, false, "blog"),
+            createSection("contact", "contact.txt", "// CV & Links", "", 7, false, "contact"),
+            createSection("certs", "CERTS.log", "// Certificates & Courses", "", 8, false, "certificates")
         );
         
         // Get existing sections by slug for easy lookup

@@ -3,6 +3,7 @@ export type Project = {
     id?: number;
     title: string;
     description: string;
+    finished: boolean;
     
     // Header picture
     headerPictureString?: string;
@@ -35,6 +36,7 @@ export type Project = {
 export type ProjectCreateRequest = {
     title: string;
     description: string;
+    finished: boolean;
     headerPicturePath?: string;
     technologies: string[];
     liveDemoUrl?: string;

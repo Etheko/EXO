@@ -53,6 +53,10 @@ public class Project {
     @Column(nullable = false, length = 1000)
     private String description;
 
+    @JsonView(BasicInfo.class)
+    @Column(nullable = false)
+    private boolean finished = false;
+
     /* ==========================
      *      HEADER PICTURE
      * ==========================
@@ -147,12 +151,13 @@ public class Project {
     public Project() {
     }
 
-    public Project(String title, String description, String headerPicturePath,
+    public Project(String title, String description, boolean finished, String headerPicturePath,
                    List<String> technologies, String liveDemoUrl, String projectWebsiteUrl,
                    String github, String instagram, String facebook, String xUsername,
                    String mastodon, String bluesky, String tiktok) throws IOException, SQLException {
         this.title = title;
         this.description = description;
+        this.finished = finished;
         this.technologies = technologies != null ? technologies : new ArrayList<>();
         this.liveDemoUrl = liveDemoUrl;
         this.projectWebsiteUrl = projectWebsiteUrl;
@@ -284,6 +289,10 @@ public class Project {
 
     public void removeTechnology(String technology) {
         this.technologies.remove(technology);
+    }
+
+    public void setFinished(boolean finished) {
+        this.finished = finished;
     }
 
     public Blob localImageToBlob(String imgPath) throws IOException, SQLException {

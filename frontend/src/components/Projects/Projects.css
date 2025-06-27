@@ -220,4 +220,50 @@
     border-color: rgba(255, 255, 255, 0.4);
     color: white;
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* ==========================
+ *   SECTION STYLES
+ * ==========================*/
+
+.projects-section {
+    margin-bottom: 2.5rem;
+}
+
+.section-subtitle {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 600;
+    font-size: 1.5rem;
+    color: white;
+    margin: 0;
+}
+
+/* Subtitle container with horizontal separator */
+.section-subtitle-container {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    margin: 0 0 1.5rem 0;
+}
+
+.section-subtitle-container::after {
+    content: '';
+    flex-grow: 1;
+    margin-left: 1rem;
+
+    /* --- Dotted Line --- */
+    --dot-color: rgba(255, 255, 255, 0.22);
+    --dot-diameter: 7px;
+    --dot-spacing: 10px;
+
+    height: var(--dot-diameter);
+
+    background-image: radial-gradient(
+        circle at center,
+        var(--dot-color) calc(var(--dot-diameter) / 2 - 0.5px),
+        transparent calc(var(--dot-diameter) / 2 + 0.5px)
+    );
+    background-size: calc(var(--dot-diameter) + var(--dot-spacing)) var(--dot-diameter);
+    background-repeat: space;
+    background-position: center;
 } 

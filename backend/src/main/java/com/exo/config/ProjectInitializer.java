@@ -34,6 +34,7 @@ public class ProjectInitializer {
         List<Project> expectedProjects = Arrays.asList(
             createProject("portfolio-website", "Portfolio Website", 
                 "A modern portfolio website built with React, Spring Boot, and MySQL. Features a responsive design, dark mode, and smooth animations.",
+                true,
                 "/assets/projects/portfolio-header.jpg",
                 Arrays.asList("React", "TypeScript", "Spring Boot", "MySQL", "Tailwind CSS"),
                 "https://your-portfolio.com",
@@ -42,6 +43,7 @@ public class ProjectInitializer {
                 
             createProject("task-management-app", "Task Management App",
                 "A full-stack task management application with real-time updates, user authentication, and collaborative features.",
+                true,
                 "/assets/projects/task-manager-header.jpg",
                 Arrays.asList("Angular", "Node.js", "MongoDB", "Socket.io", "Express"),
                 "https://task-manager-demo.com",
@@ -50,6 +52,7 @@ public class ProjectInitializer {
                 
             createProject("ecommerce-platform", "E-commerce Platform",
                 "A complete e-commerce solution with payment processing, inventory management, and admin dashboard.",
+                false,
                 "/assets/projects/ecommerce-header.jpg",
                 Arrays.asList("Vue.js", "Spring Boot", "PostgreSQL", "Stripe API", "Redis"),
                 "https://ecommerce-demo.com",
@@ -79,7 +82,8 @@ public class ProjectInitializer {
                                     !Objects.equals(existingProject.getXUsername(), expectedProject.getXUsername()) ||
                                     !Objects.equals(existingProject.getMastodon(), expectedProject.getMastodon()) ||
                                     !Objects.equals(existingProject.getBluesky(), expectedProject.getBluesky()) ||
-                                    !Objects.equals(existingProject.getTiktok(), expectedProject.getTiktok());
+                                    !Objects.equals(existingProject.getTiktok(), expectedProject.getTiktok()) ||
+                                    existingProject.isFinished() != expectedProject.isFinished();
                 
                 if (needsUpdate) {
                     existingProject.setDescription(expectedProject.getDescription());
@@ -94,6 +98,7 @@ public class ProjectInitializer {
                     existingProject.setMastodon(expectedProject.getMastodon());
                     existingProject.setBluesky(expectedProject.getBluesky());
                     existingProject.setTiktok(expectedProject.getTiktok());
+                    existingProject.setFinished(expectedProject.isFinished());
                     
                     try {
                         // Update header picture blob if path has changed
@@ -137,12 +142,12 @@ public class ProjectInitializer {
         System.out.println("Project initialization completed. Total projects: " + projectRepository.count());
     }
     
-    private Project createProject(String slug, String title, String description, String headerPicturePath,
+    private Project createProject(String slug, String title, String description, boolean finished, String headerPicturePath,
                                 List<String> technologies, String liveDemoUrl, String projectWebsiteUrl,
                                 String github, String instagram, String facebook, String xUsername,
                                 String mastodon, String bluesky, String tiktok) {
         try {
-            return new Project(title, description, headerPicturePath, technologies, liveDemoUrl, 
+            return new Project(title, description, finished, headerPicturePath, technologies, liveDemoUrl, 
                              projectWebsiteUrl, github, instagram, facebook, xUsername, 
                              mastodon, bluesky, tiktok);
         } catch (Exception e) {
@@ -151,6 +156,7 @@ public class ProjectInitializer {
             Project project = new Project();
             project.setTitle(title);
             project.setDescription(description);
+            project.setFinished(finished);
             project.setHeaderPictureString(headerPicturePath);
             project.setTechnologies(technologies);
             project.setLiveDemoUrl(liveDemoUrl);
