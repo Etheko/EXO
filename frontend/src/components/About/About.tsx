@@ -33,6 +33,7 @@ import Error from '../Error';
 import { useError } from '../../hooks/useError';
 import { ERROR_CODES } from '../../utils/errorCodes';
 import SocialEditWindow from './SocialEditWindow';
+import { backendUrl } from '../../services/api';
 
 // Utility: create tooltip handlers that broadcast tooltip text to Navbar
 const createTooltipHandlers = (text: string) => ({
@@ -637,8 +638,6 @@ const About = () => {
 
     const showUploadOverlay = isAdmin && isHoveringPfp && !newProfilePic;
 
-    const backendBase = (import.meta as any).env.VITE_BACKEND_URL || 'http://localhost:8080';
-
     return (
         <div className="about-component">
             <header className="about-header">
@@ -824,7 +823,7 @@ const About = () => {
                                 {imageLoading && <LoadingSpinner fullViewport={false} />}
                                 {imageError && <Error fullViewport={false} errorCode={ERROR_CODES.INTERNAL.IMAGE_LOAD_TIMEOUT} />}
                                 <img
-                                    src={user.pfpString ? (user.pfpString.startsWith('/api') ? `${backendBase}${user.pfpString}` : user.pfpString) : '/assets/defaultProfilePicture.png'}
+                                    src={user.pfpString ? (user.pfpString.startsWith('/api') ? `${backendUrl}${user.pfpString}` : user.pfpString) : '/assets/defaultProfilePicture.png'}
                                     alt="Profile"
                                     className="profile-image"
                                     style={{ display: imageError ? 'none' : 'block' }}

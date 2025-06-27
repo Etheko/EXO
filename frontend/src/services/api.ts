@@ -1,10 +1,25 @@
 import axios from 'axios';
 import LoginService from './LoginService';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
+// Function to determine the backend URL with a safe fallback for production
+const getBackendUrl = () => {
+    const envUrl = (import.meta as any).env.VITE_BACKEND_URL;
+    if (envUrl) {
+        return envUrl;
+    }
+    // If no env var, fallback based on dev/prod mode
+    if ((import.meta as any).env.PROD) {
+        // Fallback for production if the env var is missing
+        console.warn("VITE_BACKEND_URL is not set. Falling back to production URL. Please set it in your Vercel project settings.");
+        return 'https://exo-t74s.onrender.com';
+    }
+    return 'http://localhost:8080';
+};
+
+export const backendUrl = getBackendUrl();
 
 const api = axios.create({
-    baseURL: API_BASE_URL,
+    baseURL: `${backendUrl}/api`,
     headers: {
         'Content-Type': 'application/json',
     },
