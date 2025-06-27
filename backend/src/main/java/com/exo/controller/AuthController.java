@@ -7,6 +7,8 @@ import com.exo.service.AuthenticationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -21,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
     private final AuthenticationService authenticationService;
+    private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
 
     @PostMapping("/signup")
     @PreAuthorize("hasRole('ADMIN')")
@@ -36,6 +39,14 @@ public class AuthController {
     @PostMapping("/login")
     @Operation(summary = "Log in a user", description = "Authenticates a user and returns JWT tokens.")
     public ResponseEntity<JwtAuthenticationResponse> login(@RequestBody LoginRequest request) {
-        return ResponseEntity.ok(authenticationService.login(request));
+        logger.info("Login attempt for user: {}", request.getUsername());
+        try {
+            JwtAuthenticationResponse response = authenticationService.login(request);
+            logger.info("Login successful for user: {}", request.getUsername());
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            logger.error("Login failed for user: " + request.getUsername(), e);
+            throw e;
+        }
     }
 }
