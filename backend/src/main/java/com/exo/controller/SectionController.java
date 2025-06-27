@@ -4,7 +4,10 @@ import com.exo.model.Section;
 import com.exo.service.SectionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -16,6 +19,8 @@ import java.util.List;
 @RequestMapping("/api/sections")
 @Tag(name = "Section Management", description = "APIs for managing portfolio sections")
 public class SectionController {
+
+    private static final Logger logger = LoggerFactory.getLogger(SectionController.class);
 
     @Autowired
     private SectionService sectionService;
@@ -142,8 +147,20 @@ public class SectionController {
     @Operation(summary = "Get section by slug", description = "Retrieve a section by its unique slug")
     public ResponseEntity<Section> getSectionBySlug(
             @Parameter(description = "Section slug") @PathVariable String slug) {
-        Section section = sectionService.findBySlug(slug);
-        return section != null ? ResponseEntity.ok(section) : ResponseEntity.notFound().build();
+        logger.info("Attempting to find section by slug: {}", slug);
+        try {
+            Section section = sectionService.findBySlug(slug);
+            if (section != null) {
+                logger.info("Found section with slug: {}. ID: {}", slug, section.getId());
+                return ResponseEntity.ok(section);
+            } else {
+                logger.warn("No section found with slug: {}", slug);
+                return ResponseEntity.notFound().build();
+            }
+        } catch (Exception e) {
+            logger.error("Error finding section by slug: " + slug, e);
+            throw e; // Rethrow to let the default handler create the 500 response
+        }
     }
 
     @GetMapping("/published")
