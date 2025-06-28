@@ -183,7 +183,7 @@ public class Project {
         this.tiktok = buildTiktokUrl(tiktok);
 
         if (headerPicturePath == null || headerPicturePath.isEmpty()) {
-            this.headerPictureString = "/assets/defaultProjectPicture.png";
+            this.headerPictureString = "/assets/defaultProjectHeader.png";
         } else {
             this.headerPictureString = headerPicturePath;
         }

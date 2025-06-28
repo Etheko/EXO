@@ -119,6 +119,18 @@ class ProjectService {
         });
     }
 
+    async uploadHeaderPicture(projectId: number, file: File): Promise<Project> {
+        const formData = new FormData();
+        formData.append('header', file);
+    
+        const response = await api.put<Project>(`/projects/${projectId}/header`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+        return response.data;
+    }
+
     // Statistics and analytics
     async getTechnologyStatistics(): Promise<TechnologyStats[]> {
         const response = await api.get<[string, number][]>('/projects/statistics/technologies');

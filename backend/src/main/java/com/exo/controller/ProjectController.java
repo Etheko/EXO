@@ -239,6 +239,48 @@ public class ProjectController {
     }
 
     /* ==========================
+     *   HEADER PICTURE MANAGEMENT
+     * ==========================
+     */
+
+    @GetMapping(path = "/{id}/header")
+    @Operation(summary = "Get project header", description = "Returns the project's header bytes")
+    public ResponseEntity<byte[]> getProjectHeaderPicture(@PathVariable Long id) {
+        try {
+            byte[] bytes = projectService.getHeaderPicture(id);
+
+            if (bytes == null || bytes.length == 0) {
+                return ResponseEntity.notFound().build();
+            }
+
+            HttpHeaders headers = new HttpHeaders();
+            String ct;
+            try (ByteArrayInputStream bis = new ByteArrayInputStream(bytes)) {
+                ct = URLConnection.guessContentTypeFromStream(bis);
+            }
+            headers.setContentType(ct != null ? MediaType.parseMediaType(ct) : MediaType.APPLICATION_OCTET_STREAM);
+            headers.setCacheControl("no-cache, no-store, must-revalidate");
+            return new ResponseEntity<>(bytes, headers, HttpStatus.OK);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @PutMapping(path = "/{id}/header", consumes = { "multipart/form-data" })
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Upload project header", description = "Uploads a new header for the project (Admin only)")
+    public ResponseEntity<Project> uploadProjectHeader(
+            @PathVariable Long id,
+            @RequestPart("header") MultipartFile headerFile) {
+        try {
+            Project updated = projectService.uploadHeaderPicture(id, headerFile);
+            return updated != null ? ResponseEntity.ok(updated) : ResponseEntity.notFound().build();
+        } catch (IOException | SQLException e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    /* ==========================
      *        ICON MANAGEMENT
      * ==========================
      */

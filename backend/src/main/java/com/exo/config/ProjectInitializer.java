@@ -35,7 +35,7 @@ public class ProjectInitializer {
             createProject("EXO", "Project EXO", 
                 "This website: The ✨Etheko Experience Online✨.",
                 false,
-                null,
+                "/assets/projects/project-exo-header.png",
                 "/assets/projects/project-exo-logo.svg",
                 Arrays.asList("React", "TypeScript", "Spring Boot", "PostgreSQL", "Tailwind CSS"),
                 null,

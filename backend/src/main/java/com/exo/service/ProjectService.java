@@ -155,6 +155,46 @@ public class ProjectService {
         }
     }
 
+    /* ==========================
+     *   HEADER PICTURE MANAGEMENT
+     * ==========================
+     */
+
+    public byte[] getHeaderPicture(Long projectId) throws SQLException, IOException {
+        Project project = projectRepository.findById(projectId).orElse(null);
+        if (project == null) {
+            return null;
+        }
+
+        Blob headerBlob = project.getHeaderPicture();
+
+        if (headerBlob == null && project.getHeaderPictureString() != null) {
+            try {
+                headerBlob = project.localImageToBlob(project.getHeaderPictureString(), "/assets/defaultProjectHeader.png");
+                project.setHeaderPicture(headerBlob);
+                projectRepository.save(project);
+            } catch (Exception ignored) {
+                // If loading fails, we will return null later
+            }
+        }
+
+        if (headerBlob != null) {
+            return headerBlob.getBytes(1, (int) headerBlob.length());
+        }
+        return null;
+    }
+
+    @Transactional
+    public Project uploadHeaderPicture(Long projectId, MultipartFile file) throws IOException, SQLException {
+        Project project = projectRepository.findById(projectId).orElse(null);
+        if (project != null) {
+            project.setHeaderPicture(new javax.sql.rowset.serial.SerialBlob(file.getBytes()));
+            project.setHeaderPictureString("/api/projects/" + projectId + "/header");
+            return projectRepository.save(project);
+        }
+        return null;
+    }
+
     // Validation methods
     public boolean existsById(Long id) {
         return projectRepository.existsById(id);

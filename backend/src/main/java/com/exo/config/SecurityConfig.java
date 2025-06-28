@@ -39,6 +39,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/login").permitAll()
                 .requestMatchers("/api/test/**").permitAll()
                 .requestMatchers("/api/sections/**").permitAll()
+                .requestMatchers("/assets/**", "/static/**").permitAll()
                 
                 // Auth endpoints that require authentication
                 .requestMatchers("/api/auth/me").authenticated()
@@ -83,7 +84,6 @@ public class SecurityConfig {
                 .requestMatchers("/actuator/**").permitAll()
                 
                 // Static resources
-                .requestMatchers("/assets/**", "/static/**").permitAll()
                 
                 // All other requests require authentication
                 .anyRequest().authenticated()
