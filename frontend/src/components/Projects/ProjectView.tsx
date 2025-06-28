@@ -1,5 +1,7 @@
 import { Project } from '../../types/Project';
 import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import './ProjectView.css';
 import { backendUrl } from '../../services/api';
 import SentientButton from '../SentientButton';
@@ -26,6 +28,7 @@ interface ProjectViewProps {
 
 const ProjectView = ({ project, onBack }: ProjectViewProps) => {
     const [currentImage, setCurrentImage] = useState(0);
+    const [isOverlayVisible, setIsOverlayVisible] = useState(false);
     const getImageUrl = (path?: string) => {
         if (!path) return '';
         if (path.startsWith('/api') || path.startsWith('/assets')) {
@@ -137,6 +140,88 @@ const ProjectView = ({ project, onBack }: ProjectViewProps) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [currentProject.id]);
 
+    /* ==========================
+     *  OVERLAY ANIMATIONS (mirrors LoginWindow)
+     * ==========================
+     */
+    const overlayVariants = {
+        hidden: {
+            opacity: 0,
+            backdropFilter: 'blur(0px)',
+            backgroundColor: 'rgba(0, 0, 0, 0)'
+        },
+        visible: {
+            opacity: 1,
+            backdropFilter: 'blur(8px)',
+            backgroundColor: 'rgba(0, 0, 0, 0.6)',
+            transition: {
+                duration: 0.4,
+                ease: [0.23, 1, 0.32, 1]
+            }
+        },
+        exit: {
+            opacity: 0,
+            backdropFilter: 'blur(0px)',
+            backgroundColor: 'rgba(0, 0, 0, 0)',
+            transition: {
+                duration: 0.4,
+                ease: [0.23, 1, 0.32, 1]
+            }
+        }
+    } as const;
+
+    const modalVariants = {
+        hidden: { opacity: 0, scale: 0.8 },
+        visible: {
+            opacity: 1,
+            scale: 1,
+            transition: {
+                duration: 0.4,
+                ease: [0.175, 0.885, 0.32, 1.275],
+                delay: 0.1,
+            },
+        },
+        exit: {
+            opacity: 0,
+            scale: 0.8,
+            transition: { duration: 0.3, ease: [0.23, 1, 0.32, 1] },
+        },
+    };
+
+    const controlsVariants = {
+        hidden: { y: 20, opacity: 0, x: '-50%' },
+        visible: {
+            y: 0,
+            opacity: 1,
+            x: '-50%',
+            transition: { delay: 0.2, duration: 0.4, ease: 'easeOut' },
+        },
+        exit: { y: 20, opacity: 0, x: '-50%', transition: { duration: 0.3, ease: 'easeIn' } },
+    };
+
+    const openOverlay = () => setIsOverlayVisible(true);
+    const closeOverlay = () => setIsOverlayVisible(false);
+    const handleOverlayBackgroundClick = (e: React.MouseEvent) => {
+        if (e.target === e.currentTarget) {
+            closeOverlay();
+        }
+    };
+    const handleOverlayKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'Escape') {
+            closeOverlay();
+        }
+    };
+
+    // Close overlay on global Escape press (in case modal isn't focused)
+    useEffect(() => {
+        if (!isOverlayVisible) return;
+        const handler = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') closeOverlay();
+        };
+        window.addEventListener('keydown', handler);
+        return () => window.removeEventListener('keydown', handler);
+    }, [isOverlayVisible]);
+
   return (
     <div className="project-view">
         <header 
@@ -237,10 +322,18 @@ const ProjectView = ({ project, onBack }: ProjectViewProps) => {
                                         break;
                                 }
 
+                                const getClickHandler = (offset: number): (() => void) | undefined => {
+                                    if (offset === -1) return prevImage;
+                                    if (offset === 1) return nextImage;
+                                    if (offset === 0) return openOverlay;
+                                    return undefined;
+                                };
+
                                 return isVisible ? (
                                     <div
                                         key={index}
                                         className={`carousel-image-wrapper ${stateClassName}`}
+                                        onClick={getClickHandler(offset)}
                                     >
                                         <img
                                             src={image}
@@ -255,6 +348,18 @@ const ProjectView = ({ project, onBack }: ProjectViewProps) => {
                             <SentientIOB as="button" className="carousel-arrow" onClick={nextImage} {...createTooltipHandlers('next image')}>
                                 <TbChevronRight size={24} />
                             </SentientIOB>
+                        </div>
+
+                        {/* Seeker */}
+                        <div className="carousel-seeker">
+                            {galleryImages.map((_, index) => (
+                                <span
+                                    key={index}
+                                    className={`seeker-dot ${index === currentImage ? 'active' : ''}`}
+                                    onClick={() => setCurrentImage(index)}
+                                    {...createTooltipHandlers(`image ${index + 1}`)}
+                                />
+                            ))}
                         </div>
                     </div>
                 </section>
@@ -291,6 +396,89 @@ const ProjectView = ({ project, onBack }: ProjectViewProps) => {
             accept="image/*"
             aria-label="Header picture upload"
         />
+
+        {/* ==========================
+         *  IMAGE OVERLAY MODAL
+         * ========================== */}
+        {createPortal(
+            <AnimatePresence>
+                {isOverlayVisible && (
+                    <motion.div
+                        className="image-overlay"
+                        variants={overlayVariants}
+                        initial="hidden"
+                        animate="visible"
+                        exit="exit"
+                        onClick={handleOverlayBackgroundClick}
+                    >
+                        {/* A new container to handle the animation layering */}
+                        <motion.div className="modal-container" variants={modalVariants}>
+                            <AnimatePresence mode="wait">
+                                <motion.div
+                                    key={currentImage}
+                                    className="image-modal"
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    transition={{ duration: 0.15, ease: 'easeOut' }}
+                                    onClick={(e) => e.stopPropagation()}
+                                >
+                                    <img
+                                        src={galleryImages[currentImage]}
+                                        alt="Enlarged project"
+                                        className="overlay-image"
+                                    />
+                                    <div className="edit-controls overlay-close-controls">
+                                        <SentientIOB
+                                            as="button"
+                                            hoverScale={1}
+                                            onClick={closeOverlay}
+                                            {...createTooltipHandlers('close')}
+                                        >
+                                            <TbX size={18} />
+                                        </SentientIOB>
+                                    </div>
+                                </motion.div>
+                            </AnimatePresence>
+                        </motion.div>
+
+                        {/* Bottom Controls - Positioned absolutely by CSS */}
+                        <motion.div
+                            className="overlay-controls-wrapper"
+                            variants={controlsVariants}
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            {/* Left Arrow */}
+                            <div className={`carousel-arrow-wrapper overlay-arrow ${currentImage === 0 ? 'hidden' : ''}`}>
+                                <SentientIOB as="button" className="carousel-arrow" onClick={prevImage} {...createTooltipHandlers('previous image')}>
+                                    <TbChevronLeft size={24} />
+                                </SentientIOB>
+                            </div>
+
+                            {/* Seeker */}
+                            <div className="overlay-seeker">
+                                {galleryImages.map((_, index) => (
+                                    <span
+                                        key={index}
+                                        className={`seeker-dot ${index === currentImage ? 'active' : ''}`}
+                                        onClick={() => setCurrentImage(index)}
+                                        {...createTooltipHandlers(`image ${index + 1}`)}
+                                    />
+                                ))}
+                            </div>
+
+                            {/* Right Arrow */}
+                            <div className={`carousel-arrow-wrapper overlay-arrow ${currentImage >= galleryImages.length - 1 ? 'hidden' : ''}`}>
+                                <SentientIOB as="button" className="carousel-arrow" onClick={nextImage} {...createTooltipHandlers('next image')}>
+                                    <TbChevronRight size={24} />
+                                </SentientIOB>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>,
+            document.body
+        )}
     </div>
   );
 };

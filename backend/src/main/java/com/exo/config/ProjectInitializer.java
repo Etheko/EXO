@@ -46,36 +46,29 @@ public class ProjectInitializer {
                     "/assets/projects/project-exo-gallery2.png",
                     "/assets/projects/project-exo-gallery3.png"
                 )),
-                
-            createProject("task-management-app", "Task Management App",
-                "A full-stack task management application with real-time updates, user authentication, and collaborative features.",
-                true,
-                null,
-                null,
-                Arrays.asList("Angular", "Node.js", "MongoDB", "Socket.io", "Express"),
-                "https://task-manager-demo.com",
-                "https://task-manager-demo.com",
-                "yourusername", null, null, null, null, null, null, null),
-                
-            createProject("ecommerce-platform", "E-commerce Platform",
-                "A complete e-commerce solution with payment processing, inventory management, and admin dashboard.",
-                false,
-                null,
-                null,
-                Arrays.asList("Vue.js", "Spring Boot", "PostgreSQL", "Stripe API", "Redis"),
-                "https://ecommerce-demo.com",
-                "https://ecommerce-demo.com",
-                "yourusername", "yourstore", "yourstore", "yourstore", null, null, "yourstore", null),
 
-        createProject("ai-chat-assistant", "AI Chat Assistant",
-            "An intelligent chatbot powered by machine learning that provides contextual responses and learns from conversations.",
+        createProject("bookmarks-forums", "Bookmarks Forums",
+            "2024 Bookmarks Forums project extends a book-tracking platform into a social web application, letting users not only log their reading habits but also connect around them. Its main purpose is to foster community engagement through posts and chats. Users can follow each other, join book-related communities, and interact in real time.",
             true,
+            "/assets/projects/bookmarks-forums-header.png",
+            "/assets/projects/bookmarks-forums-logo.svg",
+            Arrays.asList("Java", "Spring Boot", "Angular", "Docker", "MySQL", "WebSockets"),
             null,
-            null,
-            Arrays.asList("Python", "TensorFlow", "Flask", "React", "PostgreSQL", "Redis"),
-            "https://ai-chat-demo.com",
-            "https://ai-chat-demo.com",
-            "yourusername", null, null, null, null, null, null, null)
+            "https://github.com/codeurjc-students/2024-Bookmarks-Forums",
+            "yourusername", null, null, null, null, null, null,
+            Arrays.asList(
+                    "/assets/projects/bookmarks-forums-gallery1.png",
+                    "/assets/projects/bookmarks-forums-gallery2.png",
+                    "/assets/projects/bookmarks-forums-gallery3.png",
+                    "/assets/projects/bookmarks-forums-gallery4.png",
+                    "/assets/projects/bookmarks-forums-gallery5.png",
+                    "/assets/projects/bookmarks-forums-gallery6.png",
+                    "/assets/projects/bookmarks-forums-gallery7.png",
+                    "/assets/projects/bookmarks-forums-gallery8.png",
+                    "/assets/projects/bookmarks-forums-gallery9.png",
+                    "/assets/projects/bookmarks-forums-gallery10.png",
+                    "/assets/projects/bookmarks-forums-gallery11.png"
+            ))
         );
         
         // Get existing projects by title for easy lookup
