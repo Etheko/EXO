@@ -309,8 +309,8 @@ const Navbar = ({
             <SentientIOB 
               as="div" 
               hoverScale={1} 
-              onClick={() => {
-                LoginService.logout();
+              onClick={async () => {
+                await LoginService.performLogout();
                 setHoveredTooltip(null); // Clear tooltip immediately
               }}
               {...createTooltipHandlers('Logged in (click to logout)')}

@@ -22,6 +22,9 @@ export interface RefreshTokenRequest {
     refreshToken: string;
 }
 
+// In-memory storage for the access token to avoid XSS leakage via localStorage
+let accessTokenMemory: string | null = null;
+
 class LoginService {
     // Login user
     async login(credentials: LoginRequest): Promise<JwtAuthenticationResponse> {
@@ -35,31 +38,29 @@ class LoginService {
         return response.data;
     }
 
-    // Store tokens in localStorage
-    storeTokens(accessToken: string, refreshToken: string): void {
-        localStorage.setItem('accessToken', accessToken);
-        localStorage.setItem('refreshToken', refreshToken);
+    // Store tokens (access token only in memory; refresh token currently unused)
+    storeTokens(accessToken: string, _refreshToken?: string): void {
+        accessTokenMemory = accessToken;
     }
 
-    // Get stored access token
+    // Get stored access token (from memory)
     getAccessToken(): string | null {
-        return localStorage.getItem('accessToken');
+        return accessTokenMemory;
     }
 
-    // Get stored refresh token
+    // Get stored refresh token (not stored client-side until refresh flow is implemented)
     getRefreshToken(): string | null {
-        return localStorage.getItem('refreshToken');
+        return null;
     }
 
     // Clear stored tokens
     clearTokens(): void {
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
+        accessTokenMemory = null;
     }
 
-    // Check if user is authenticated
+    // Check if user is authenticated – simple runtime check
     isAuthenticated(): boolean {
-        return this.getAccessToken() !== null;
+        return accessTokenMemory !== null;
     }
 
     // Set authorization header for authenticated requests
@@ -72,11 +73,10 @@ class LoginService {
         delete api.defaults.headers.common['Authorization'];
     }
 
-    // Initialize auth header from stored token
+    // Initialize auth header from stored token (only works during same page lifecycle)
     initializeAuthHeader(): void {
-        const token = this.getAccessToken();
-        if (token) {
-            this.setAuthHeader(token);
+        if (accessTokenMemory) {
+            this.setAuthHeader(accessTokenMemory);
         }
     }
 
@@ -169,8 +169,17 @@ class LoginService {
     }
 
     // Complete logout flow
-    performLogout(): void {
-        this.logout();
+    async performLogout(): Promise<void> {
+        try {
+            // Call backend to clear the HttpOnly cookie
+            await api.post('/auth/logout');
+        } catch (error) {
+            console.error('Backend logout failed:', error);
+            // Continue with local cleanup even if backend call fails
+        } finally {
+            // Always clear local state
+            this.logout();
+        }
     }
 
     // Check if current token is valid and not expired

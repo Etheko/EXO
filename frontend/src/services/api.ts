@@ -20,6 +20,7 @@ export const backendUrl = getBackendUrl();
 
 const api = axios.create({
     baseURL: `${backendUrl}/api`,
+    withCredentials: true,
     headers: {
         'Content-Type': 'application/json',
     },
@@ -48,7 +49,7 @@ api.interceptors.response.use(
         // If we get a 401 Unauthorized, the token might be expired
         if (error.response?.status === 401) {
             // Logout the user since we don't have refresh token implemented yet
-            LoginService.performLogout();
+            await LoginService.performLogout();
         }
         
         return Promise.reject(error);

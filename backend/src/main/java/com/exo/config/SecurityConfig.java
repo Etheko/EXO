@@ -41,7 +41,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/sections/**").permitAll()
                 
                 // Auth endpoints that require authentication
-                .requestMatchers("/api/auth/me").permitAll()
+                .requestMatchers("/api/auth/me").authenticated()
+                .requestMatchers("/api/auth/logout").authenticated()
                 .requestMatchers("/api/auth/**").hasRole("ADMIN")
                 
                 // Projects - public read, admin write
