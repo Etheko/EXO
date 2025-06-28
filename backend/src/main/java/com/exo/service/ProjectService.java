@@ -115,6 +115,26 @@ public class ProjectService {
         }
     }
 
+    public List<String> getGalleryImagePaths(Long projectId) {
+        Project project = projectRepository.findById(projectId).orElse(null);
+        if (project != null) {
+            return project.getGalleryImagePaths();
+        }
+        return null;
+    }
+
+    public byte[] getGalleryImage(Long projectId, int index) throws SQLException, IOException {
+        Project project = projectRepository.findById(projectId).orElse(null);
+        if (project == null || project.getGallery() == null || index < 0 || index >= project.getGallery().size()) {
+            return null;
+        }
+        Blob imageBlob = project.getGallery().get(index);
+        if (imageBlob != null) {
+            return imageBlob.getBytes(1, (int) imageBlob.length());
+        }
+        return null;
+    }
+
     // Technology management
     public void addTechnology(Long projectId, String technology) {
         Optional<Project> projectOpt = projectRepository.findById(projectId);

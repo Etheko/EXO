@@ -202,6 +202,39 @@ public class ProjectController {
         return ResponseEntity.ok().build();
     }
 
+    @GetMapping(path = "/{id}/gallery-paths")
+    @Operation(summary = "Get project gallery paths", description = "Returns the project's gallery image paths")
+    public ResponseEntity<List<String>> getProjectGalleryPaths(@PathVariable Long id) {
+        List<String> paths = projectService.getGalleryImagePaths(id);
+        if (paths == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(paths);
+    }
+
+    @GetMapping(path = "/{id}/gallery/{index}")
+    @Operation(summary = "Get project gallery image", description = "Returns a specific gallery image by index")
+    public ResponseEntity<byte[]> getProjectGalleryImage(@PathVariable Long id, @PathVariable int index) {
+        try {
+            byte[] bytes = projectService.getGalleryImage(id, index);
+
+            if (bytes == null || bytes.length == 0) {
+                return ResponseEntity.notFound().build();
+            }
+
+            HttpHeaders headers = new HttpHeaders();
+            String ct;
+            try (ByteArrayInputStream bis = new ByteArrayInputStream(bytes)) {
+                ct = URLConnection.guessContentTypeFromStream(bis);
+            }
+            headers.setContentType(ct != null ? MediaType.parseMediaType(ct) : MediaType.APPLICATION_OCTET_STREAM);
+            headers.setCacheControl("no-cache, no-store, must-revalidate");
+            return new ResponseEntity<>(bytes, headers, HttpStatus.OK);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
     // Technology management
     @PostMapping("/{id}/technologies")
     @PreAuthorize("hasRole('ADMIN')")

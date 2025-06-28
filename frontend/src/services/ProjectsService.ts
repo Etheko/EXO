@@ -95,6 +95,15 @@ class ProjectService {
         });
     }
 
+    async getGalleryPaths(projectId: number): Promise<string[]> {
+        const response = await api.get<string[]>(`/projects/${projectId}/gallery-paths`);
+        return response.data;
+    }
+
+    getGalleryImageUrl(projectId: number, index: number): string {
+        return `${api.defaults.baseURL}/projects/${projectId}/gallery/${index}`;
+    }
+
     async removeGalleryImage(projectId: number, index: number): Promise<void> {
         await api.delete(`/projects/${projectId}/gallery/${index}`);
     }

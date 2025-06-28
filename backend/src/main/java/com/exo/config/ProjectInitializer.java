@@ -40,7 +40,12 @@ public class ProjectInitializer {
                 Arrays.asList("React", "TypeScript", "Spring Boot", "PostgreSQL", "Tailwind CSS"),
                 null,
                 "https://etheko.dev",
-                "https://github.com/Etheko/EXO", null, null, null, null, null, null),
+                "https://github.com/Etheko/EXO", null, null, null, null, null, null,
+                Arrays.asList(
+                    "/assets/projects/project-exo-gallery1.png",
+                    "/assets/projects/project-exo-gallery2.png",
+                    "/assets/projects/project-exo-gallery3.png"
+                )),
                 
             createProject("task-management-app", "Task Management App",
                 "A full-stack task management application with real-time updates, user authentication, and collaborative features.",
@@ -50,7 +55,7 @@ public class ProjectInitializer {
                 Arrays.asList("Angular", "Node.js", "MongoDB", "Socket.io", "Express"),
                 "https://task-manager-demo.com",
                 "https://task-manager-demo.com",
-                "yourusername", null, null, null, null, null, null),
+                "yourusername", null, null, null, null, null, null, null),
                 
             createProject("ecommerce-platform", "E-commerce Platform",
                 "A complete e-commerce solution with payment processing, inventory management, and admin dashboard.",
@@ -60,7 +65,7 @@ public class ProjectInitializer {
                 Arrays.asList("Vue.js", "Spring Boot", "PostgreSQL", "Stripe API", "Redis"),
                 "https://ecommerce-demo.com",
                 "https://ecommerce-demo.com",
-                "yourusername", "yourstore", "yourstore", "yourstore", null, null, "yourstore"),
+                "yourusername", "yourstore", "yourstore", "yourstore", null, null, "yourstore", null),
 
         createProject("ai-chat-assistant", "AI Chat Assistant",
             "An intelligent chatbot powered by machine learning that provides contextual responses and learns from conversations.",
@@ -70,7 +75,7 @@ public class ProjectInitializer {
             Arrays.asList("Python", "TensorFlow", "Flask", "React", "PostgreSQL", "Redis"),
             "https://ai-chat-demo.com",
             "https://ai-chat-demo.com",
-            "yourusername", null, null, null, null, null, null)
+            "yourusername", null, null, null, null, null, null, null)
         );
         
         // Get existing projects by title for easy lookup
@@ -97,6 +102,7 @@ public class ProjectInitializer {
                                     !Objects.equals(existingProject.getBluesky(), expectedProject.getBluesky()) ||
                                     !Objects.equals(existingProject.getTiktok(), expectedProject.getTiktok()) ||
                                     !Objects.equals(existingProject.getIconString(), expectedProject.getIconString()) ||
+                                    !Objects.equals(existingProject.getGalleryImagePaths(), expectedProject.getGalleryImagePaths()) ||
                                     existingProject.isFinished() != expectedProject.isFinished();
                 
                 if (needsUpdate) {
@@ -168,11 +174,11 @@ public class ProjectInitializer {
     private Project createProject(String slug, String title, String description, boolean finished, String headerPicturePath, String iconPath,
                                 List<String> technologies, String liveDemoUrl, String projectWebsiteUrl,
                                 String github, String instagram, String facebook, String xUsername,
-                                String mastodon, String bluesky, String tiktok) {
+                                String mastodon, String bluesky, String tiktok, List<String> galleryImagePaths) {
         try {
             return new Project(title, description, finished, headerPicturePath, technologies, liveDemoUrl, 
                              projectWebsiteUrl, github, instagram, facebook, xUsername, 
-                             mastodon, bluesky, tiktok, iconPath);
+                             mastodon, bluesky, tiktok, iconPath, galleryImagePaths);
         } catch (Exception e) {
             System.err.println("Error creating project object for: " + title + " - " + e.getMessage());
             // Return a basic project without blob operations if there's an error

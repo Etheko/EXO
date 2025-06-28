@@ -12,6 +12,7 @@ export type Project = {
     
     // Gallery (paths to images)
     gallery?: string[];
+    galleryImagePaths?: string[];
     
     // Technologies
     technologies: string[];

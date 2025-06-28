@@ -95,6 +95,12 @@ public class Project {
     @JsonIgnore // Blobs are heavy; expose paths separately via DTO if needed
     private List<Blob> gallery = new ArrayList<>();
 
+    @JsonView(GalleryInfo.class)
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(name = "project_gallery_paths", joinColumns = @JoinColumn(name = "project_id"))
+    @Column(name = "image_path")
+    private List<String> galleryImagePaths = new ArrayList<>();
+
     /* ==========================
      *      TECHNOLOGIES
      * ==========================
@@ -167,7 +173,7 @@ public class Project {
     public Project(String title, String description, boolean finished, String headerPicturePath,
                    List<String> technologies, String liveDemoUrl, String projectWebsiteUrl,
                    String github, String instagram, String facebook, String xUsername,
-                   String mastodon, String bluesky, String tiktok, String iconPath) throws IOException, SQLException {
+                   String mastodon, String bluesky, String tiktok, String iconPath, List<String> galleryImagePaths) throws IOException, SQLException {
         this.title = title;
         this.description = description;
         this.finished = finished;
@@ -196,6 +202,13 @@ public class Project {
             this.iconString = iconPath;
         }
         this.icon = localImageToBlob(this.iconString);
+
+        if (galleryImagePaths != null) {
+            for (String path : galleryImagePaths) {
+                this.gallery.add(localImageToBlob(path));
+                this.galleryImagePaths.add(path);
+            }
+        }
     }
 
     /* ==========================
@@ -293,12 +306,16 @@ public class Project {
      */
 
     public void addGalleryImage(String imgPath) throws IOException, SQLException {
+        this.galleryImagePaths.add(imgPath);
         this.gallery.add(localImageToBlob(imgPath));
     }
 
     public void removeGalleryImage(int index) {
         if (index >= 0 && index < this.gallery.size()) {
             this.gallery.remove(index);
+            if (index < this.galleryImagePaths.size()) {
+                this.galleryImagePaths.remove(index);
+            }
         }
     }
 

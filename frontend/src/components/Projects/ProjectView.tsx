@@ -1,5 +1,5 @@
 import { Project } from '../../types/Project';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import './ProjectView.css';
 import { backendUrl } from '../../services/api';
 import SentientButton from '../SentientButton';
@@ -26,13 +26,6 @@ interface ProjectViewProps {
 
 const ProjectView = ({ project, onBack }: ProjectViewProps) => {
     const [currentImage, setCurrentImage] = useState(0);
-    const [isAdmin, setIsAdmin] = useState<boolean>(LoginService.isCurrentUserAdmin());
-    const [isHoveringHeader, setIsHoveringHeader] = useState(false);
-    const [newHeaderPic, setNewHeaderPic] = useState<{ file: File; previewUrl: string } | null>(null);
-    const fileInputRef = useRef<HTMLInputElement>(null);
-    const { showError } = useError();
-    const [currentProject, setCurrentProject] = useState<Project>(project);
-
     const getImageUrl = (path?: string) => {
         if (!path) return '';
         if (path.startsWith('/api') || path.startsWith('/assets')) {
@@ -41,10 +34,25 @@ const ProjectView = ({ project, onBack }: ProjectViewProps) => {
         return path;
     };
 
+    const [galleryImages, setGalleryImages] = useState<string[]>(() => {
+        if (project.gallery && project.gallery.length > 0) {
+            return project.gallery.map(getImageUrl);
+        }
+        if (project.galleryImagePaths && project.galleryImagePaths.length > 0) {
+            return project.galleryImagePaths.map(getImageUrl);
+        }
+        return [];
+    });
+
+    const [isAdmin, setIsAdmin] = useState<boolean>(LoginService.isCurrentUserAdmin());
+    const [isHoveringHeader, setIsHoveringHeader] = useState(false);
+    const [newHeaderPic, setNewHeaderPic] = useState<{ file: File; previewUrl: string } | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const { showError } = useError();
+    const [currentProject, setCurrentProject] = useState<Project>(project);
+
     const headerImageUrl = newHeaderPic ? newHeaderPic.previewUrl : getImageUrl(currentProject.headerPictureString);
     const iconUrl = getImageUrl(currentProject.iconString);
-
-    const galleryImages = currentProject.gallery?.map(getImageUrl) ?? [];
 
     const nextImage = () => {
         setCurrentImage((prev) => (prev + 1) % galleryImages.length);
@@ -112,6 +120,22 @@ const ProjectView = ({ project, onBack }: ProjectViewProps) => {
     ]
 
     const showUploadOverlay = isAdmin && isHoveringHeader && !newHeaderPic;
+
+    // Fetch gallery paths from backend when component mounts if not already present
+    useEffect(() => {
+        const fetchGallery = async () => {
+            if (galleryImages.length === 0 && currentProject.id) {
+                try {
+                    const paths = await ProjectService.getGalleryPaths(currentProject.id);
+                    setGalleryImages(paths.map(getImageUrl));
+                } catch (error) {
+                    console.error("Failed to fetch gallery images", error);
+                }
+            }
+        };
+        fetchGallery();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentProject.id]);
 
   return (
     <div className="project-view">
@@ -183,15 +207,55 @@ const ProjectView = ({ project, onBack }: ProjectViewProps) => {
                         <h2 className="section-subtitle">Pics</h2>
                     </div>
                     <div className="gallery-carousel">
-                        <SentientButton as="button" className="carousel-arrow left" onClick={prevImage}>
-                            <TbChevronLeft size={28} />
-                        </SentientButton>
-                        <div className="carousel-image-container">
-                            <img src={galleryImages[currentImage]} alt={`Project gallery image ${currentImage + 1}`} className="carousel-image" />
+                        <div className={`carousel-arrow-wrapper left ${currentImage === 0 ? 'hidden' : ''}`}>
+                            <SentientIOB as="button" className="carousel-arrow" onClick={prevImage} {...createTooltipHandlers('previous image')}>
+                                <TbChevronLeft size={24} />
+                            </SentientIOB>
                         </div>
-                        <SentientButton as="button" className="carousel-arrow right" onClick={nextImage}>
-                            <TbChevronRight size={28} />
-                        </SentientButton>
+                        <div className="carousel-images-container">
+                            {galleryImages.map((image, index) => {
+                                const offset = index - currentImage;
+                                // We now need to render 5 items to allow for fade-out animations
+                                const isVisible = Math.abs(offset) <= 2;
+
+                                let stateClassName = '';
+                                switch (offset) {
+                                    case -2:
+                                        stateClassName = 'prev-hiding';
+                                        break;
+                                    case -1:
+                                        stateClassName = 'prev';
+                                        break;
+                                    case 0:
+                                        stateClassName = 'current';
+                                        break;
+                                    case 1:
+                                        stateClassName = 'next';
+                                        break;
+                                    case 2:
+                                        stateClassName = 'next-hiding';
+                                        break;
+                                }
+
+                                return isVisible ? (
+                                    <div
+                                        key={index}
+                                        className={`carousel-image-wrapper ${stateClassName}`}
+                                    >
+                                        <img
+                                            src={image}
+                                            alt={`Project gallery image ${index + 1}`}
+                                            className="carousel-image"
+                                        />
+                                    </div>
+                                ) : null;
+                            })}
+                        </div>
+                        <div className={`carousel-arrow-wrapper right ${currentImage >= galleryImages.length - 1 ? 'hidden' : ''}`}>
+                            <SentientIOB as="button" className="carousel-arrow" onClick={nextImage} {...createTooltipHandlers('next image')}>
+                                <TbChevronRight size={24} />
+                            </SentientIOB>
+                        </div>
                     </div>
                 </section>
             )}
