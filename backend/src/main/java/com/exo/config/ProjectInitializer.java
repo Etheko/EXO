@@ -54,8 +54,8 @@ public class ProjectInitializer {
             "/assets/projects/bookmarks-forums-logo.svg",
             Arrays.asList("Java", "Spring Boot", "Angular", "Docker", "MySQL", "WebSockets"),
             null,
-            "https://github.com/codeurjc-students/2024-Bookmarks-Forums",
-            "yourusername", null, null, null, null, null, null,
+            null,
+            "codeurjc-students/2024-Bookmarks-Forums", null, null, null, null, null, null,
             Arrays.asList(
                     "/assets/projects/bookmarks-forums-gallery1.png",
                     "/assets/projects/bookmarks-forums-gallery2.png",
