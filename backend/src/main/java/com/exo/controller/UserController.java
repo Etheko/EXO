@@ -292,6 +292,21 @@ public class UserController {
         }
     }
 
+    @DeleteMapping("/{username}/pfp")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Remove profile picture", description = "Removes the user's profile picture and resets it to the default (Admin only)")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Profile picture removed successfully",
+                    content = @Content(schema = @Schema(implementation = User.class))),
+        @ApiResponse(responseCode = "404", description = "User not found")
+    })
+    public ResponseEntity<User> removeProfilePicture(
+            @Parameter(description = "Username of the user")
+            @PathVariable String username) {
+        User updatedUser = userService.removeProfilePicture(username);
+        return updatedUser != null ? ResponseEntity.ok(updatedUser) : ResponseEntity.notFound().build();
+    }
+
     /* ==========================
      *      GALLERY MANAGEMENT
      * ==========================

@@ -35,8 +35,8 @@ public class ProjectInitializer {
             createProject("EXO", "Project EXO", 
                 "This website: The ✨Etheko Experience Online✨.",
                 false,
-                "/assets/projects/portfolio-header.jpg",
-                "/assets/projects/portfolio-icon.png",
+                null,
+                "/assets/projects/project-exo-logo.svg",
                 Arrays.asList("React", "TypeScript", "Spring Boot", "PostgreSQL", "Tailwind CSS"),
                 null,
                 "https://etheko.dev",
@@ -45,8 +45,8 @@ public class ProjectInitializer {
             createProject("task-management-app", "Task Management App",
                 "A full-stack task management application with real-time updates, user authentication, and collaborative features.",
                 true,
-                "/assets/projects/task-manager-header.jpg",
-                "/assets/projects/task-manager-icon.png",
+                null,
+                null,
                 Arrays.asList("Angular", "Node.js", "MongoDB", "Socket.io", "Express"),
                 "https://task-manager-demo.com",
                 "https://task-manager-demo.com",
@@ -55,8 +55,8 @@ public class ProjectInitializer {
             createProject("ecommerce-platform", "E-commerce Platform",
                 "A complete e-commerce solution with payment processing, inventory management, and admin dashboard.",
                 false,
-                "/assets/projects/ecommerce-header.jpg",
-                "/assets/projects/ecommerce-icon.png",
+                null,
+                null,
                 Arrays.asList("Vue.js", "Spring Boot", "PostgreSQL", "Stripe API", "Redis"),
                 "https://ecommerce-demo.com",
                 "https://ecommerce-demo.com",
@@ -65,8 +65,8 @@ public class ProjectInitializer {
         createProject("ai-chat-assistant", "AI Chat Assistant",
             "An intelligent chatbot powered by machine learning that provides contextual responses and learns from conversations.",
             true,
-            "/assets/projects/ai-chat-header.jpg",
-            "/assets/projects/ai-chat-icon.png",
+            null,
+            null,
             Arrays.asList("Python", "TensorFlow", "Flask", "React", "PostgreSQL", "Redis"),
             "https://ai-chat-demo.com",
             "https://ai-chat-demo.com",
@@ -96,9 +96,14 @@ public class ProjectInitializer {
                                     !Objects.equals(existingProject.getMastodon(), expectedProject.getMastodon()) ||
                                     !Objects.equals(existingProject.getBluesky(), expectedProject.getBluesky()) ||
                                     !Objects.equals(existingProject.getTiktok(), expectedProject.getTiktok()) ||
+                                    !Objects.equals(existingProject.getIconString(), expectedProject.getIconString()) ||
                                     existingProject.isFinished() != expectedProject.isFinished();
                 
                 if (needsUpdate) {
+                    // Capture old image paths before modifying them
+                    String oldHeaderPath = existingProject.getHeaderPictureString();
+                    String oldIconPath = existingProject.getIconString();
+
                     existingProject.setDescription(expectedProject.getDescription());
                     existingProject.setHeaderPictureString(expectedProject.getHeaderPictureString());
                     existingProject.setTechnologies(expectedProject.getTechnologies());
@@ -111,15 +116,20 @@ public class ProjectInitializer {
                     existingProject.setMastodon(expectedProject.getMastodon());
                     existingProject.setBluesky(expectedProject.getBluesky());
                     existingProject.setTiktok(expectedProject.getTiktok());
+                    existingProject.setIconString(expectedProject.getIconString());
                     existingProject.setFinished(expectedProject.isFinished());
                     
                     try {
-                        // Update header picture blob if path has changed
-                        if (!Objects.equals(existingProject.getHeaderPictureString(), expectedProject.getHeaderPictureString())) {
+                        // Update blobs only if the path has actually changed
+                        if (!Objects.equals(oldHeaderPath, expectedProject.getHeaderPictureString())) {
                             existingProject.setHeaderPicture(existingProject.localImageToBlob(expectedProject.getHeaderPictureString()));
                         }
+
+                        if (!Objects.equals(oldIconPath, expectedProject.getIconString())) {
+                            existingProject.setIcon(existingProject.localImageToBlob(expectedProject.getIconString()));
+                        }
                     } catch (Exception e) {
-                        System.err.println("Warning: Could not update header picture for project: " + title + " - " + e.getMessage());
+                        System.err.println("Warning: Could not update images for project: " + title + " - " + e.getMessage());
                     }
                     
                     projectRepository.save(existingProject);

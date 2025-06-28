@@ -73,10 +73,26 @@ public class UserService implements UserDetailsService {
      * ==========================
      */
     
-    public byte[] getProfilePicture(String username) throws SQLException {
+    public byte[] getProfilePicture(String username) throws SQLException, IOException {
         User user = userRepository.findByUsername(username);
-        if (user != null && user.getPfp() != null) {
-            return user.getPfp().getBytes(1, (int) user.getPfp().length());
+        if (user == null) {
+            return null;
+        }
+
+        Blob pfpBlob = user.getPfp();
+
+        // Lazily load from stored path if blob is not present
+        if (pfpBlob == null && user.getPfpString() != null) {
+            try {
+                pfpBlob = user.localImageToBlob(user.getPfpString(), "/assets/defaultProfilePicture.png");
+                user.setPfp(pfpBlob);
+                userRepository.save(user);
+            } catch (Exception ignored) {
+            }
+        }
+
+        if (pfpBlob != null) {
+            return pfpBlob.getBytes(1, (int) pfpBlob.length());
         }
         return null;
     }
@@ -428,5 +444,16 @@ public class UserService implements UserDetailsService {
     @Override
     public User loadUserByUsername(String username) throws UsernameNotFoundException {
         return userRepository.findByUsername(username);
+    }
+
+    @Transactional
+    public User removeProfilePicture(String username) {
+        User user = userRepository.findByUsername(username);
+        if (user != null) {
+            user.setPfp(null);
+            user.setPfpString("/assets/defaultProfilePicture.png");
+            return userRepository.save(user);
+        }
+        return null;
     }
 }

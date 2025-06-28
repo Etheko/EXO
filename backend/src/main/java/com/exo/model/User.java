@@ -399,6 +399,13 @@ public class User implements UserDetails {
         }
     }
 
+    public Blob localImageToBlob(String imgPath, String fallbackPath) throws IOException, SQLException {
+        if (imgPath == null || imgPath.trim().isEmpty()) {
+            imgPath = fallbackPath;
+        }
+        return localImageToBlob(imgPath);
+    }
+
     @Override
     public String toString() {
         return this.username;

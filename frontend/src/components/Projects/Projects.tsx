@@ -67,7 +67,21 @@ const Projects = ({ onProjectSelected, onBackToIndex }: ProjectsProps) => {
 
     const renderProjectCard = (project: Project, index: number) => (
         <div key={project.id} className="project-card" onClick={() => onProjectSelected(project)}>
-            <div className="project-enumeration">{(index + 1).toString().padStart(2, '0')}</div>
+            <div className="project-enum-icon-container">
+                {project.iconString ? (
+                    <img
+                        src={
+                            project.iconString.startsWith('/assets')
+                                ? `${import.meta.env.VITE_BACKEND_URL ?? 'http://localhost:8080'}${project.iconString}`
+                                : project.iconString
+                        }
+                        alt={`${project.title} icon`}
+                        className="project-icon"
+                    />
+                ) : (
+                    <div className="project-enumeration">{(index + 1).toString().padStart(2, '0')}</div>
+                )}
+            </div>
             <h3 className="project-title-card">{project.title}</h3>
             <p className="project-description">{project.description}</p>
             <div className="project-technologies">

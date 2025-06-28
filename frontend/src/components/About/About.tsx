@@ -823,7 +823,15 @@ const About = () => {
                                 {imageLoading && <LoadingSpinner fullViewport={false} />}
                                 {imageError && <Error fullViewport={false} errorCode={ERROR_CODES.INTERNAL.IMAGE_LOAD_TIMEOUT} />}
                                 <img
-                                    src={user.pfpString ? (user.pfpString.startsWith('/api') ? `${backendUrl}${user.pfpString}` : user.pfpString) : '/assets/defaultProfilePicture.png'}
+                                    src={(() => {
+                                        if (user.pfpString) {
+                                            if (user.pfpString.startsWith('/api') || user.pfpString.startsWith('/assets')) {
+                                                return `${backendUrl}${user.pfpString}`;
+                                            }
+                                            return user.pfpString;
+                                        }
+                                        return `${backendUrl}/assets/defaultProfilePicture.png`;
+                                    })()}
                                     alt="Profile"
                                     className="profile-image"
                                     style={{ display: imageError ? 'none' : 'block' }}

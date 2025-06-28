@@ -134,6 +134,18 @@
     border-color: rgba(255, 255, 255, 0.3);
 }
 
+.project-enum-icon-container {
+    display: flex;
+    justify-content: left;
+}
+
+.project-icon {
+    width: 3rem;
+    height: 3rem;
+    margin-bottom: 1rem;
+    object-fit: contain;
+}
+
 .project-enumeration {
     font-family: 'Outfit', sans-serif;
     font-weight: 700;

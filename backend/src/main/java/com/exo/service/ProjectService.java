@@ -140,7 +140,7 @@ public class ProjectService {
         if (projectOpt.isPresent()) {
             Project project = projectOpt.get();
             project.setHeaderPictureString(imagePath);
-            project.setHeaderPicture(project.localImageToBlob(imagePath));
+            project.setHeaderPicture(project.localImageToBlob(imagePath, "/assets/defaultProjectHeader.png"));
             projectRepository.save(project);
         }
     }
@@ -188,10 +188,27 @@ public class ProjectService {
      * ==========================
      */
 
-    public byte[] getIcon(Long projectId) throws SQLException {
+    public byte[] getIcon(Long projectId) throws SQLException, IOException {
         Project project = projectRepository.findById(projectId).orElse(null);
-        if (project != null && project.getIcon() != null) {
-            return project.getIcon().getBytes(1, (int) project.getIcon().length());
+        if (project == null) {
+            return null;
+        }
+
+        Blob iconBlob = project.getIcon();
+
+        // Lazily load the icon from the stored path if it is not yet persisted
+        if (iconBlob == null && project.getIconString() != null) {
+            try {
+                iconBlob = project.localImageToBlob(project.getIconString(), "/assets/defaultProjectIcon.png");
+                project.setIcon(iconBlob);
+                projectRepository.save(project);
+            } catch (Exception ignored) {
+                // If loading fails, we will return null later
+            }
+        }
+
+        if (iconBlob != null) {
+            return iconBlob.getBytes(1, (int) iconBlob.length());
         }
         return null;
     }
@@ -212,7 +229,7 @@ public class ProjectService {
         Project project = projectRepository.findById(projectId).orElse(null);
         if (project != null) {
             project.setIconString(imagePath);
-            project.setIcon(project.localImageToBlob(imagePath));
+            project.setIcon(project.localImageToBlob(imagePath, "/assets/defaultProjectIcon.png"));
             return projectRepository.save(project);
         }
         return null;
