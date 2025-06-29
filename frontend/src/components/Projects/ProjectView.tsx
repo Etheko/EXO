@@ -1,16 +1,17 @@
+import React, { useState, useRef, useEffect } from 'react';
 import { Project } from '../../types/Project';
-import { useState, useRef, useEffect } from 'react';
 import './ProjectView.css';
 import { backendUrl } from '../../services/api';
 import SentientButton from '../SentientButton';
 import SentientIOB from '../SentientIOB';
 import TechnologyIcon from './TechnologyIcon';
-import { TbArrowLeft, TbChevronLeft, TbChevronRight, TbBrandGithub, TbBrandInstagram, TbBrandFacebook, TbBrandX, TbBrandMastodon, TbBrandBluesky, TbBrandTiktok, TbExternalLink, TbHome, TbUpload, TbX, TbCheck } from 'react-icons/tb';
+import { TbArrowLeft, TbChevronLeft, TbChevronRight, TbBrandGithub, TbBrandInstagram, TbBrandFacebook, TbBrandX, TbBrandMastodon, TbBrandBluesky, TbBrandTiktok, TbExternalLink, TbHome, TbUpload, TbX, TbCheck, TbEdit, TbPlus, TbPhoto, TbIcons } from 'react-icons/tb';
 import LoginService from '../../services/LoginService';
 import ProjectService from '../../services/ProjectsService';
 import { useError } from '../../hooks/useError';
 import { ERROR_CODES } from '../../utils/errorCodes';
 import ImageOverlay from '../ImageOverlay';
+import SocialEditWindow from '../SocialEditWindow';
 
 // Utility: create tooltip handlers that broadcast tooltip text to Navbar
 const createTooltipHandlers = (text: string) => ({
@@ -49,12 +50,189 @@ const ProjectView = ({ project, onBack }: ProjectViewProps) => {
     const [isAdmin, setIsAdmin] = useState<boolean>(LoginService.isCurrentUserAdmin());
     const [isHoveringHeader, setIsHoveringHeader] = useState(false);
     const [newHeaderPic, setNewHeaderPic] = useState<{ file: File; previewUrl: string } | null>(null);
-    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [newIconPic, setNewIconPic] = useState<{ file: File; previewUrl: string } | null>(null);
+    const headerFileInputRef = useRef<HTMLInputElement>(null);
+    const iconFileInputRef = useRef<HTMLInputElement>(null);
     const { showError } = useError();
     const [currentProject, setCurrentProject] = useState<Project>(project);
 
     const headerImageUrl = newHeaderPic ? newHeaderPic.previewUrl : getImageUrl(currentProject.headerPictureString);
-    const iconUrl = getImageUrl(currentProject.iconString);
+    const iconUrl = newIconPic ? newIconPic.previewUrl : getImageUrl(currentProject.iconString);
+
+    /* ==========================
+     *     EDIT STATE LOGIC
+     * ==========================
+     */
+    type SectionKey = 'description' | 'technologies' | 'links';
+    const [editingSection, setEditingSection] = useState<SectionKey | null>(null);
+    const [hoverSection, setHoverSection] = useState<SectionKey | null>(null);
+
+    // Description state
+    const [descriptionInput, setDescriptionInput] = useState<string>('');
+    const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+
+    // Technologies state
+    const [draftTechnologies, setDraftTechnologies] = useState<string[]>([]);
+    const [newTechnologyInput, setNewTechnologyInput] = useState('');
+
+    // Links draft state
+    const [draftLinks, setDraftLinks] = useState<Partial<Project>>({});
+    const [linkModal, setLinkModal] = useState<{ key: string; visible: boolean }>({ key: '', visible: false });
+
+    // Dynamic opacity for edit controls
+    const [editControlsOpacity, setEditControlsOpacity] = useState<Record<SectionKey, number>>({
+        description: 0,
+        technologies: 0,
+        links: 0,
+    });
+    const editControlsRefs = useRef<Partial<Record<SectionKey, HTMLDivElement | null>>>({});
+    const MAX_DISTANCE = 200;
+
+    const updateOpacityForSection = (section: SectionKey, mouseX: number, mouseY: number) => {
+        const ref = editControlsRefs.current[section];
+        if (!ref) return;
+        const rect = ref.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+        const distance = Math.sqrt(Math.pow(mouseX - cx, 2) + Math.pow(mouseY - cy, 2));
+        const opacity = Math.max(0, Math.min(1, 1 - distance / MAX_DISTANCE));
+        setEditControlsOpacity(prev => (prev[section] === opacity ? prev : { ...prev, [section]: opacity }));
+    };
+
+    const handleMouseMove = (event: React.MouseEvent, section: SectionKey) => {
+        if (!isAdmin || editingSection === section) return;
+        updateOpacityForSection(section, event.clientX, event.clientY);
+    };
+
+    const handleMouseLeaveSection = (section: SectionKey) => {
+        if (!isAdmin) return;
+        setEditControlsOpacity(prev => ({ ...prev, [section]: 0 }));
+        setHoverSection(null);
+    };
+
+    useEffect(() => {
+        if (editingSection) {
+            setEditControlsOpacity(prev => ({ ...prev, [editingSection]: 1 }));
+        }
+    }, [editingSection]);
+
+    // Auto-resize textarea
+    const autoResizeTextarea = (element: HTMLTextAreaElement) => {
+        element.style.height = 'auto';
+        element.style.height = `${element.scrollHeight}px`;
+    };
+
+    useEffect(() => {
+        if (editingSection === 'description' && textareaRef.current) {
+            autoResizeTextarea(textareaRef.current);
+        }
+    }, [editingSection, descriptionInput]);
+
+    useEffect(() => {
+        if (editingSection !== 'description') {
+            setDescriptionInput(currentProject.description);
+        }
+    }, [currentProject.description, editingSection]);
+    
+    // Save handler
+    const handleSave = async (section: SectionKey) => {
+        if (!currentProject.id) return;
+
+        let payload: Partial<Project> = {};
+        if (section === 'description') {
+            payload = { description: descriptionInput };
+        } else if (section === 'technologies') {
+            payload = { technologies: draftTechnologies };
+        } else if (section === 'links') {
+            payload = { ...draftLinks };
+        }
+
+        try {
+            const updated = await ProjectService.updateProject(currentProject.id, {
+                ...currentProject,
+                ...payload,
+            });
+            setCurrentProject(updated);
+            setEditingSection(null);
+        } catch (error) {
+            console.error(`Failed to save ${section}`, error);
+            showError(ERROR_CODES.INTERNAL.DATA_UPDATE_FAILED, `Failed to update project ${section}.`);
+        }
+    };
+
+    // Cancel handler
+    const handleCancel = () => {
+        // Reset draft states from master state
+        setDescriptionInput(currentProject.description);
+        setDraftTechnologies(currentProject.technologies);
+        setNewTechnologyInput('');
+        setDraftLinks({});
+        setEditingSection(null);
+    };
+    
+    const handleStartEditing = (section: SectionKey) => {
+        if (section === 'description') {
+            setDescriptionInput(currentProject.description);
+        } else if (section === 'technologies') {
+            setDraftTechnologies([...currentProject.technologies]);
+        } else if (section === 'links') {
+            setDraftLinks({ ...currentProject });
+        }
+        setEditingSection(section);
+    };
+
+    // Technology handlers
+    const addTechnology = () => {
+        if (newTechnologyInput.trim()) {
+            setDraftTechnologies(prev => [...prev, newTechnologyInput.trim()]);
+            setNewTechnologyInput('');
+        }
+    };
+
+    const removeTechnology = (techToRemove: string) => {
+        setDraftTechnologies(prev => prev.filter(tech => tech !== techToRemove));
+    };
+
+    const handleTechInputKeyPress = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            addTechnology();
+        }
+    };
+    
+    const renderEditControls = (section: SectionKey) => {
+        if (!isAdmin) return null;
+    
+        const commonProps = { as: 'button', hoverScale: 1 } as const;
+        const isEditing = editingSection === section;
+        const opacity = editControlsOpacity[section] ?? 0;
+        const scale = 0.8 + 0.2 * opacity;
+    
+        return (
+            <div
+                className="edit-controls description-edit-controls"
+                ref={el => { if (el) editControlsRefs.current[section] = el; }}
+                style={{ opacity: isEditing ? 1 : opacity, transform: `scale(${isEditing ? 1 : scale})` }}
+            >
+                {isEditing ? (
+                    <>
+                        <SentientIOB {...commonProps} onClick={handleCancel} {...createTooltipHandlers('cancel')}>
+                            <TbX size={18} />
+                        </SentientIOB>
+                        <SentientIOB {...commonProps} onClick={() => handleSave(section)} {...createTooltipHandlers('save')}>
+                            <TbCheck size={18} />
+                        </SentientIOB>
+                    </>
+                ) : (
+                    hoverSection === section && (
+                        <SentientIOB {...commonProps} onClick={() => handleStartEditing(section)} {...createTooltipHandlers('edit')}>
+                            <TbEdit size={18} />
+                        </SentientIOB>
+                    )
+                )}
+            </div>
+        );
+    };
 
     const nextImage = () => {
         setCurrentImage((prev) => (prev + 1) % galleryImages.length);
@@ -64,13 +242,7 @@ const ProjectView = ({ project, onBack }: ProjectViewProps) => {
         setCurrentImage((prev) => (prev - 1 + galleryImages.length) % galleryImages.length);
     };
     
-    const handleHeaderClick = () => {
-        if (isAdmin) {
-            fileInputRef.current?.click();
-        }
-    };
-
-    const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const handleHeaderFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (file) {
             if (newHeaderPic) {
@@ -84,26 +256,51 @@ const ProjectView = ({ project, onBack }: ProjectViewProps) => {
         }
     };
 
-    const handleSaveHeaderPic = async () => {
-        if (!newHeaderPic || !currentProject.id) return;
-        try {
-            const updatedProject = await ProjectService.uploadHeaderPicture(currentProject.id, newHeaderPic.file);
-            setCurrentProject(updatedProject);
-            if (newHeaderPic) {
-                URL.revokeObjectURL(newHeaderPic.previewUrl);
+    const handleIconFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file) {
+            if (newIconPic) {
+                URL.revokeObjectURL(newIconPic.previewUrl);
             }
-            setNewHeaderPic(null);
-        } catch (error) {
-            console.error("Failed to upload header picture", error);
-            showError(ERROR_CODES.INTERNAL.DATA_UPDATE_FAILED, 'Failed to upload header picture.');
+            setNewIconPic({
+                file,
+                previewUrl: URL.createObjectURL(file),
+            });
+            event.target.value = '';
         }
     };
 
-    const handleCancelHeaderPic = () => {
-        if (newHeaderPic) {
-            URL.revokeObjectURL(newHeaderPic.previewUrl);
+    const handleSaveImageChanges = async () => {
+        if (!currentProject.id) return;
+        
+        try {
+            let projectAfterUpdate = currentProject;
+    
+            if (newHeaderPic) {
+                projectAfterUpdate = await ProjectService.uploadHeaderPicture(projectAfterUpdate.id!, newHeaderPic.file);
+            }
+            if (newIconPic) {
+                projectAfterUpdate = await ProjectService.uploadIcon(projectAfterUpdate.id!, newIconPic.file);
+            }
+    
+            setCurrentProject(projectAfterUpdate);
+    
+            if (newHeaderPic) URL.revokeObjectURL(newHeaderPic.previewUrl);
+            if (newIconPic) URL.revokeObjectURL(newIconPic.previewUrl);
+            
+            setNewHeaderPic(null);
+            setNewIconPic(null);
+        } catch (error) {
+            console.error("Failed to upload image(s)", error);
+            showError(ERROR_CODES.INTERNAL.DATA_UPDATE_FAILED, 'Failed to upload new image(s).');
         }
+    };
+
+    const handleCancelImageChanges = () => {
+        if (newHeaderPic) URL.revokeObjectURL(newHeaderPic.previewUrl);
+        if (newIconPic) URL.revokeObjectURL(newIconPic.previewUrl);
         setNewHeaderPic(null);
+        setNewIconPic(null);
     };
     
     const projectSocials = [
@@ -121,7 +318,7 @@ const ProjectView = ({ project, onBack }: ProjectViewProps) => {
         { key: 'website', url: currentProject.projectWebsiteUrl, icon: TbHome, label: 'project website' },
     ]
 
-    const showUploadOverlay = isAdmin && isHoveringHeader && !newHeaderPic;
+    const showUploadOverlay = isAdmin && isHoveringHeader && !newHeaderPic && !newIconPic;
 
     // Overlay visibility helpers
     const openOverlay = () => setIsOverlayVisible(true);
@@ -143,11 +340,34 @@ const ProjectView = ({ project, onBack }: ProjectViewProps) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [currentProject.id]);
 
+    /* ==========================
+     *        LINKS EDITING
+     * ==========================
+     */
+    const mapLinkKeyToProp = (k: string): keyof Project => {
+        switch (k) {
+            case 'liveDemo':
+                return 'liveDemoUrl';
+            case 'website':
+                return 'projectWebsiteUrl';
+            case 'github':
+            case 'instagram':
+            case 'facebook':
+            case 'mastodon':
+            case 'bluesky':
+            case 'tiktok':
+                return k as keyof Project;
+            case 'x':
+                return 'xUsername';
+            default:
+                return k as keyof Project;
+        }
+    };
+
   return (
     <div className="project-view">
         <header 
             className="project-view-header" 
-            onClick={handleHeaderClick}
             onMouseEnter={() => isAdmin && setIsHoveringHeader(true)}
             onMouseLeave={() => isAdmin && setIsHoveringHeader(false)}
         >
@@ -156,25 +376,36 @@ const ProjectView = ({ project, onBack }: ProjectViewProps) => {
                 style={{ backgroundImage: `url(${headerImageUrl})` }}
             ></div>
             <div className="project-view-header-content">
+                <div className="project-view-icon-wrapper">
                 {iconUrl && <img src={iconUrl} alt={`${currentProject.title} icon`} className="project-view-icon" />}
+                </div>
                 <h1 className="project-view-title">{currentProject.title}</h1>
             </div>
-            {showUploadOverlay && (
-                <div className="pfp-upload-overlay">
-                    <TbUpload size={48} />
-                    <span>Change header</span>
-                </div>
-            )}
-            {newHeaderPic && (
-                <div className="edit-controls header-edit-controls">
-                    <SentientIOB as="button" hoverScale={1} onClick={(e) => { e.stopPropagation(); handleCancelHeaderPic(); }} {...createTooltipHandlers('cancel')}>
+            
+            <div 
+                className="edit-controls header-hover-controls"
+                style={{ opacity: isAdmin && (isHoveringHeader || newHeaderPic || newIconPic) ? 1 : 0 }}
+            >
+                {newHeaderPic || newIconPic ? (
+                    <>
+                        <SentientIOB as="button" hoverScale={1} onClick={handleCancelImageChanges} {...createTooltipHandlers('cancel')}>
                         <TbX size={18} />
                     </SentientIOB>
-                    <SentientIOB as="button" hoverScale={1} onClick={(e) => { e.stopPropagation(); handleSaveHeaderPic(); }} {...createTooltipHandlers('save')}>
+                        <SentientIOB as="button" hoverScale={1} onClick={handleSaveImageChanges} {...createTooltipHandlers('save')}>
                         <TbCheck size={18} />
                     </SentientIOB>
+                    </>
+                ) : (
+                    <>
+                        <SentientIOB as="button" hoverScale={1} onClick={() => iconFileInputRef.current?.click()} {...createTooltipHandlers('change icon')}>
+                            <TbIcons size={18} />
+                        </SentientIOB>
+                        <SentientIOB as="button" hoverScale={1} onClick={() => headerFileInputRef.current?.click()} {...createTooltipHandlers('change banner')}>
+                            <TbPhoto size={18} />
+                        </SentientIOB>
+                    </>
+                )}
                 </div>
-            )}
         </header>
 
         <main className="project-view-content">
@@ -182,28 +413,80 @@ const ProjectView = ({ project, onBack }: ProjectViewProps) => {
                 <div className="section-subtitle-container">
                     <h2 className="section-subtitle">What is this?</h2>
                 </div>
-                <div className="description-card">
-                    {currentProject.description.split('\n').map((line, index) => (
+                <div
+                    className={`description-card ${isAdmin ? 'editable-section' : ''} ${editingSection === 'description' ? 'editing' : ''}`}
+                    onMouseEnter={() => isAdmin && setHoverSection('description')}
+                    onMouseLeave={() => handleMouseLeaveSection('description')}
+                    onMouseMove={(e) => handleMouseMove(e, 'description')}
+                >
+                    {renderEditControls('description')}
+
+                    {/* Description Content */}
+                    {editingSection === 'description' ? (
+                        <textarea
+                            ref={textareaRef}
+                            value={descriptionInput}
+                            placeholder="Enter project description..."
+                            onChange={e => setDescriptionInput(e.target.value)}
+                            onInput={e => autoResizeTextarea(e.target as HTMLTextAreaElement)}
+                        />
+                    ) : (
+                        (currentProject.description || '').split('\n').map((line, index) => (
                         <p key={index} className="description-text">
                             {line || '\u00A0'} 
                         </p>
-                    ))}
+                        ))
+                    )}
                 </div>
             </section>
 
             {currentProject.technologies && currentProject.technologies.length > 0 && (
-                <section className="project-view-section">
+                <section 
+                    className={`project-view-section ${isAdmin ? 'editable-section' : ''} ${editingSection === 'technologies' ? 'editing' : ''}`}
+                    onMouseEnter={() => isAdmin && setHoverSection('technologies')}
+                    onMouseLeave={() => handleMouseLeaveSection('technologies')}
+                    onMouseMove={(e) => handleMouseMove(e, 'technologies')}
+                >
+                    {renderEditControls('technologies')}
                     <div className="section-subtitle-container">
                         <h2 className="section-subtitle">Built With</h2>
                     </div>
                     <div className="project-technologies-view">
-                        {currentProject.technologies.map((tech, index) => (
+                        {(editingSection === 'technologies' ? draftTechnologies : currentProject.technologies).map((tech, index) => (
                             <span key={index} className="technology-tag">
                                 <TechnologyIcon technology={tech} />
                                 <span>{tech}</span>
+                                {editingSection === 'technologies' && (
+                                    <button
+                                        className="technology-tag-remove"
+                                        onClick={() => removeTechnology(tech)}
+                                        {...createTooltipHandlers('remove')}
+                                    >
+                                        <TbX size={12} />
+                                    </button>
+                                )}
                             </span>
                         ))}
                     </div>
+                    {editingSection === 'technologies' && (
+                        <div className="technology-input-container">
+                            <input
+                                className="login-input"
+                                value={newTechnologyInput}
+                                onChange={(e) => setNewTechnologyInput(e.target.value)}
+                                onKeyPress={handleTechInputKeyPress}
+                                placeholder="Add a technology..."
+                            />
+                            <SentientIOB
+                                as="button"
+                                onClick={addTechnology}
+                                disabled={!newTechnologyInput.trim()}
+                                {...createTooltipHandlers('add')}
+                            >
+                                <TbPlus size={16} />
+                            </SentientIOB>
+                        </div>
+                    )}
                 </section>
             )}
 
@@ -286,36 +569,74 @@ const ProjectView = ({ project, onBack }: ProjectViewProps) => {
                 </section>
             )}
 
-            <section className="project-view-section">
+            {/* Links Section */}
+            <section 
+                className={`project-view-section ${isAdmin ? 'editable-section' : ''} ${editingSection === 'links' ? 'editing' : ''}`}
+                onMouseEnter={() => isAdmin && setHoverSection('links')}
+                onMouseLeave={() => handleMouseLeaveSection('links')}
+                onMouseMove={(e) => handleMouseMove(e, 'links')}
+            >
+                {renderEditControls('links')}
                 <div className="section-subtitle-container">
                     <h2 className="section-subtitle">Links</h2>
                 </div>
                 <div className="project-social-icons">
-                    {projectLinks.map(({ key, url, icon: IconCmp, label }) => 
-                        url && (
-                            <SentientIOB key={key} href={url} as="a" {...createTooltipHandlers(label)}>
+                    {[...projectLinks, ...projectSocials].map(({ key, url, icon: IconCmp, label }) => {
+                        const prop = mapLinkKeyToProp(key);
+                        const effectiveUrl = editingSection === 'links' ? (draftLinks[prop] as string | undefined) : url;
+
+                        if (editingSection === 'links') {
+                            const isActive = Boolean(effectiveUrl);
+                            return (
+                                <SentientIOB
+                                    key={key}
+                                    as="button"
+                                    className={isActive ? 'social-icon-active' : ''}
+                                    onClick={() => setLinkModal({ key, visible: true })}
+                                    {...createTooltipHandlers(label)}
+                                >
                                 <IconCmp size={24} />
                             </SentientIOB>
-                        )
-                    )}
-                    {projectSocials.map(({ key, url, icon: IconCmp, label }) => 
-                        url && (
-                            <SentientIOB key={key} href={url} as="a" {...createTooltipHandlers(label)}>
+                            );
+                        }
+
+                        if (effectiveUrl) {
+                            return (
+                                <SentientIOB key={key} href={effectiveUrl} as="a" {...createTooltipHandlers(label)}>
                                 <IconCmp size={24} />
                             </SentientIOB>
-                        )
-                    )}
+                            );
+                        }
+
+                        // Show disabled icon only for admins; hide completely for regular users
+                        if (isAdmin) {
+                            return (
+                                <span key={key} className="disabled-social-icon" title={label}>
+                                    <IconCmp size={24} />
+                                </span>
+                            );
+                        }
+                        return null;
+                    })}
                 </div>
             </section>
 
         </main>
         <input
             type="file"
-            ref={fileInputRef}
-            onChange={handleFileSelect}
+            ref={headerFileInputRef}
+            onChange={handleHeaderFileSelect}
             style={{ display: 'none' }}
-            accept="image/*"
+            accept=".jpg, .jpeg, .png, .gif"
             aria-label="Header picture upload"
+        />
+        <input
+            type="file"
+            ref={iconFileInputRef}
+            onChange={handleIconFileSelect}
+            style={{ display: 'none' }}
+            accept=".jpg, .jpeg, .png, .gif"
+            aria-label="Icon picture upload"
         />
 
         {/* Image Overlay */}
@@ -327,6 +648,19 @@ const ProjectView = ({ project, onBack }: ProjectViewProps) => {
             onPrev={prevImage}
             onNext={nextImage}
             onSelect={setCurrentImage}
+        />
+
+        {/* Link Edit Window */}
+        <SocialEditWindow
+            isVisible={linkModal.visible}
+            label={linkModal.key}
+            currentValue={(draftLinks[mapLinkKeyToProp(linkModal.key)] as string | undefined) ?? ''}
+            onSave={(value) => {
+                if (editingSection === 'links') {
+                    setDraftLinks(prev => ({ ...prev, [mapLinkKeyToProp(linkModal.key)]: value }));
+                }
+            }}
+            onClose={() => setLinkModal({ key: '', visible: false })}
         />
     </div>
   );

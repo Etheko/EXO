@@ -85,11 +85,15 @@
     gap: 1rem;
 }
 
+.project-view-icon-wrapper {
+    position: relative;
+    padding: 0.25rem;
+}
+
 .project-view-icon {
     width: 4rem;
     height: 4rem;
     object-fit: contain;
-    padding: 0.25rem;
 }
 
 .project-view-title {
@@ -183,6 +187,54 @@
     align-items: center;
     gap: 0.4rem;
     font-weight: 500;
+}
+
+.technology-tag-remove {
+    background: none;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    padding: 2px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 6px;
+    transition: all 0.2s ease;
+    opacity: 0.7;
+}
+
+.technology-tag-remove:hover {
+    opacity: 1;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.technology-input-container {
+    display: flex;
+    gap: 8px;
+    margin-top: 1rem;
+    align-items: center;
+    width: 100%;
+    max-width: 400px;
+}
+
+.technology-input-container .login-input {
+    flex: 1;
+    margin: 0;
+    font-size: 0.9rem;
+    padding: 8px 12px;
+    width: 100%; /* Ensure it takes full width of its flex container */
+}
+
+/* Disabled social icon styling */
+.disabled-social-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.25);
+    pointer-events: none;
 }
 
 .gallery-carousel {
@@ -350,30 +402,6 @@
     justify-content: flex-start;
 }
 
-.pfp-upload-overlay {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    background-color: rgba(0, 0, 0, 0.7);
-    color: white;
-    z-index: 2;
-    pointer-events: none; /* Let clicks pass through to container */
-    gap: 0.5rem;
-    font-family: 'Outfit', sans-serif;
-    font-weight: 500;
-    transition: opacity 0.2s ease-in-out;
-    opacity: 0;
-    -webkit-backdrop-filter: blur(10px);
-    backdrop-filter: blur(10px);
-}
-
-.project-view-header:hover .pfp-upload-overlay {
-    opacity: 1;
-}
-
 .edit-controls {
     position: absolute;
     display: flex;
@@ -383,11 +411,41 @@
     padding: 6px;
     background-color: rgba(0, 0, 0, 0.9);
     box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.5);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+}
+
+.project-view-header:hover .header-hover-controls {
+    opacity: 1;
+}
+
+.project-view-icon-wrapper:hover .icon-edit-controls {
+    opacity: 1;
+}
+
+.header-edit-controls, .icon-edit-controls {
+    opacity: 1;
 }
 
 .header-edit-controls {
     bottom: 1rem;
     right: 1rem;
+}
+
+.header-hover-controls {
+    top: 1rem;
+    right: 1rem;
+}
+
+.icon-edit-controls {
+    position: absolute;
+    bottom: -0.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 4px;
+    gap: 2px;
 }
 
 @media (max-width: 768px) {
@@ -635,4 +693,63 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
+}
+
+/* ==========================
+ *   ADMIN EDIT OVERLAYS
+ * ==========================*/
+
+.editable-section {
+    position: relative;
+}
+
+.editable-section::before {
+    content: "";
+    position: absolute;
+    inset: -1.5rem;
+    border: 1px solid rgba(255, 255, 255, 0);
+    border-radius: 12px;
+    background-color: rgba(255, 255, 255, 0);
+    pointer-events: none; /* so it doesn't block clicks */
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.editable-section:hover::before,
+.editable-section.editing::before {
+    background-color: rgba(255, 255, 255, 0.07);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.description-card.editable-section.editing {
+    padding: 1rem;
+    height: auto;
+    min-height: 120px;
+}
+
+/* Edit controls positioning for description card */
+.description-edit-controls {
+    top: 0.5rem;
+    right: 0.5rem;
+}
+
+/* Description textarea styling for edit mode */
+.description-card textarea {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 400;
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.8);
+    line-height: 1.6;
+    background-color: transparent;
+    border: none;
+    outline: none;
+    resize: none;
+    width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+    min-height: 80px;
+}
+
+.description-card textarea::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+    font-style: italic;
 }

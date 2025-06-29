@@ -140,6 +140,19 @@ class ProjectService {
         return response.data;
     }
 
+    // Icon management
+    async uploadIcon(projectId: number, file: File): Promise<Project> {
+        const formData = new FormData();
+        formData.append('icon', file);
+    
+        const response = await api.put<Project>(`/projects/${projectId}/icon`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+        return response.data;
+    }
+
     // Statistics and analytics
     async getTechnologyStatistics(): Promise<TechnologyStats[]> {
         const response = await api.get<[string, number][]>('/projects/statistics/technologies');
