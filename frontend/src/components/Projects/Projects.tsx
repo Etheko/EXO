@@ -39,16 +39,16 @@ const Projects = ({ onProjectSelected, onBackToIndex }: ProjectsProps) => {
 
     const fetchProjects = useCallback(async () => {
         setLoading(true);
-        try {
-            const data = await ProjectService.getAllProjects();
-            setProjects(data.content);
-            setError(null);
-        } catch (err) {
-            setError('Failed to fetch projects');
-            console.error('Error fetching projects:', err);
-        } finally {
-            setLoading(false);
-        }
+            try {
+                const data = await ProjectService.getAllProjects();
+                setProjects(data.content);
+                setError(null);
+            } catch (err) {
+                setError('Failed to fetch projects');
+                console.error('Error fetching projects:', err);
+            } finally {
+                setLoading(false);
+            }
     }, []);
 
     useEffect(() => {
@@ -245,50 +245,50 @@ const Projects = ({ onProjectSelected, onBackToIndex }: ProjectsProps) => {
                         </SentientIOB>
                     </div>
                 )}
-                <div className="project-enum-icon-container">
-                    {project.iconString ? (
-                        <img
-                            src={
-                                project.iconString.startsWith('/assets')
-                                    ? `${import.meta.env.VITE_BACKEND_URL ?? 'http://localhost:8080'}${project.iconString}`
-                                    : project.iconString
-                            }
-                            alt={`${project.title} icon`}
-                            className="project-icon"
-                        />
-                    ) : (
-                        <div className="project-enumeration">{(index + 1).toString().padStart(2, '0')}</div>
-                    )}
-                </div>
-                <h3 className="project-title-card">{project.title}</h3>
-                <p className="project-description">{project.description}</p>
-                <div className="project-technologies">
-                    {project.technologies.map((tech, index) => (
-                        <span
-                            key={index}
-                            className="technology-tag"
-                        >
-                            <TechnologyIcon technology={tech} />
-                            <span>{tech}</span>
-                        </span>
-                    ))}
-                </div>
-                <div className="project-links">
-                    {project.github && (
-                        <SentientButton href={project.github} className="project-button" as="a">
-                            <TbBrandGithub size={20} />
-                            <span>GitHub</span>
-                        </SentientButton>
-                    )}
-                    {project.liveDemoUrl && (
-                        <SentientButton href={project.liveDemoUrl} className="project-button" as="a">
-                            <TbExternalLink size={20} />
-                            <span>Live Demo</span>
-                        </SentientButton>
-                    )}
-                </div>
+            <div className="project-enum-icon-container">
+                {project.iconString ? (
+                    <img
+                        src={
+                            project.iconString.startsWith('/assets')
+                                ? `${import.meta.env.VITE_BACKEND_URL ?? 'http://localhost:8080'}${project.iconString}`
+                                : project.iconString
+                        }
+                        alt={`${project.title} icon`}
+                        className="project-icon"
+                    />
+                ) : (
+                    <div className="project-enumeration">{(index + 1).toString().padStart(2, '0')}</div>
+                )}
             </div>
-        );
+            <h3 className="project-title-card">{project.title}</h3>
+            <p className="project-description">{project.description}</p>
+            <div className="project-technologies">
+                {project.technologies.map((tech, index) => (
+                    <span
+                        key={index}
+                        className="technology-tag"
+                    >
+                        <TechnologyIcon technology={tech} />
+                        <span>{tech}</span>
+                    </span>
+                ))}
+            </div>
+            <div className="project-links">
+                {project.github && (
+                    <SentientButton href={project.github} className="project-button" as="a">
+                        <TbBrandGithub size={20} />
+                        <span>GitHub</span>
+                    </SentientButton>
+                )}
+                {project.liveDemoUrl && (
+                    <SentientButton href={project.liveDemoUrl} className="project-button" as="a">
+                        <TbExternalLink size={20} />
+                        <span>Live Demo</span>
+                    </SentientButton>
+                )}
+            </div>
+        </div>
+    );
     };
 
     return (

@@ -208,6 +208,13 @@
     font-weight: 500;
 }
 
+.technology-tag.placeholder-tech {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.5);
+    font-style: italic;
+    cursor: default;
+}
+
 .technology-tag-remove {
     background: none;
     border: none;

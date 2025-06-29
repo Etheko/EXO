@@ -74,11 +74,24 @@ public class ProjectController {
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Update project", description = "Update an existing project (Admin only)")
-    public ResponseEntity<Project> updateProject(@PathVariable Long id, @RequestBody Project project) {
+    public ResponseEntity<Project> updateProject(@PathVariable Long id, @RequestBody Project projectDetails) {
         return projectService.findById(id)
                 .map(existingProject -> {
-                    project.setId(id);
-                    return ResponseEntity.ok(projectService.save(project));
+                    existingProject.setTitle(projectDetails.getTitle());
+                    existingProject.setDescription(projectDetails.getDescription());
+                    existingProject.setFinished(projectDetails.isFinished());
+                    existingProject.setTechnologies(projectDetails.getTechnologies());
+                    existingProject.setLiveDemoUrl(projectDetails.getLiveDemoUrl());
+                    existingProject.setProjectWebsiteUrl(projectDetails.getProjectWebsiteUrl());
+                    existingProject.setGithub(projectDetails.getGithub());
+                    existingProject.setInstagram(projectDetails.getInstagram());
+                    existingProject.setFacebook(projectDetails.getFacebook());
+                    existingProject.setXUsername(projectDetails.getXUsername());
+                    existingProject.setMastodon(projectDetails.getMastodon());
+                    existingProject.setBluesky(projectDetails.getBluesky());
+                    existingProject.setTiktok(projectDetails.getTiktok());
+                    
+                    return ResponseEntity.ok(projectService.save(existingProject));
                 })
                 .orElse(ResponseEntity.notFound().build());
     }

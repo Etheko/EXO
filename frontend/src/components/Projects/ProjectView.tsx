@@ -521,364 +521,371 @@ const ProjectView = ({ project, onBack, onStateChange }: ProjectViewProps) => {
         }
     };
 
-  return (
-    <div className="project-view">
-        <header 
-            className="project-view-header" 
-            onMouseEnter={() => isAdmin && setIsHoveringHeader(true)}
-            onMouseLeave={() => isAdmin && setIsHoveringHeader(false)}
-        >
-            <div 
-                className="project-view-header-background"
-                style={{ backgroundImage: `url(${headerImageUrl})` }}
-            ></div>
-            <div className="project-view-header-content">
-                <div className="project-view-icon-wrapper">
-                {iconUrl && <img src={iconUrl} alt={`${currentProject.title} icon`} className="project-view-icon" />}
-                </div>
-                {isEditingTitle ? (
-                    <input
-                        title="Project title"
-                        placeholder="Project title"
-                        type="text"
-                        className="project-view-title-input"
-                        value={draftTitle}
-                        onChange={(e) => setDraftTitle(e.target.value)}
-                        onKeyDown={(e) => {
-                            if (e.key === 'Enter') handleSaveTitle();
-                            if (e.key === 'Escape') handleCancelEditTitle();
-                        }}
-                        autoFocus
-                    />
-                ) : (
-                    <h1 className="project-view-title">{currentProject.title}</h1>
-                )}
-            </div>
-            
-            <div 
-                className="edit-controls header-hover-controls"
-                style={{ opacity: isAdmin && (isHoveringHeader || newHeaderPic || newIconPic || isEditingTitle) ? 1 : 0 }}
+    const technologiesToShow = editingSection === 'technologies' ? draftTechnologies : currentProject.technologies;
+
+    return (
+        <div className="project-view">
+            <header 
+                className="project-view-header" 
+                onMouseEnter={() => isAdmin && setIsHoveringHeader(true)}
+                onMouseLeave={() => isAdmin && setIsHoveringHeader(false)}
             >
-                {isEditingTitle ? (
-                    <>
-                        <SentientIOB as="button" hoverScale={1} onClick={handleCancelEditTitle} {...createTooltipHandlers('cancel')}>
-                            <TbX size={18} />
-                        </SentientIOB>
-                        <SentientIOB as="button" hoverScale={1} onClick={handleSaveTitle} {...createTooltipHandlers('save')}>
-                            <TbCheck size={18} />
-                        </SentientIOB>
-                    </>
-                ) : newHeaderPic || newIconPic ? (
-                    <>
-                        <SentientIOB as="button" hoverScale={1} onClick={handleCancelImageChanges} {...createTooltipHandlers('cancel')}>
-                            <TbX size={18} />
-                        </SentientIOB>
-                        <SentientIOB as="button" hoverScale={1} onClick={handleSaveImageChanges} {...createTooltipHandlers('save')}>
-                            <TbCheck size={18} />
-                        </SentientIOB>
-                    </>
-                ) : (
-                    <>
-                        <SentientIOB as="button" hoverScale={1} onClick={handleStartEditTitle} {...createTooltipHandlers('edit title')}>
-                            <TbEdit size={18} />
-                        </SentientIOB>
-                        <SentientIOB as="button" hoverScale={1} onClick={() => iconFileInputRef.current?.click()} {...createTooltipHandlers('change icon')}>
-                            <TbIcons size={18} />
-                        </SentientIOB>
-                        <SentientIOB as="button" hoverScale={1} onClick={() => headerFileInputRef.current?.click()} {...createTooltipHandlers('change banner')}>
-                            <TbPhoto size={18} />
-                        </SentientIOB>
-                    </>
-                )}
-                </div>
-        </header>
-
-        <main className="project-view-content">
-            <section className="project-view-section">
-                <div className="section-subtitle-container">
-                    <h2 className="section-subtitle">What is this?</h2>
-                </div>
-                <div
-                    className={`description-card ${isAdmin ? 'editable-section' : ''} ${editingSection === 'description' ? 'editing' : ''}`}
-                    onMouseEnter={() => isAdmin && setHoverSection('description')}
-                    onMouseLeave={() => handleMouseLeaveSection('description')}
-                    onMouseMove={(e) => handleMouseMove(e, 'description')}
-                >
-                    {renderEditControls('description')}
-
-                    {/* Description Content */}
-                    {editingSection === 'description' ? (
-                        <textarea
-                            ref={textareaRef}
-                            value={descriptionInput}
-                            placeholder="Enter project description..."
-                            onChange={e => setDescriptionInput(e.target.value)}
-                            onInput={e => autoResizeTextarea(e.target as HTMLTextAreaElement)}
+                <div 
+                    className="project-view-header-background"
+                    style={{ backgroundImage: `url(${headerImageUrl})` }}
+                ></div>
+                <div className="project-view-header-content">
+                    <div className="project-view-icon-wrapper">
+                    {iconUrl && <img src={iconUrl} alt={`${currentProject.title} icon`} className="project-view-icon" />}
+                    </div>
+                    {isEditingTitle ? (
+                        <input
+                            title="Project title"
+                            placeholder="Project title"
+                            type="text"
+                            className="project-view-title-input"
+                            value={draftTitle}
+                            onChange={(e) => setDraftTitle(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleSaveTitle();
+                                if (e.key === 'Escape') handleCancelEditTitle();
+                            }}
+                            autoFocus
                         />
                     ) : (
-                        (currentProject.description || '').split('\n').map((line, index) => (
-                        <p key={index} className="description-text">
-                            {line || '\u00A0'} 
-                        </p>
-                        ))
+                        <h1 className="project-view-title">{currentProject.title}</h1>
                     )}
                 </div>
-            </section>
-
-            {currentProject.technologies && currentProject.technologies.length > 0 && (
-                <section 
-                    className={`project-view-section ${isAdmin ? 'editable-section' : ''} ${editingSection === 'technologies' ? 'editing' : ''}`}
-                    onMouseEnter={() => isAdmin && setHoverSection('technologies')}
-                    onMouseLeave={() => handleMouseLeaveSection('technologies')}
-                    onMouseMove={(e) => handleMouseMove(e, 'technologies')}
+                
+                <div 
+                    className="edit-controls header-hover-controls"
+                    style={{ opacity: isAdmin && (isHoveringHeader || newHeaderPic || newIconPic || isEditingTitle) ? 1 : 0 }}
                 >
-                    {renderEditControls('technologies')}
-                    <div className="section-subtitle-container">
-                        <h2 className="section-subtitle">Built With</h2>
-                    </div>
-                    <div className="project-technologies-view">
-                        {(editingSection === 'technologies' ? draftTechnologies : currentProject.technologies).map((tech, index) => (
-                            <span key={index} className="technology-tag">
-                                <TechnologyIcon technology={tech} />
-                                <span>{tech}</span>
-                                {editingSection === 'technologies' && (
-                                    <button
-                                        className="technology-tag-remove"
-                                        onClick={() => removeTechnology(tech)}
-                                        {...createTooltipHandlers('remove')}
-                                    >
-                                        <TbX size={12} />
-                                    </button>
-                                )}
-                            </span>
-                        ))}
-                    </div>
-                    {editingSection === 'technologies' && (
-                        <div className="technology-input-container">
-                            <input
-                                className="login-input"
-                                value={newTechnologyInput}
-                                onChange={(e) => setNewTechnologyInput(e.target.value)}
-                                onKeyPress={handleTechInputKeyPress}
-                                placeholder="Add a technology..."
-                            />
-                            <SentientIOB
-                                as="button"
-                                onClick={addTechnology}
-                                disabled={!newTechnologyInput.trim()}
-                                {...createTooltipHandlers('add')}
-                            >
-                                <TbPlus size={16} />
+                    {isEditingTitle ? (
+                        <>
+                            <SentientIOB as="button" hoverScale={1} onClick={handleCancelEditTitle} {...createTooltipHandlers('cancel')}>
+                                <TbX size={18} />
                             </SentientIOB>
-                        </div>
+                            <SentientIOB as="button" hoverScale={1} onClick={handleSaveTitle} {...createTooltipHandlers('save')}>
+                                <TbCheck size={18} />
+                            </SentientIOB>
+                        </>
+                    ) : newHeaderPic || newIconPic ? (
+                        <>
+                            <SentientIOB as="button" hoverScale={1} onClick={handleCancelImageChanges} {...createTooltipHandlers('cancel')}>
+                                <TbX size={18} />
+                            </SentientIOB>
+                            <SentientIOB as="button" hoverScale={1} onClick={handleSaveImageChanges} {...createTooltipHandlers('save')}>
+                                <TbCheck size={18} />
+                            </SentientIOB>
+                        </>
+                    ) : (
+                        <>
+                            <SentientIOB as="button" hoverScale={1} onClick={handleStartEditTitle} {...createTooltipHandlers('edit title')}>
+                                <TbEdit size={18} />
+                            </SentientIOB>
+                            <SentientIOB as="button" hoverScale={1} onClick={() => iconFileInputRef.current?.click()} {...createTooltipHandlers('change icon')}>
+                                <TbIcons size={18} />
+                            </SentientIOB>
+                            <SentientIOB as="button" hoverScale={1} onClick={() => headerFileInputRef.current?.click()} {...createTooltipHandlers('change banner')}>
+                                <TbPhoto size={18} />
+                            </SentientIOB>
+                        </>
                     )}
-                </section>
-            )}
-
-            {(galleryImages.length > 0 || isAdmin) && (
-                <section
-                    className={`project-view-section ${isAdmin ? 'editable-section' : ''} ${editingSection === 'gallery' ? 'editing' : ''}`}
-                    onMouseEnter={() => isAdmin && setHoverSection('gallery')}
-                    onMouseLeave={() => handleMouseLeaveSection('gallery')}
-                    onMouseMove={(e) => handleMouseMove(e, 'gallery')}
-                >
-                    {renderEditControls('gallery')}
-                    <div className="section-subtitle-container">
-                        <h2 className="section-subtitle">Pics</h2>
                     </div>
-                    <div className="gallery-carousel">
-                        <div className={`carousel-arrow-wrapper left ${currentImage === 0 ? 'hidden' : ''}`}>
-                            <SentientIOB as="button" className="carousel-arrow" onClick={prevImage} {...createTooltipHandlers('previous image')}>
-                                <TbChevronLeft size={24} />
-                            </SentientIOB>
+            </header>
+
+            <main className="project-view-content">
+                <section className="project-view-section">
+                    <div className="section-subtitle-container">
+                        <h2 className="section-subtitle">What is this?</h2>
+                    </div>
+                    <div
+                        className={`description-card ${isAdmin ? 'editable-section' : ''} ${editingSection === 'description' ? 'editing' : ''}`}
+                        onMouseEnter={() => isAdmin && setHoverSection('description')}
+                        onMouseLeave={() => handleMouseLeaveSection('description')}
+                        onMouseMove={(e) => handleMouseMove(e, 'description')}
+                    >
+                        {renderEditControls('description')}
+
+                        {/* Description Content */}
+                        {editingSection === 'description' ? (
+                            <textarea
+                                ref={textareaRef}
+                                value={descriptionInput}
+                                placeholder="Enter project description..."
+                                onChange={e => setDescriptionInput(e.target.value)}
+                                onInput={e => autoResizeTextarea(e.target as HTMLTextAreaElement)}
+                            />
+                        ) : (
+                            (currentProject.description || '').split('\n').map((line, index) => (
+                            <p key={index} className="description-text">
+                                {line || '\u00A0'} 
+                            </p>
+                            ))
+                        )}
+                    </div>
+                </section>
+
+                {(technologiesToShow.length > 0 || isAdmin) && (
+                    <section 
+                        className={`project-view-section ${isAdmin ? 'editable-section' : ''} ${editingSection === 'technologies' ? 'editing' : ''}`}
+                        onMouseEnter={() => isAdmin && setHoverSection('technologies')}
+                        onMouseLeave={() => handleMouseLeaveSection('technologies')}
+                        onMouseMove={(e) => handleMouseMove(e, 'technologies')}
+                    >
+                        {renderEditControls('technologies')}
+                        <div className="section-subtitle-container">
+                            <h2 className="section-subtitle">Built With</h2>
                         </div>
-                        <div className="carousel-images-container">
-                            {(editingSection === 'gallery' ? draftGallery : galleryImages).map((image, index) => {
-                                const offset = index - currentImage;
-                                // We now need to render 5 items to allow for fade-out animations
-                                const isVisible = Math.abs(offset) <= 2;
-
-                                let stateClassName = '';
-                                switch (offset) {
-                                    case -2:
-                                        stateClassName = 'prev-hiding';
-                                        break;
-                                    case -1:
-                                        stateClassName = 'prev';
-                                        break;
-                                    case 0:
-                                        stateClassName = 'current';
-                                        break;
-                                    case 1:
-                                        stateClassName = 'next';
-                                        break;
-                                    case 2:
-                                        stateClassName = 'next-hiding';
-                                        break;
-                                }
-
-                                const getClickHandler = (offset: number): (() => void) | undefined => {
-                                    if (offset === -1) return prevImage;
-                                    if (offset === 1) return nextImage;
-                                    if (offset === 0) return openOverlay;
-                                    return undefined;
-                                };
-                                
-                                const isMarkedForDeletion = editingSection === 'gallery' && imagesToDelete.includes(image);
-
-                                return isVisible ? (
-                                    <div
-                                        key={index}
-                                        className={`carousel-image-wrapper ${stateClassName} ${isMarkedForDeletion ? 'marked-for-deletion' : ''}`}
-                                        onClick={getClickHandler(offset)}
-                                    >
-                                        <img
-                                            src={image}
-                                            alt={`Project gallery image ${index + 1}`}
-                                            className="carousel-image"
-                                        />
-                                        {editingSection === 'gallery' && offset === 0 && (
-                                            <div className="edit-controls image-delete-controls">
-                                                <SentientIOB as="button" hoverScale={1} onClick={(e) => { e.stopPropagation(); handleDeleteImage(image); }} {...createTooltipHandlers(isMarkedForDeletion ? 'unmark for deletion' : 'delete image')}>
-                                                    <TbTrash size={18} />
-                                                </SentientIOB>
-                                            </div>
-                                        )}
-                                    </div>
-                                ) : null;
-                            })}
-                            {(editingSection === 'gallery' ? draftGallery : galleryImages).length === 0 && (
-                                <div className="carousel-image-wrapper current placeholder-wrapper" onClick={() => editingSection==='gallery' && galleryFileInputRef.current?.click()}>
-                                    <div className="placeholder-content">Upload images</div>
-                                </div>
+                        <div className="project-technologies-view">
+                            {technologiesToShow.map((tech, index) => (
+                                <span key={index} className="technology-tag">
+                                    <TechnologyIcon technology={tech} />
+                                    <span>{tech}</span>
+                                    {editingSection === 'technologies' && (
+                                        <button
+                                            className="technology-tag-remove"
+                                            onClick={() => removeTechnology(tech)}
+                                            {...createTooltipHandlers('remove')}
+                                        >
+                                            <TbX size={12} />
+                                        </button>
+                                    )}
+                                </span>
+                            ))}
+                            {isAdmin && technologiesToShow.length === 0 && (
+                                <span className="technology-tag placeholder-tech">
+                                    <span>Add a technology...</span>
+                                </span>
                             )}
                         </div>
-                        <div className={`carousel-arrow-wrapper right ${currentImage >= ((editingSection === 'gallery') ? draftGallery.length : galleryImages.length) - 1 ? 'hidden' : ''}`}>
-                            <SentientIOB as="button" className="carousel-arrow" onClick={nextImage} {...createTooltipHandlers('next image')}>
-                                <TbChevronRight size={24} />
-                            </SentientIOB>
-                        </div>
-
-                        {/* Seeker */}
-                        <div className="carousel-seeker">
-                            {(editingSection === 'gallery' ? draftGallery : galleryImages).map((_, index) => (
-                                <span
-                                    key={index}
-                                    className={`seeker-dot ${index === currentImage ? 'active' : ''}`}
-                                    onClick={() => setCurrentImage(index)}
-                                    {...createTooltipHandlers(`image ${index + 1}`)}
+                        {editingSection === 'technologies' && (
+                            <div className="technology-input-container">
+                                <input
+                                    className="login-input"
+                                    value={newTechnologyInput}
+                                    onChange={(e) => setNewTechnologyInput(e.target.value)}
+                                    onKeyPress={handleTechInputKeyPress}
+                                    placeholder="Add a technology..."
                                 />
-                            ))}
+                                <SentientIOB
+                                    as="button"
+                                    onClick={addTechnology}
+                                    disabled={!newTechnologyInput.trim()}
+                                    {...createTooltipHandlers('add')}
+                                >
+                                    <TbPlus size={16} />
+                                </SentientIOB>
+                            </div>
+                        )}
+                    </section>
+                )}
+
+                {(galleryImages.length > 0 || isAdmin) && (
+                    <section
+                        className={`project-view-section ${isAdmin ? 'editable-section' : ''} ${editingSection === 'gallery' ? 'editing' : ''}`}
+                        onMouseEnter={() => isAdmin && setHoverSection('gallery')}
+                        onMouseLeave={() => handleMouseLeaveSection('gallery')}
+                        onMouseMove={(e) => handleMouseMove(e, 'gallery')}
+                    >
+                        {renderEditControls('gallery')}
+                        <div className="section-subtitle-container">
+                            <h2 className="section-subtitle">Pics</h2>
                         </div>
+                        <div className="gallery-carousel">
+                            <div className={`carousel-arrow-wrapper left ${currentImage === 0 ? 'hidden' : ''}`}>
+                                <SentientIOB as="button" className="carousel-arrow" onClick={prevImage} {...createTooltipHandlers('previous image')}>
+                                    <TbChevronLeft size={24} />
+                                </SentientIOB>
+                            </div>
+                            <div className="carousel-images-container">
+                                {(editingSection === 'gallery' ? draftGallery : galleryImages).map((image, index) => {
+                                    const offset = index - currentImage;
+                                    // We now need to render 5 items to allow for fade-out animations
+                                    const isVisible = Math.abs(offset) <= 2;
+
+                                    let stateClassName = '';
+                                    switch (offset) {
+                                        case -2:
+                                            stateClassName = 'prev-hiding';
+                                            break;
+                                        case -1:
+                                            stateClassName = 'prev';
+                                            break;
+                                        case 0:
+                                            stateClassName = 'current';
+                                            break;
+                                        case 1:
+                                            stateClassName = 'next';
+                                            break;
+                                        case 2:
+                                            stateClassName = 'next-hiding';
+                                            break;
+                                    }
+
+                                    const getClickHandler = (offset: number): (() => void) | undefined => {
+                                        if (offset === -1) return prevImage;
+                                        if (offset === 1) return nextImage;
+                                        if (offset === 0) return openOverlay;
+                                        return undefined;
+                                    };
+                                    
+                                    const isMarkedForDeletion = editingSection === 'gallery' && imagesToDelete.includes(image);
+
+                                    return isVisible ? (
+                                        <div
+                                            key={index}
+                                            className={`carousel-image-wrapper ${stateClassName} ${isMarkedForDeletion ? 'marked-for-deletion' : ''}`}
+                                            onClick={getClickHandler(offset)}
+                                        >
+                                            <img
+                                                src={image}
+                                                alt={`Project gallery image ${index + 1}`}
+                                                className="carousel-image"
+                                            />
+                                            {editingSection === 'gallery' && offset === 0 && (
+                                                <div className="edit-controls image-delete-controls">
+                                                    <SentientIOB as="button" hoverScale={1} onClick={(e) => { e.stopPropagation(); handleDeleteImage(image); }} {...createTooltipHandlers(isMarkedForDeletion ? 'unmark for deletion' : 'delete image')}>
+                                                        <TbTrash size={18} />
+                                                    </SentientIOB>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ) : null;
+                                })}
+                                {(editingSection === 'gallery' ? draftGallery : galleryImages).length === 0 && (
+                                    <div className="carousel-image-wrapper current placeholder-wrapper" onClick={() => editingSection==='gallery' && galleryFileInputRef.current?.click()}>
+                                        <div className="placeholder-content">Upload images</div>
+                                    </div>
+                                )}
+                            </div>
+                            <div className={`carousel-arrow-wrapper right ${currentImage >= ((editingSection === 'gallery') ? draftGallery.length : galleryImages.length) - 1 ? 'hidden' : ''}`}>
+                                <SentientIOB as="button" className="carousel-arrow" onClick={nextImage} {...createTooltipHandlers('next image')}>
+                                    <TbChevronRight size={24} />
+                                </SentientIOB>
+                            </div>
+
+                            {/* Seeker */}
+                            <div className="carousel-seeker">
+                                {(editingSection === 'gallery' ? draftGallery : galleryImages).map((_, index) => (
+                                    <span
+                                        key={index}
+                                        className={`seeker-dot ${index === currentImage ? 'active' : ''}`}
+                                        onClick={() => setCurrentImage(index)}
+                                        {...createTooltipHandlers(`image ${index + 1}`)}
+                                    />
+                                ))}
+                            </div>
+                        </div>
+                    </section>
+                )}
+
+                {/* Links Section */}
+                <section 
+                    className={`project-view-section ${isAdmin ? 'editable-section' : ''} ${editingSection === 'links' ? 'editing' : ''}`}
+                    onMouseEnter={() => isAdmin && setHoverSection('links')}
+                    onMouseLeave={() => handleMouseLeaveSection('links')}
+                    onMouseMove={(e) => handleMouseMove(e, 'links')}
+                >
+                    {renderEditControls('links')}
+                    <div className="section-subtitle-container">
+                        <h2 className="section-subtitle">Links</h2>
+                    </div>
+                    <div className="project-social-icons">
+                        {[...projectLinks, ...projectSocials].map(({ key, url, icon: IconCmp, label }) => {
+                            const prop = mapLinkKeyToProp(key);
+                            const effectiveUrl = editingSection === 'links' ? (draftLinks[prop] as string | undefined) : url;
+
+                            if (editingSection === 'links') {
+                                const isActive = Boolean(effectiveUrl);
+                                return (
+                                    <SentientIOB
+                                        key={key}
+                                        as="button"
+                                        className={isActive ? 'social-icon-active' : ''}
+                                        onClick={() => setLinkModal({ key, visible: true })}
+                                        {...createTooltipHandlers(label)}
+                                    >
+                                    <IconCmp size={24} />
+                                </SentientIOB>
+                                );
+                            }
+
+                            if (effectiveUrl) {
+                                return (
+                                    <SentientIOB key={key} href={effectiveUrl} as="a" {...createTooltipHandlers(label)}>
+                                    <IconCmp size={24} />
+                                </SentientIOB>
+                                );
+                            }
+
+                            // Show disabled icon only for admins; hide completely for regular users
+                            if (isAdmin) {
+                                return (
+                                    <span key={key} className="disabled-social-icon" title={label}>
+                                        <IconCmp size={24} />
+                                    </span>
+                                );
+                            }
+                            return null;
+                        })}
                     </div>
                 </section>
-            )}
 
-            {/* Links Section */}
-            <section 
-                className={`project-view-section ${isAdmin ? 'editable-section' : ''} ${editingSection === 'links' ? 'editing' : ''}`}
-                onMouseEnter={() => isAdmin && setHoverSection('links')}
-                onMouseLeave={() => handleMouseLeaveSection('links')}
-                onMouseMove={(e) => handleMouseMove(e, 'links')}
-            >
-                {renderEditControls('links')}
-                <div className="section-subtitle-container">
-                    <h2 className="section-subtitle">Links</h2>
-                </div>
-                <div className="project-social-icons">
-                    {[...projectLinks, ...projectSocials].map(({ key, url, icon: IconCmp, label }) => {
-                        const prop = mapLinkKeyToProp(key);
-                        const effectiveUrl = editingSection === 'links' ? (draftLinks[prop] as string | undefined) : url;
+            </main>
+            <input
+                type="file"
+                ref={headerFileInputRef}
+                onChange={handleHeaderFileSelect}
+                style={{ display: 'none' }}
+                accept=".jpg, .jpeg, .png, .gif"
+                aria-label="Header picture upload"
+            />
+            <input
+                type="file"
+                ref={iconFileInputRef}
+                onChange={handleIconFileSelect}
+                style={{ display: 'none' }}
+                accept=".jpg, .jpeg, .png, .gif"
+                aria-label="Icon picture upload"
+            />
 
-                        if (editingSection === 'links') {
-                            const isActive = Boolean(effectiveUrl);
-                            return (
-                                <SentientIOB
-                                    key={key}
-                                    as="button"
-                                    className={isActive ? 'social-icon-active' : ''}
-                                    onClick={() => setLinkModal({ key, visible: true })}
-                                    {...createTooltipHandlers(label)}
-                                >
-                                <IconCmp size={24} />
-                            </SentientIOB>
-                            );
-                        }
+            {/* Image Overlay */}
+            <ImageOverlay
+                images={editingSection === 'gallery' ? draftGallery : galleryImages}
+                isOpen={isOverlayVisible}
+                currentIndex={currentImage}
+                onClose={closeOverlay}
+                onPrev={prevImage}
+                onNext={nextImage}
+                onSelect={setCurrentImage}
+            />
 
-                        if (effectiveUrl) {
-                            return (
-                                <SentientIOB key={key} href={effectiveUrl} as="a" {...createTooltipHandlers(label)}>
-                                <IconCmp size={24} />
-                            </SentientIOB>
-                            );
-                        }
+            {/* Link Edit Window */}
+            <SocialEditWindow
+                isVisible={linkModal.visible}
+                label={linkModal.key}
+                currentValue={(draftLinks[mapLinkKeyToProp(linkModal.key)] as string | undefined) ?? ''}
+                onSave={(value) => {
+                    if (editingSection === 'links') {
+                        setDraftLinks(prev => ({ ...prev, [mapLinkKeyToProp(linkModal.key)]: value }));
+                    }
+                }}
+                onClose={() => setLinkModal({ key: '', visible: false })}
+            />
 
-                        // Show disabled icon only for admins; hide completely for regular users
-                        if (isAdmin) {
-                            return (
-                                <span key={key} className="disabled-social-icon" title={label}>
-                                    <IconCmp size={24} />
-                                </span>
-                            );
-                        }
-                        return null;
-                    })}
-                </div>
-            </section>
-
-        </main>
-        <input
-            type="file"
-            ref={headerFileInputRef}
-            onChange={handleHeaderFileSelect}
-            style={{ display: 'none' }}
-            accept=".jpg, .jpeg, .png, .gif"
-            aria-label="Header picture upload"
-        />
-        <input
-            type="file"
-            ref={iconFileInputRef}
-            onChange={handleIconFileSelect}
-            style={{ display: 'none' }}
-            accept=".jpg, .jpeg, .png, .gif"
-            aria-label="Icon picture upload"
-        />
-
-        {/* Image Overlay */}
-        <ImageOverlay
-            images={editingSection === 'gallery' ? draftGallery : galleryImages}
-            isOpen={isOverlayVisible}
-            currentIndex={currentImage}
-            onClose={closeOverlay}
-            onPrev={prevImage}
-            onNext={nextImage}
-            onSelect={setCurrentImage}
-        />
-
-        {/* Link Edit Window */}
-        <SocialEditWindow
-            isVisible={linkModal.visible}
-            label={linkModal.key}
-            currentValue={(draftLinks[mapLinkKeyToProp(linkModal.key)] as string | undefined) ?? ''}
-            onSave={(value) => {
-                if (editingSection === 'links') {
-                    setDraftLinks(prev => ({ ...prev, [mapLinkKeyToProp(linkModal.key)]: value }));
-                }
-            }}
-            onClose={() => setLinkModal({ key: '', visible: false })}
-        />
-
-        <input
-            type="file"
-            multiple
-            ref={galleryFileInputRef}
-            onChange={handleAddGalleryImages}
-            style={{ display: 'none' }}
-            accept=".jpg, .jpeg, .png, .gif"
-            aria-label="Gallery picture upload"
-        />
-    </div>
-  );
+            <input
+                type="file"
+                multiple
+                ref={galleryFileInputRef}
+                onChange={handleAddGalleryImages}
+                style={{ display: 'none' }}
+                accept=".jpg, .jpeg, .png, .gif"
+                aria-label="Gallery picture upload"
+            />
+        </div>
+    );
 };
 
 export default ProjectView;
