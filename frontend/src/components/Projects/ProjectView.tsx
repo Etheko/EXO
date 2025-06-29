@@ -59,6 +59,9 @@ const ProjectView = ({ project, onBack }: ProjectViewProps) => {
     const headerImageUrl = newHeaderPic ? newHeaderPic.previewUrl : getImageUrl(currentProject.headerPictureString);
     const iconUrl = newIconPic ? newIconPic.previewUrl : getImageUrl(currentProject.iconString);
 
+    const [isEditingTitle, setIsEditingTitle] = useState(false);
+    const [draftTitle, setDraftTitle] = useState('');
+
     /* ==========================
      *     EDIT STATE LOGIC
      * ==========================
@@ -460,6 +463,35 @@ const ProjectView = ({ project, onBack }: ProjectViewProps) => {
         }
     };
 
+    const handleStartEditTitle = () => {
+        setDraftTitle(currentProject.title);
+        setIsEditingTitle(true);
+    };
+
+    const handleCancelEditTitle = () => {
+        setIsEditingTitle(false);
+        setDraftTitle('');
+    };
+
+    const handleSaveTitle = async () => {
+        if (!currentProject.id || draftTitle.trim() === '' || draftTitle === currentProject.title) {
+            handleCancelEditTitle();
+            return;
+        }
+    
+        try {
+            const updated = await ProjectService.updateProject(currentProject.id, {
+                ...currentProject,
+                title: draftTitle,
+            });
+            setCurrentProject(updated);
+            handleCancelEditTitle();
+        } catch (error) {
+            console.error("Failed to update project title", error);
+            showError(ERROR_CODES.INTERNAL.DATA_UPDATE_FAILED, 'Failed to update project title.');
+        }
+    };
+
   return (
     <div className="project-view">
         <header 
@@ -475,24 +507,52 @@ const ProjectView = ({ project, onBack }: ProjectViewProps) => {
                 <div className="project-view-icon-wrapper">
                 {iconUrl && <img src={iconUrl} alt={`${currentProject.title} icon`} className="project-view-icon" />}
                 </div>
-                <h1 className="project-view-title">{currentProject.title}</h1>
+                {isEditingTitle ? (
+                    <input
+                        title="Project title"
+                        placeholder="Project title"
+                        type="text"
+                        className="project-view-title-input"
+                        value={draftTitle}
+                        onChange={(e) => setDraftTitle(e.target.value)}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter') handleSaveTitle();
+                            if (e.key === 'Escape') handleCancelEditTitle();
+                        }}
+                        autoFocus
+                    />
+                ) : (
+                    <h1 className="project-view-title">{currentProject.title}</h1>
+                )}
             </div>
             
             <div 
                 className="edit-controls header-hover-controls"
-                style={{ opacity: isAdmin && (isHoveringHeader || newHeaderPic || newIconPic) ? 1 : 0 }}
+                style={{ opacity: isAdmin && (isHoveringHeader || newHeaderPic || newIconPic || isEditingTitle) ? 1 : 0 }}
             >
-                {newHeaderPic || newIconPic ? (
+                {isEditingTitle ? (
+                    <>
+                        <SentientIOB as="button" hoverScale={1} onClick={handleCancelEditTitle} {...createTooltipHandlers('cancel')}>
+                            <TbX size={18} />
+                        </SentientIOB>
+                        <SentientIOB as="button" hoverScale={1} onClick={handleSaveTitle} {...createTooltipHandlers('save')}>
+                            <TbCheck size={18} />
+                        </SentientIOB>
+                    </>
+                ) : newHeaderPic || newIconPic ? (
                     <>
                         <SentientIOB as="button" hoverScale={1} onClick={handleCancelImageChanges} {...createTooltipHandlers('cancel')}>
-                        <TbX size={18} />
-                    </SentientIOB>
+                            <TbX size={18} />
+                        </SentientIOB>
                         <SentientIOB as="button" hoverScale={1} onClick={handleSaveImageChanges} {...createTooltipHandlers('save')}>
-                        <TbCheck size={18} />
-                    </SentientIOB>
+                            <TbCheck size={18} />
+                        </SentientIOB>
                     </>
                 ) : (
                     <>
+                        <SentientIOB as="button" hoverScale={1} onClick={handleStartEditTitle} {...createTooltipHandlers('edit title')}>
+                            <TbEdit size={18} />
+                        </SentientIOB>
                         <SentientIOB as="button" hoverScale={1} onClick={() => iconFileInputRef.current?.click()} {...createTooltipHandlers('change icon')}>
                             <TbIcons size={18} />
                         </SentientIOB>

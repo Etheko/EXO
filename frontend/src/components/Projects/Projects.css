@@ -126,12 +126,15 @@
     transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275),
         background-color 0.3s, border-color 0.3s;
     cursor: pointer;
+    position: relative;
 }
 
 .project-card:hover {
     transform: scale(1.05);
     background-color: rgba(255, 255, 255, 0.07);
-    border-color: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.4);
+    color: white;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
 }
 
 .project-enum-icon-container {
@@ -241,6 +244,7 @@
 
 .projects-section {
     margin-bottom: 2.5rem;
+    position: relative;
 }
 
 .section-subtitle {
@@ -279,4 +283,63 @@
     background-size: calc(var(--dot-diameter) + var(--dot-spacing)) var(--dot-diameter);
     background-repeat: space;
     background-position: center;
+}
+
+/* ==========================
+*   ADMIN EDIT OVERLAYS
+* ==========================*/
+
+.editable-section {
+    position: relative;
+}
+
+.editable-section::before {
+    content: "";
+    position: absolute;
+    inset: -0.5rem;
+    border: 1px solid rgba(255, 255, 255, 0);
+    border-radius: 12px;
+    background-color: rgba(255, 255, 255, 0);
+    pointer-events: none; /* so it doesn't block clicks */
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.editable-section:hover::before,
+.editable-section.editing::before {
+    background-color: rgba(255, 255, 255, 0.07);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.edit-controls {
+    position: absolute;
+    display: flex;
+    gap: 4px;
+    z-index: 5;
+    border-radius: 12px;
+    padding: 6px;
+    background-color: rgba(0, 0, 0, 0.9);
+    box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.5);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    transition: opacity 0.2s ease-in-out;
+}
+
+.section-edit-controls {
+    top: 1rem;
+    right: 1rem;
+}
+
+.card-edit-controls {
+    top: 0.5rem;
+    right: 0.5rem;
+}
+
+.project-card.marked-for-deletion {
+    border-color: #ef4444;
+    box-shadow: 0 0 20px 5px rgba(239, 68, 68, 0.4);
+}
+
+.project-card.marked-for-deletion > *:not(.edit-controls) {
+    opacity: 0.5;
+    filter: grayscale(80%);
 } 
