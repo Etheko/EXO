@@ -1,9 +1,9 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import ProjectService from '../../services/ProjectsService';
 import SectionService from '../../services/SectionService';
 import './Projects.css';
 import TechnologyIcon from './TechnologyIcon';
-import { TbBrandGithub, TbExternalLink, TbEdit, TbCheck, TbX, TbTrash, TbPlus } from 'react-icons/tb';
+import { TbBrandGithub, TbExternalLink, TbEdit, TbCheck, TbX, TbTrash, TbPlus, TbArrowRight, TbProgress, TbProgressCheck } from 'react-icons/tb';
 import SentientButton from '../SentientButton';
 import LoadingSpinner from '../LoadingSpinner';
 import { Project } from '../../types/Project';
@@ -12,6 +12,11 @@ import LoginService from '../../services/LoginService';
 import SentientIOB from '../SentientIOB';
 import { useError } from '../../hooks/useError';
 import { ERROR_CODES } from '../../utils/errorCodes';
+
+const createTooltipHandlers = (text: string) => ({
+    onMouseEnter: () => window.dispatchEvent(new CustomEvent('tooltipHover', { detail: { text } })),
+    onMouseLeave: () => window.dispatchEvent(new CustomEvent('tooltipHover', { detail: { text: null } })),
+});
 
 interface ProjectsProps {
     onProjectSelected: (project: Project) => void;
@@ -29,27 +34,32 @@ const Projects = ({ onProjectSelected, onBackToIndex }: ProjectsProps) => {
     const [projectsToDelete, setProjectsToDelete] = useState<number[]>([]);
     const [hoverSection, setHoverSection] = useState<'ongoing' | 'finished' | null>(null);
     const { showError } = useError();
+    const [selectionMode, setSelectionMode] = useState<'moving-to-finished' | 'moving-to-ongoing' | null>(null);
+    const [projectsToMove, setProjectsToMove] = useState<number[]>([]);
+
+    const fetchProjects = useCallback(async () => {
+        setLoading(true);
+        try {
+            const data = await ProjectService.getAllProjects();
+            setProjects(data.content);
+            setError(null);
+        } catch (err) {
+            setError('Failed to fetch projects');
+            console.error('Error fetching projects:', err);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
 
     useEffect(() => {
-        const fetchProjects = async () => {
-            try {
-                const data = await ProjectService.getAllProjects();
-                setProjects(data.content);
-                setError(null);
-            } catch (err) {
-                setError('Failed to fetch projects');
-                console.error('Error fetching projects:', err);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        const fetchSection = async () => {
+        const fetchInitialData = async () => {
+            await fetchProjects();
+            
             try {
                 const sectionData = await SectionService.getSectionBySlug('projects');
                 setSection(sectionData);
             } catch (err) {
-                setError('Failed to load section data');
+                setError(prev => prev || 'Failed to load section data');
                 console.error('Error fetching section:', err);
             } finally {
                 setSectionLoading(false);
@@ -57,9 +67,8 @@ const Projects = ({ onProjectSelected, onBackToIndex }: ProjectsProps) => {
         };
 
         setIsAdmin(LoginService.isCurrentUserAdmin());
-        fetchProjects();
-        fetchSection();
-    }, []);
+        fetchInitialData();
+    }, [fetchProjects]);
 
     const { ongoingProjects, finishedProjects } = useMemo(() => {
         const ongoing = projects.filter(p => !p.finished);
@@ -83,6 +92,8 @@ const Projects = ({ onProjectSelected, onBackToIndex }: ProjectsProps) => {
     const handleCancelEdit = () => {
         setEditingSection(null);
         setProjectsToDelete([]);
+        setSelectionMode(null);
+        setProjectsToMove([]);
     };
 
     const handleConfirmDeletions = async () => {
@@ -125,11 +136,56 @@ const Projects = ({ onProjectSelected, onBackToIndex }: ProjectsProps) => {
         );
     };
 
+    const toggleProjectToMove = (projectId: number) => {
+        setProjectsToMove(prev => 
+            prev.includes(projectId)
+                ? prev.filter(id => id !== projectId)
+                : [...prev, projectId]
+        );
+    };
+
+    const handleStartSelectionMode = (mode: 'moving-to-finished' | 'moving-to-ongoing') => {
+        setSelectionMode(mode);
+        setProjectsToMove([]);
+    };
+
+    const handleConfirmMove = async () => {
+        if (projectsToMove.length === 0) {
+            handleCancelEdit();
+            return;
+        }
+
+        const newFinishedStatus = selectionMode === 'moving-to-finished';
+
+        try {
+            await ProjectService.batchUpdateProjectsStatus(projectsToMove, newFinishedStatus);
+            await fetchProjects(); // Refetch data
+            handleCancelEdit(); // Reset state
+        } catch (err) {
+            showError(ERROR_CODES.INTERNAL.DATA_UPDATE_FAILED, 'Failed to move projects.');
+            console.error('Error moving projects:', err);
+        }
+    };
+
     const renderEditControls = (section: 'ongoing' | 'finished') => {
         if (!isAdmin) return null;
 
         const commonProps = { as: 'button', hoverScale: 1 } as const;
         const isEditing = editingSection === section;
+        const isSelecting = selectionMode !== null;
+
+        if (isEditing && isSelecting) {
+             return (
+                <div className="edit-controls section-edit-controls">
+                    <SentientIOB {...commonProps} onClick={handleCancelEdit} {...createTooltipHandlers('cancel move')}>
+                        <TbX size={18} />
+                    </SentientIOB>
+                    <SentientIOB {...commonProps} onClick={handleConfirmMove} {...createTooltipHandlers('confirm move')}>
+                        <TbCheck size={18} />
+                    </SentientIOB>
+                </div>
+            )
+        }
 
         return (
             <div
@@ -138,18 +194,21 @@ const Projects = ({ onProjectSelected, onBackToIndex }: ProjectsProps) => {
             >
                 {isEditing ? (
                     <>
-                        <SentientIOB {...commonProps} onClick={() => handleCreateProject(section === 'finished')}>
+                        <SentientIOB {...commonProps} onClick={() => section === 'ongoing' ? handleStartSelectionMode('moving-to-finished') : handleStartSelectionMode('moving-to-ongoing')} {...createTooltipHandlers(section === 'ongoing' ? 'move to finished' : 'move to on-going')}>
+                           {section === 'ongoing' ? <TbProgressCheck size={18} /> : <TbProgress size={18}/>}
+                        </SentientIOB>
+                        <SentientIOB {...commonProps} onClick={() => handleCreateProject(section === 'finished')} {...createTooltipHandlers('new project')}>
                             <TbPlus size={18} />
                         </SentientIOB>
-                        <SentientIOB {...commonProps} onClick={handleCancelEdit}>
+                        <SentientIOB {...commonProps} onClick={handleCancelEdit} {...createTooltipHandlers('cancel')}>
                             <TbX size={18} />
                         </SentientIOB>
-                        <SentientIOB {...commonProps} onClick={handleConfirmDeletions}>
+                        <SentientIOB {...commonProps} onClick={handleConfirmDeletions} {...createTooltipHandlers('confirm delete')}>
                             <TbCheck size={18} />
                         </SentientIOB>
                     </>
                 ) : (
-                    <SentientIOB {...commonProps} onClick={() => handleStartEditing(section)}>
+                    <SentientIOB {...commonProps} onClick={() => handleStartEditing(section)} {...createTooltipHandlers('edit section')}>
                         <TbEdit size={18} />
                     </SentientIOB>
                 )}
@@ -160,16 +219,28 @@ const Projects = ({ onProjectSelected, onBackToIndex }: ProjectsProps) => {
     const renderProjectCard = (project: Project, index: number, sectionKey: 'ongoing' | 'finished') => {
         const isEditingThisSection = editingSection === sectionKey;
         const isMarkedForDeletion = project.id ? projectsToDelete.includes(project.id) : false;
+        
+        const isSelectionModeActive = (sectionKey === 'ongoing' && selectionMode === 'moving-to-finished') || 
+                                      (sectionKey === 'finished' && selectionMode === 'moving-to-ongoing');
+        const isMarkedForMove = project.id ? projectsToMove.includes(project.id) : false;
+
+        const handleCardClick = () => {
+            if (isSelectionModeActive && project.id) {
+                toggleProjectToMove(project.id);
+            } else if (!isEditingThisSection) {
+                onProjectSelected(project);
+            }
+        };
 
         return (
             <div 
                 key={project.id} 
-                className={`project-card ${isMarkedForDeletion ? 'marked-for-deletion' : ''}`}
-                onClick={() => !isEditingThisSection && onProjectSelected(project)}
+                className={`project-card ${isMarkedForDeletion ? 'marked-for-deletion' : ''} ${isMarkedForMove ? 'marked-for-move' : ''}`}
+                onClick={handleCardClick}
             >
-                {isEditingThisSection && project.id && (
+                {isEditingThisSection && !isSelectionModeActive && project.id && (
                     <div className="edit-controls card-edit-controls">
-                        <SentientIOB as="button" hoverScale={1} onClick={(e) => { e.stopPropagation(); toggleMarkForDeletion(project.id!)}}>
+                        <SentientIOB as="button" hoverScale={1} onClick={(e) => { e.stopPropagation(); toggleMarkForDeletion(project.id!)}} {...createTooltipHandlers('delete')}>
                             <TbTrash size={18} />
                         </SentientIOB>
                     </div>

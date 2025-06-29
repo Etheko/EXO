@@ -403,4 +403,15 @@ public class ProjectController {
     public ResponseEntity<Boolean> projectTitleExists(@RequestParam String title) {
         return ResponseEntity.ok(projectService.existsByTitle(title));
     }
+
+    // Batch operations
+    @PutMapping("/batch-status")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Batch update project finished status", description = "Updates the 'finished' status for a list of project IDs (Admin only)")
+    public ResponseEntity<Void> batchUpdateFinishedStatus(
+            @RequestParam List<Long> ids,
+            @RequestParam boolean finished) {
+        projectService.batchUpdateFinishedStatus(ids, finished);
+        return ResponseEntity.ok().build();
+    }
 } 

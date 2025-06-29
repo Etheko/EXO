@@ -342,4 +342,10 @@
 .project-card.marked-for-deletion > *:not(.edit-controls) {
     opacity: 0.5;
     filter: grayscale(80%);
+}
+
+.project-card.marked-for-move {
+    border-color: #22c55e; /* green-500 */
+    box-shadow: 0 0 20px 5px rgba(34, 197, 94, 0.4);
+    background-color: rgba(34, 197, 94, 0.1);
 } 

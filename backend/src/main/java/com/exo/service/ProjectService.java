@@ -118,6 +118,14 @@ public class ProjectService {
         return projectRepository.findProjectsByTechnologyCount(pageable);
     }
 
+    // Batch operations
+    @Transactional
+    public void batchUpdateFinishedStatus(List<Long> ids, boolean finished) {
+        if (ids != null && !ids.isEmpty()) {
+            projectRepository.updateFinishedStatusForIds(finished, ids);
+        }
+    }
+
     // Statistics and analytics
     public List<Object[]> getTechnologyStatistics() {
         return projectRepository.countProjectsByTechnology();

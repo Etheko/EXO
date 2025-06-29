@@ -4,9 +4,11 @@ import com.exo.model.Project;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -58,4 +60,9 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
     // Find projects with most technologies
     @Query("SELECT p FROM Project p ORDER BY SIZE(p.technologies) DESC")
     Page<Project> findProjectsByTechnologyCount(Pageable pageable);
+
+    @Modifying
+    @Transactional
+    @Query("UPDATE Project p SET p.finished = :finished WHERE p.id IN :ids")
+    void updateFinishedStatusForIds(@Param("finished") boolean finished, @Param("ids") List<Long> ids);
 } 

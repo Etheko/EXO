@@ -36,6 +36,15 @@ class ProjectService {
         await api.delete(`/projects/${id}`);
     }
 
+    async batchUpdateProjectsStatus(ids: number[], finished: boolean): Promise<void> {
+        await api.put('/projects/batch-status', null, {
+            params: { 
+                ids: ids.join(','), 
+                finished 
+            }
+        });
+    }
+
     // Search and filtering operations
     async searchProjects(query: string, page = 0, size = 10): Promise<{ content: Project[], totalElements: number, totalPages: number }> {
         const response = await api.get('/projects/search', {
