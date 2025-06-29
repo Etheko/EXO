@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.sql.Blob;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -97,13 +98,45 @@ public class ProjectService {
     }
 
     // Gallery management
-    public void addGalleryImage(Long projectId, String imagePath) throws IOException, SQLException {
-        Optional<Project> projectOpt = projectRepository.findById(projectId);
-        if (projectOpt.isPresent()) {
-            Project project = projectOpt.get();
-            project.addGalleryImage(imagePath);
-            projectRepository.save(project);
+    @Transactional
+    public Project updateGallery(Long projectId, List<String> pathsToDelete, List<MultipartFile> filesToAdd) throws IOException, SQLException {
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new RuntimeException("Project not found with id: " + projectId));
+
+        List<Blob> currentBlobs = project.getGallery();
+        List<String> currentPaths = project.getGalleryImagePaths();
+
+        List<Blob> nextBlobs = new ArrayList<>();
+        List<String> nextPaths = new ArrayList<>();
+
+        if (pathsToDelete != null && !pathsToDelete.isEmpty()) {
+            for (int i = 0; i < currentPaths.size(); i++) {
+                if (!pathsToDelete.contains(currentPaths.get(i))) {
+                    nextBlobs.add(currentBlobs.get(i));
+                    nextPaths.add(currentPaths.get(i));
+                }
+            }
+        } else {
+            nextBlobs.addAll(currentBlobs);
+            nextPaths.addAll(currentPaths);
         }
+
+        project.getGallery().clear();
+        project.getGallery().addAll(nextBlobs);
+        project.getGalleryImagePaths().clear();
+
+        if (filesToAdd != null && !filesToAdd.isEmpty()) {
+            for (MultipartFile file : filesToAdd) {
+                Blob blob = new javax.sql.rowset.serial.SerialBlob(file.getBytes());
+                project.getGallery().add(blob);
+            }
+        }
+
+        for (int i = 0; i < project.getGallery().size(); i++) {
+            project.getGalleryImagePaths().add("/api/projects/" + projectId + "/gallery/" + i);
+        }
+
+        return projectRepository.save(project);
     }
 
     public void removeGalleryImage(Long projectId, int index) {

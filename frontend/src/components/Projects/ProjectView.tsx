@@ -5,7 +5,7 @@ import { backendUrl } from '../../services/api';
 import SentientButton from '../SentientButton';
 import SentientIOB from '../SentientIOB';
 import TechnologyIcon from './TechnologyIcon';
-import { TbArrowLeft, TbChevronLeft, TbChevronRight, TbBrandGithub, TbBrandInstagram, TbBrandFacebook, TbBrandX, TbBrandMastodon, TbBrandBluesky, TbBrandTiktok, TbExternalLink, TbHome, TbUpload, TbX, TbCheck, TbEdit, TbPlus, TbPhoto, TbIcons } from 'react-icons/tb';
+import { TbArrowLeft, TbChevronLeft, TbChevronRight, TbBrandGithub, TbBrandInstagram, TbBrandFacebook, TbBrandX, TbBrandMastodon, TbBrandBluesky, TbBrandTiktok, TbExternalLink, TbHome, TbUpload, TbX, TbCheck, TbEdit, TbPlus, TbPhoto, TbIcons, TbTrash } from 'react-icons/tb';
 import LoginService from '../../services/LoginService';
 import ProjectService from '../../services/ProjectsService';
 import { useError } from '../../hooks/useError';
@@ -63,7 +63,7 @@ const ProjectView = ({ project, onBack }: ProjectViewProps) => {
      *     EDIT STATE LOGIC
      * ==========================
      */
-    type SectionKey = 'description' | 'technologies' | 'links';
+    type SectionKey = 'description' | 'technologies' | 'links' | 'gallery';
     const [editingSection, setEditingSection] = useState<SectionKey | null>(null);
     const [hoverSection, setHoverSection] = useState<SectionKey | null>(null);
 
@@ -79,11 +79,18 @@ const ProjectView = ({ project, onBack }: ProjectViewProps) => {
     const [draftLinks, setDraftLinks] = useState<Partial<Project>>({});
     const [linkModal, setLinkModal] = useState<{ key: string; visible: boolean }>({ key: '', visible: false });
 
+    // Gallery draft state
+    const [draftGallery, setDraftGallery] = useState<string[]>([]);
+    const [imagesToAdd, setImagesToAdd] = useState<File[]>([]);
+    const [imagesToDelete, setImagesToDelete] = useState<string[]>([]);
+    const galleryFileInputRef = useRef<HTMLInputElement>(null);
+
     // Dynamic opacity for edit controls
     const [editControlsOpacity, setEditControlsOpacity] = useState<Record<SectionKey, number>>({
         description: 0,
         technologies: 0,
         links: 0,
+        gallery: 0,
     });
     const editControlsRefs = useRef<Partial<Record<SectionKey, HTMLDivElement | null>>>({});
     const MAX_DISTANCE = 200;
@@ -147,17 +154,51 @@ const ProjectView = ({ project, onBack }: ProjectViewProps) => {
             payload = { ...draftLinks };
         }
 
-        try {
-            const updated = await ProjectService.updateProject(currentProject.id, {
-                ...currentProject,
-                ...payload,
-            });
-            setCurrentProject(updated);
-            setEditingSection(null);
-        } catch (error) {
-            console.error(`Failed to save ${section}`, error);
-            showError(ERROR_CODES.INTERNAL.DATA_UPDATE_FAILED, `Failed to update project ${section}.`);
+        if (section === 'gallery') {
+            try {
+                // First, handle deletions (remove by index starting from highest)
+                const deletionIndexes = imagesToDelete
+                    .map((path) => galleryImages.indexOf(path))
+                    .filter((i) => i >= 0)
+                    .sort((a, b) => b - a);
+
+                for (const idx of deletionIndexes) {
+                    await ProjectService.removeGalleryImage(currentProject.id, idx);
+                }
+
+                // Handle additions, if any
+                if (imagesToAdd.length > 0) {
+                    await ProjectService.updateGallery(currentProject.id, [], imagesToAdd);
+                }
+
+                // Refresh gallery from backend
+                const newPaths = await ProjectService.getGalleryPaths(currentProject.id);
+                const updatedImages = newPaths.map(getImageUrl);
+                setGalleryImages(updatedImages);
+
+                // Adjust currentImage index if the previously viewed image was deleted
+                const deletionsBeforeCurrent = deletionIndexes.filter(i => i <= currentImage).length;
+                let newIndex = currentImage - deletionsBeforeCurrent;
+                if (newIndex < 0) newIndex = 0;
+                if (newIndex >= updatedImages.length) newIndex = updatedImages.length - 1;
+                setCurrentImage(newIndex >=0 ? newIndex : 0);
+            } catch (error) {
+                console.error(`Failed to save ${section}`, error);
+                showError(ERROR_CODES.INTERNAL.DATA_UPDATE_FAILED, `Failed to update project ${section}.`);
+            }
+        } else {
+            try {
+                const updated = await ProjectService.updateProject(currentProject.id, {
+                    ...currentProject,
+                    ...payload,
+                });
+                setCurrentProject(updated);
+            } catch (error) {
+                console.error(`Failed to save ${section}`, error);
+                showError(ERROR_CODES.INTERNAL.DATA_UPDATE_FAILED, `Failed to update project ${section}.`);
+            }
         }
+        setEditingSection(null);
     };
 
     // Cancel handler
@@ -167,6 +208,16 @@ const ProjectView = ({ project, onBack }: ProjectViewProps) => {
         setDraftTechnologies(currentProject.technologies);
         setNewTechnologyInput('');
         setDraftLinks({});
+        // Reset gallery state
+        imagesToAdd.forEach(file => URL.revokeObjectURL(URL.createObjectURL(file)));
+        setImagesToAdd([]);
+        setImagesToDelete([]);
+        // Determine if current image is a newly added preview (blob url)
+        const wasViewingTempImage = editingSection === 'gallery' && draftGallery[currentImage]?.startsWith('blob:');
+        setDraftGallery([...galleryImages]);
+        if (wasViewingTempImage && galleryImages.length > 0) {
+            setCurrentImage(galleryImages.length - 1);
+        }
         setEditingSection(null);
     };
     
@@ -177,6 +228,10 @@ const ProjectView = ({ project, onBack }: ProjectViewProps) => {
             setDraftTechnologies([...currentProject.technologies]);
         } else if (section === 'links') {
             setDraftLinks({ ...currentProject });
+        } else if (section === 'gallery') {
+            setDraftGallery([...galleryImages]);
+            setImagesToAdd([]);
+            setImagesToDelete([]);
         }
         setEditingSection(section);
     };
@@ -216,6 +271,11 @@ const ProjectView = ({ project, onBack }: ProjectViewProps) => {
             >
                 {isEditing ? (
                     <>
+                        {section === 'gallery' && (
+                            <SentientIOB {...commonProps} onClick={() => galleryFileInputRef.current?.click()} {...createTooltipHandlers('add image')}>
+                                <TbPlus size={18} />
+                            </SentientIOB>
+                        )}
                         <SentientIOB {...commonProps} onClick={handleCancel} {...createTooltipHandlers('cancel')}>
                             <TbX size={18} />
                         </SentientIOB>
@@ -234,12 +294,18 @@ const ProjectView = ({ project, onBack }: ProjectViewProps) => {
         );
     };
 
+    const getActiveGalleryLength = () => editingSection === 'gallery' ? draftGallery.length : galleryImages.length;
+
     const nextImage = () => {
-        setCurrentImage((prev) => (prev + 1) % galleryImages.length);
+        const len = getActiveGalleryLength();
+        if (len === 0) return;
+        setCurrentImage((prev) => (prev + 1) % len);
     };
 
     const prevImage = () => {
-        setCurrentImage((prev) => (prev - 1 + galleryImages.length) % galleryImages.length);
+        const len = getActiveGalleryLength();
+        if (len === 0) return;
+        setCurrentImage((prev) => (prev - 1 + len) % len);
     };
     
     const handleHeaderFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -361,6 +427,36 @@ const ProjectView = ({ project, onBack }: ProjectViewProps) => {
                 return 'xUsername';
             default:
                 return k as keyof Project;
+        }
+    };
+
+    // Gallery handlers
+    const handleAddGalleryImages = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const files = Array.from(event.target.files || []);
+        if (files.length > 0) {
+            setImagesToAdd(prev => [...prev, ...files]);
+            const newPreviews = files.map(file => URL.createObjectURL(file));
+            setDraftGallery(prev => [...prev, ...newPreviews]);
+        }
+        event.target.value = '';
+    };
+
+    const handleDeleteImage = (imagePath: string) => {
+        // If it's a newly added preview, remove it directly
+        if (imagePath.startsWith('blob:')) {
+            const indexToRemove = draftGallery.indexOf(imagePath);
+            const fileIndexToRemove = indexToRemove - (draftGallery.length - imagesToAdd.length);
+            
+            setImagesToAdd(prev => prev.filter((_, i) => i !== fileIndexToRemove));
+            setDraftGallery(prev => prev.filter(p => p !== imagePath));
+            URL.revokeObjectURL(imagePath);
+        } else {
+            // If it's an existing image, mark it for deletion
+            if (imagesToDelete.includes(imagePath)) {
+                setImagesToDelete(prev => prev.filter(p => p !== imagePath));
+            } else {
+                setImagesToDelete(prev => [...prev, imagePath]);
+            }
         }
     };
 
@@ -490,8 +586,14 @@ const ProjectView = ({ project, onBack }: ProjectViewProps) => {
                 </section>
             )}
 
-            {galleryImages.length > 0 && (
-                <section className="project-view-section">
+            {(galleryImages.length > 0 || isAdmin) && (
+                <section
+                    className={`project-view-section ${isAdmin ? 'editable-section' : ''} ${editingSection === 'gallery' ? 'editing' : ''}`}
+                    onMouseEnter={() => isAdmin && setHoverSection('gallery')}
+                    onMouseLeave={() => handleMouseLeaveSection('gallery')}
+                    onMouseMove={(e) => handleMouseMove(e, 'gallery')}
+                >
+                    {renderEditControls('gallery')}
                     <div className="section-subtitle-container">
                         <h2 className="section-subtitle">Pics</h2>
                     </div>
@@ -502,7 +604,7 @@ const ProjectView = ({ project, onBack }: ProjectViewProps) => {
                             </SentientIOB>
                         </div>
                         <div className="carousel-images-container">
-                            {galleryImages.map((image, index) => {
+                            {(editingSection === 'gallery' ? draftGallery : galleryImages).map((image, index) => {
                                 const offset = index - currentImage;
                                 // We now need to render 5 items to allow for fade-out animations
                                 const isVisible = Math.abs(offset) <= 2;
@@ -532,11 +634,13 @@ const ProjectView = ({ project, onBack }: ProjectViewProps) => {
                                     if (offset === 0) return openOverlay;
                                     return undefined;
                                 };
+                                
+                                const isMarkedForDeletion = editingSection === 'gallery' && imagesToDelete.includes(image);
 
                                 return isVisible ? (
                                     <div
                                         key={index}
-                                        className={`carousel-image-wrapper ${stateClassName}`}
+                                        className={`carousel-image-wrapper ${stateClassName} ${isMarkedForDeletion ? 'marked-for-deletion' : ''}`}
                                         onClick={getClickHandler(offset)}
                                     >
                                         <img
@@ -544,11 +648,23 @@ const ProjectView = ({ project, onBack }: ProjectViewProps) => {
                                             alt={`Project gallery image ${index + 1}`}
                                             className="carousel-image"
                                         />
+                                        {editingSection === 'gallery' && offset === 0 && (
+                                            <div className="edit-controls image-delete-controls">
+                                                <SentientIOB as="button" hoverScale={1} onClick={(e) => { e.stopPropagation(); handleDeleteImage(image); }} {...createTooltipHandlers(isMarkedForDeletion ? 'unmark for deletion' : 'delete image')}>
+                                                    <TbTrash size={18} />
+                                                </SentientIOB>
+                                            </div>
+                                        )}
                                     </div>
                                 ) : null;
                             })}
+                            {(editingSection === 'gallery' ? draftGallery : galleryImages).length === 0 && (
+                                <div className="carousel-image-wrapper current placeholder-wrapper" onClick={() => editingSection==='gallery' && galleryFileInputRef.current?.click()}>
+                                    <div className="placeholder-content">Upload images</div>
+                                </div>
+                            )}
                         </div>
-                        <div className={`carousel-arrow-wrapper right ${currentImage >= galleryImages.length - 1 ? 'hidden' : ''}`}>
+                        <div className={`carousel-arrow-wrapper right ${currentImage >= ((editingSection === 'gallery') ? draftGallery.length : galleryImages.length) - 1 ? 'hidden' : ''}`}>
                             <SentientIOB as="button" className="carousel-arrow" onClick={nextImage} {...createTooltipHandlers('next image')}>
                                 <TbChevronRight size={24} />
                             </SentientIOB>
@@ -556,7 +672,7 @@ const ProjectView = ({ project, onBack }: ProjectViewProps) => {
 
                         {/* Seeker */}
                         <div className="carousel-seeker">
-                            {galleryImages.map((_, index) => (
+                            {(editingSection === 'gallery' ? draftGallery : galleryImages).map((_, index) => (
                                 <span
                                     key={index}
                                     className={`seeker-dot ${index === currentImage ? 'active' : ''}`}
@@ -641,7 +757,7 @@ const ProjectView = ({ project, onBack }: ProjectViewProps) => {
 
         {/* Image Overlay */}
         <ImageOverlay
-            images={galleryImages}
+            images={editingSection === 'gallery' ? draftGallery : galleryImages}
             isOpen={isOverlayVisible}
             currentIndex={currentImage}
             onClose={closeOverlay}
@@ -661,6 +777,16 @@ const ProjectView = ({ project, onBack }: ProjectViewProps) => {
                 }
             }}
             onClose={() => setLinkModal({ key: '', visible: false })}
+        />
+
+        <input
+            type="file"
+            multiple
+            ref={galleryFileInputRef}
+            onChange={handleAddGalleryImages}
+            style={{ display: 'none' }}
+            accept=".jpg, .jpeg, .png, .gif"
+            aria-label="Gallery picture upload"
         />
     </div>
   );

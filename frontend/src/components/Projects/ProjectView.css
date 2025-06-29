@@ -250,6 +250,23 @@
     margin-bottom: 1.5rem;
 }
 
+.image-delete-controls {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    opacity: 1;
+}
+
+.carousel-image-wrapper.marked-for-deletion {
+    border-color: #ef4444;
+    box-shadow: 0 0 20px 5px rgba(239, 68, 68, 0.4);
+}
+
+.carousel-image-wrapper.marked-for-deletion .carousel-image {
+    opacity: 0.5;
+    filter: grayscale(80%);
+}
+
 .carousel-images-container {
     position: relative;
     width: 100%;
@@ -752,4 +769,19 @@
 .description-card textarea::placeholder {
     color: rgba(255, 255, 255, 0.4);
     font-style: italic;
+}
+
+.carousel-image-wrapper.placeholder-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(255,255,255,0.05);
+    color: rgba(255,255,255,0.5);
+    font-family: 'Outfit', sans-serif;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.placeholder-content {
+    pointer-events: none;
 }

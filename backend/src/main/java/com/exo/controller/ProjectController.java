@@ -178,15 +178,16 @@ public class ProjectController {
     }
 
     // Gallery management
-    @PostMapping("/{id}/gallery")
+    @PostMapping(path = "/{id}/gallery", consumes = { "multipart/form-data" })
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Add gallery image", description = "Add an image to the project gallery (Admin only)")
-    public ResponseEntity<Void> addGalleryImage(
-            @PathVariable Long id,
-            @RequestParam String imagePath) {
+    @Operation(summary = "Update project gallery", description = "Atomically updates the project gallery by adding and removing images.")
+    public ResponseEntity<Project> updateGallery(
+        @PathVariable Long id,
+        @RequestParam(value = "pathsToDelete", required = false) List<String> pathsToDelete,
+        @RequestPart(value = "filesToAdd", required = false) List<MultipartFile> filesToAdd) {
         try {
-            projectService.addGalleryImage(id, imagePath);
-            return ResponseEntity.ok().build();
+            Project updatedProject = projectService.updateGallery(id, pathsToDelete, filesToAdd);
+            return ResponseEntity.ok(updatedProject);
         } catch (IOException | SQLException e) {
             return ResponseEntity.badRequest().build();
         }

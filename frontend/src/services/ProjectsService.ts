@@ -108,6 +108,25 @@ class ProjectService {
         await api.delete(`/projects/${projectId}/gallery/${index}`);
     }
 
+    async updateGallery(projectId: number, pathsToDelete: string[], filesToAdd: File[]): Promise<Project> {
+        const formData = new FormData();
+
+        pathsToDelete.forEach(path => {
+            formData.append('pathsToDelete', path);
+        });
+
+        filesToAdd.forEach(file => {
+            formData.append('filesToAdd', file);
+        });
+
+        const response = await api.post<Project>(`/projects/${projectId}/gallery`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+        return response.data;
+    }
+
     // Technology management
     async addTechnology(projectId: number, technology: string): Promise<void> {
         await api.post(`/projects/${projectId}/technologies`, null, {

@@ -42,8 +42,8 @@ public class Project {
 
     @JsonView(BasicInfo.class)
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private Long id = 0L;
 
     @JsonView(BasicInfo.class)
     @Column(nullable = false)
