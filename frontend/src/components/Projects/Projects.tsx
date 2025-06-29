@@ -3,7 +3,7 @@ import ProjectService from '../../services/ProjectsService';
 import SectionService from '../../services/SectionService';
 import './Projects.css';
 import TechnologyIcon from './TechnologyIcon';
-import { TbBrandGithub, TbExternalLink, TbEdit, TbCheck, TbX, TbTrash } from 'react-icons/tb';
+import { TbBrandGithub, TbExternalLink, TbEdit, TbCheck, TbX, TbTrash, TbPlus } from 'react-icons/tb';
 import SentientButton from '../SentientButton';
 import LoadingSpinner from '../LoadingSpinner';
 import { Project } from '../../types/Project';
@@ -107,6 +107,16 @@ const Projects = ({ onProjectSelected, onBackToIndex }: ProjectsProps) => {
         }
     };
 
+    const handleCreateProject = async (finished: boolean) => {
+        try {
+            const newProject = await ProjectService.createDefaultProject(finished);
+            onProjectSelected(newProject);
+        } catch (err) {
+            showError(ERROR_CODES.INTERNAL.DATA_UPDATE_FAILED, 'Failed to create a new project.');
+            console.error('Error creating project:', err);
+        }
+    };
+
     const toggleMarkForDeletion = (projectId: number) => {
         setProjectsToDelete(prev =>
             prev.includes(projectId)
@@ -128,6 +138,9 @@ const Projects = ({ onProjectSelected, onBackToIndex }: ProjectsProps) => {
             >
                 {isEditing ? (
                     <>
+                        <SentientIOB {...commonProps} onClick={() => handleCreateProject(section === 'finished')}>
+                            <TbPlus size={18} />
+                        </SentientIOB>
                         <SentientIOB {...commonProps} onClick={handleCancelEdit}>
                             <TbX size={18} />
                         </SentientIOB>

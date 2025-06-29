@@ -20,6 +20,13 @@ class ProjectService {
         return response.data;
     }
 
+    async createDefaultProject(finished: boolean): Promise<Project> {
+        const response = await api.post<Project>('/projects/create-default', null, {
+            params: { finished }
+        });
+        return response.data;
+    }
+
     async updateProject(id: number, project: ProjectCreateRequest): Promise<Project> {
         const response = await api.put<Project>(`/projects/${id}`, project);
         return response.data;

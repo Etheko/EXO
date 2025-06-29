@@ -36,6 +36,32 @@ public class ProjectService {
         return projectRepository.save(project);
     }
 
+    @Transactional
+    public Project createDefaultProject(boolean finished) {
+        Project project = new Project();
+
+        project.setTitle("New Project");
+
+        project.setDescription("This is a new project. You can edit this description.");
+        project.setFinished(finished);
+
+        // Set default images by providing their paths
+        project.setHeaderPictureString("/assets/defaultProjectHeader.png");
+        project.setIconString("/assets/defaultProjectIcon.png");
+        try {
+            project.setHeaderPicture(project.localImageToBlob(project.getHeaderPictureString()));
+            project.setIcon(project.localImageToBlob(project.getIconString()));
+        } catch (IOException | SQLException e) {
+            System.err.println("Warning: Could not set default blob images for new project: " + e.getMessage());
+        }
+
+        project.setTechnologies(new ArrayList<>());
+        project.setGalleryImagePaths(new ArrayList<>());
+        project.setGallery(new ArrayList<>());
+
+        return projectRepository.save(project);
+    }
+
     public void deleteById(Long id) {
         projectRepository.deleteById(id);
     }
@@ -254,7 +280,7 @@ public class ProjectService {
     }
 
     public boolean existsByTitle(String title) {
-        return !projectRepository.findByTitleContainingIgnoreCase(title, Pageable.unpaged()).isEmpty();
+        return projectRepository.existsByTitleIgnoreCase(title);
     }
 
     // Bulk operations

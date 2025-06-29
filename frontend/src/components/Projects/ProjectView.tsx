@@ -24,9 +24,10 @@ const createTooltipHandlers = (text: string) => ({
 interface ProjectViewProps {
   project: Project;
   onBack: () => void;
+  onStateChange: (state: { isNew: boolean; isModified: boolean; snapshot: Project }) => void;
 }
 
-const ProjectView = ({ project, onBack }: ProjectViewProps) => {
+const ProjectView = ({ project, onBack, onStateChange }: ProjectViewProps) => {
     const [currentImage, setCurrentImage] = useState(0);
     const [isOverlayVisible, setIsOverlayVisible] = useState(false);
     const getImageUrl = (path?: string) => {
@@ -55,6 +56,20 @@ const ProjectView = ({ project, onBack }: ProjectViewProps) => {
     const iconFileInputRef = useRef<HTMLInputElement>(null);
     const { showError } = useError();
     const [currentProject, setCurrentProject] = useState<Project>(project);
+
+    const [isNewProject, setIsNewProject] = useState(false);
+    const [isModified, setIsModified] = useState(false);
+
+    useEffect(() => {
+        const isNew = project.title.startsWith("New Project");
+        setIsNewProject(isNew);
+        // Reset modification state when a new project is loaded into the view
+        setIsModified(false);
+    }, [project]);
+
+    useEffect(() => {
+        onStateChange({ isNew: isNewProject, isModified, snapshot: currentProject });
+    }, [isNewProject, isModified, currentProject, onStateChange]);
 
     const headerImageUrl = newHeaderPic ? newHeaderPic.previewUrl : getImageUrl(currentProject.headerPictureString);
     const iconUrl = newIconPic ? newIconPic.previewUrl : getImageUrl(currentProject.iconString);
@@ -178,6 +193,7 @@ const ProjectView = ({ project, onBack }: ProjectViewProps) => {
                 const newPaths = await ProjectService.getGalleryPaths(currentProject.id);
                 const updatedImages = newPaths.map(getImageUrl);
                 setGalleryImages(updatedImages);
+                setCurrentProject(prev => ({ ...prev, galleryImagePaths: newPaths }));
 
                 // Adjust currentImage index if the previously viewed image was deleted
                 const deletionsBeforeCurrent = deletionIndexes.filter(i => i <= currentImage).length;
@@ -185,6 +201,8 @@ const ProjectView = ({ project, onBack }: ProjectViewProps) => {
                 if (newIndex < 0) newIndex = 0;
                 if (newIndex >= updatedImages.length) newIndex = updatedImages.length - 1;
                 setCurrentImage(newIndex >=0 ? newIndex : 0);
+
+                setIsModified(true);
             } catch (error) {
                 console.error(`Failed to save ${section}`, error);
                 showError(ERROR_CODES.INTERNAL.DATA_UPDATE_FAILED, `Failed to update project ${section}.`);
@@ -196,6 +214,7 @@ const ProjectView = ({ project, onBack }: ProjectViewProps) => {
                     ...payload,
                 });
                 setCurrentProject(updated);
+                setIsModified(true);
             } catch (error) {
                 console.error(`Failed to save ${section}`, error);
                 showError(ERROR_CODES.INTERNAL.DATA_UPDATE_FAILED, `Failed to update project ${section}.`);
@@ -353,6 +372,7 @@ const ProjectView = ({ project, onBack }: ProjectViewProps) => {
             }
     
             setCurrentProject(projectAfterUpdate);
+            setIsModified(true);
     
             if (newHeaderPic) URL.revokeObjectURL(newHeaderPic.previewUrl);
             if (newIconPic) URL.revokeObjectURL(newIconPic.previewUrl);
@@ -485,10 +505,19 @@ const ProjectView = ({ project, onBack }: ProjectViewProps) => {
                 title: draftTitle,
             });
             setCurrentProject(updated);
+            setIsModified(true);
             handleCancelEditTitle();
         } catch (error) {
             console.error("Failed to update project title", error);
             showError(ERROR_CODES.INTERNAL.DATA_UPDATE_FAILED, 'Failed to update project title.');
+        }
+    };
+
+    const handleLinkSave = (key: string, value: string) => {
+        if (editingSection === 'links') {
+            const prop = mapLinkKeyToProp(key);
+            setDraftLinks(prev => ({ ...prev, [prop]: value }));
+            // Note: This only stages the change. The actual save (and isModified=true) happens in handleSave('links').
         }
     };
 

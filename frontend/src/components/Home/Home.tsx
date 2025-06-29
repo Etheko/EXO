@@ -14,9 +14,23 @@ import ProjectView from '../Projects/ProjectView';
 import { ErrorCode } from '../../utils/errorCodes';
 import { ErrorProvider } from '../../hooks/useError';
 import LoadingSpinner from '../LoadingSpinner';
+import ProjectService from '../../services/ProjectsService';
 
 type AnimationState = 'text' | 'camera-to-grid' | 'mainframe' | 'camera-to-text';
 type MainFrameView = 'portfolioIndex' | 'projects' | 'projectView' | 'about' | 'tech-stack' | 'design' | 'cyber-logs' | 'devops' | 'blog' | 'contact' | 'certificates' | 'error';
+
+const PLACEHOLDER_TITLE = 'New Project';
+const PLACEHOLDER_DESCRIPTION = 'This is a new project. You can edit this description.';
+
+const isPlaceholderProject = (p: Project): boolean => {
+  const isTitlePlaceholder = p.title === PLACEHOLDER_TITLE;
+  const isDescriptionPlaceholder = p.description === PLACEHOLDER_DESCRIPTION;
+  const hasNoGallery = !p.galleryImagePaths || p.galleryImagePaths.length === 0;
+  const hasNoTech = !p.technologies || p.technologies.length === 0;
+  const socials = [p.github, p.instagram, p.facebook, p.xUsername, p.mastodon, p.bluesky, p.tiktok, p.liveDemoUrl, p.projectWebsiteUrl];
+  const hasNoSocials = socials.every(v => !v || v.trim() === '');
+  return isTitlePlaceholder && isDescriptionPlaceholder && hasNoGallery && hasNoTech && hasNoSocials;
+};
 
 const Home = () => {
   const [animationState, setAnimationState] = useState<AnimationState>('text');
@@ -30,6 +44,9 @@ const Home = () => {
   const [isLoginVisible, setIsLoginVisible] = useState(false);
   const mainFrameRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+  const [isProjectNew, setIsProjectNew] = useState(false);
+  const [isProjectModified, setIsProjectModified] = useState(false);
+  const [projectsRefreshKey, setProjectsRefreshKey] = useState(0);
 
   const handleWheel = useCallback((e: WheelEvent) => {
     // Ignore scroll events until initial text animation is complete
@@ -145,18 +162,28 @@ const Home = () => {
     setMainFrameView('portfolioIndex');
   }, []);
 
-  const handleNavbarBackClick = useCallback(() => {
+  const handleProjectViewStateChange = useCallback(({ isNew, isModified, snapshot }: { isNew: boolean; isModified: boolean; snapshot: Project }) => {
+    setIsProjectNew(isNew);
+    setIsProjectModified(isModified);
+    setSelectedProject(snapshot); // keep latest snapshot
+  }, []);
+
+  const handleNavbarBackClick = useCallback(async () => {
     if (mainFrameView === 'projectView') {
+      const shouldDiscard = isProjectNew && selectedProject && isPlaceholderProject(selectedProject);
+      if (shouldDiscard && selectedProject?.id) {
+          await ProjectService.deleteProject(selectedProject.id);
+          setProjectsRefreshKey(prev => prev + 1);
+      }
       handleBackToProjects();
     } else if (mainFrameView === 'projects') {
       handleBackToIndex();
     } else if (mainFrameView === 'about') {
       handleBackToIndex();
     } else if (mainFrameView === 'error') {
-      // Go back to the previous view before error
       handleBackToIndex();
     }
-  }, [mainFrameView, handleBackToProjects, handleBackToIndex]);
+  }, [mainFrameView, handleBackToProjects, handleBackToIndex, isProjectNew, selectedProject]);
 
   const handleBrandClick = useCallback(() => {
     // Only trigger if we're in mainframe state and no animation is in progress
@@ -256,9 +283,13 @@ const Home = () => {
       >
         <ErrorProvider showError={showError} clearError={clearError}>
           {mainFrameView === 'portfolioIndex' && <PortfolioIndex onSectionSelected={handleSectionSelected} />}
-          {mainFrameView === 'projects' && <Projects onProjectSelected={handleProjectSelected} onBackToIndex={handleBackToIndex} />}
+          {mainFrameView === 'projects' && <Projects key={projectsRefreshKey} onProjectSelected={handleProjectSelected} onBackToIndex={handleBackToIndex} />}
           {mainFrameView === 'projectView' && selectedProject && (
-            <ProjectView project={selectedProject} onBack={handleBackToProjects} />
+            <ProjectView 
+              project={selectedProject} 
+              onBack={handleBackToProjects} 
+              onStateChange={handleProjectViewStateChange}
+            />
           )}
           {mainFrameView === 'about' && <About />}
           {mainFrameView === 'tech-stack' && <div>Tech Stack Component - Coming Soon</div>}

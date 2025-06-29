@@ -64,6 +64,13 @@ public class ProjectController {
         return ResponseEntity.ok(projectService.save(project));
     }
 
+    @PostMapping("/create-default")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Create default project", description = "Creates a new project with default placeholder values (Admin only).")
+    public ResponseEntity<Project> createDefaultProject(@RequestParam(name = "finished", defaultValue = "false") boolean finished) {
+        return ResponseEntity.ok(projectService.createDefaultProject(finished));
+    }
+
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Update project", description = "Update an existing project (Admin only)")

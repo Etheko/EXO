@@ -16,6 +16,8 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
     // Find projects by title containing the given string (case-insensitive)
     Page<Project> findByTitleContainingIgnoreCase(String title, Pageable pageable);
     
+    boolean existsByTitleIgnoreCase(String title);
+    
     // Find projects by description containing the given string (case-insensitive)
     Page<Project> findByDescriptionContainingIgnoreCase(String description, Pageable pageable);
     
