@@ -15,6 +15,7 @@ import { ErrorCode } from '../../utils/errorCodes';
 import { ErrorProvider } from '../../hooks/useError';
 import LoadingSpinner from '../LoadingSpinner';
 import ProjectService from '../../services/ProjectsService';
+import Technologies from '../Technologies';
 
 type AnimationState = 'text' | 'camera-to-grid' | 'mainframe' | 'camera-to-text';
 type MainFrameView = 'portfolioIndex' | 'projects' | 'projectView' | 'about' | 'tech-stack' | 'design' | 'cyber-logs' | 'devops' | 'blog' | 'contact' | 'certificates' | 'error';
@@ -180,6 +181,8 @@ const Home = () => {
       handleBackToIndex();
     } else if (mainFrameView === 'about') {
       handleBackToIndex();
+    } else if (mainFrameView === 'tech-stack') {
+      handleBackToIndex();
     } else if (mainFrameView === 'error') {
       handleBackToIndex();
     }
@@ -292,7 +295,7 @@ const Home = () => {
             />
           )}
           {mainFrameView === 'about' && <About />}
-          {mainFrameView === 'tech-stack' && <div>Tech Stack Component - Coming Soon</div>}
+          {mainFrameView === 'tech-stack' && <Technologies />}
           {mainFrameView === 'design' && <div>Design Component - Coming Soon</div>}
           {mainFrameView === 'cyber-logs' && <div>Cyber Logs Component - Coming Soon</div>}
           {mainFrameView === 'devops' && <div>DevOps Component - Coming Soon</div>}

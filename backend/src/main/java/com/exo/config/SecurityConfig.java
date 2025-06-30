@@ -85,6 +85,12 @@ public class SecurityConfig {
                 
                 // Static resources
                 
+                // Technology endpoints
+                .requestMatchers(HttpMethod.GET, "/api/technologies/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/technologies/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/api/technologies/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/api/technologies/**").hasRole("ADMIN")
+                
                 // All other requests require authentication
                 .anyRequest().authenticated()
             )

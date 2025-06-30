@@ -1,0 +1,126 @@
+:root {
+  --tech-font: 'DM Mono Medium', monospace;
+}
+
+/* Font-face: only DM Mono Bold (others removed for simplicity) */
+@font-face {
+  font-family: 'DM Mono Medium';
+  src: url('/fonts/DMMono-Medium.ttf') format('truetype');
+  font-style: monospace;
+}
+
+.line.init-line {
+    font-family: 'Courier New', Courier, monospace;
+}
+
+.technologies-component {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  color: white;
+  font-family: var(--tech-font);
+}
+
+.technologies-header {
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  text-align: left;
+}
+
+.technologies-header-content {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.technologies-title {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 700;
+  font-size: 2rem;
+  color: white;
+  margin: 0;
+}
+
+.technologies-content {
+  flex-grow: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.coming-soon-text {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.2rem;
+  color: rgba(255, 255, 255, 0.8);
+  text-align: center;
+}
+
+/* Terminal container */
+.terminal {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 1.5rem;
+  box-sizing: border-box;
+  font-family: var(--tech-font);
+  overflow: hidden;
+  font-size: 16px;
+}
+
+/* Output area grows and scrolls; text aligns left */
+.output {
+  flex-grow: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end; /* lines start near prompt */
+  align-items: flex-start; /* ensure left alignment */
+  gap: 0px;
+}
+
+.line {
+  color: #ffffff;
+  width: 100%;
+  white-space: pre-wrap;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--tech-font);
+}
+
+.line.selected {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Prompt line */
+.prompt-line {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 8px;
+  font-family: var(--tech-font);
+}
+
+.prompt-label {
+  color: #00ff7f;
+}
+
+.prompt-input {
+  color: #ffffff;
+  white-space: pre;
+  word-break: break-all;
+}
+
+/* Blinking cursor */
+.prompt-cursor {
+  width: 8px;
+  height: 16px;
+  background-color: #ffffff;
+  animation: blink 1s step-start 0s infinite;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}

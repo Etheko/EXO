@@ -34,7 +34,7 @@ public class SectionInitializer {
         List<Section> expectedSections = Arrays.asList(
             createSection("init-etheko", "INIT::Etheko()", "// Who am I?", "", 0, true, "about"),
             createSection("projects", "PROJECTS.log", "// On-going & Finished", "", 1, true, "projects"),
-            createSection("modules-loaded", "MODULES_LOADED", "// Tech Stack", "", 2, false, "tech-stack"),
+            createSection("modules-loaded", "MODULES_LOADED", "// Tech Stack", "", 2, true, "tech-stack"),
             createSection("ux-lab", "UX.LAB{👾}", "// Design Zone", "", 3, false, "design"),
             createSection("sys-sec-insights", "SYS_SEC::INSIGHTS", "// Cyber Logs", "", 4, false, "cyber-logs"),
             createSection("pipeline-workflow", "PIPELINE::WORKFLOW", "// DevOps & Agile", "", 5, false, "devops"),

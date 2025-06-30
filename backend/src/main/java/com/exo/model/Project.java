@@ -344,7 +344,6 @@ public class Project {
         try (InputStream imgStream = getClass().getResourceAsStream(resourcePath)) {
             if (imgStream == null) {
                 // If the primary path fails, try to load a default image as a fallback.
-                // Note: You might want a different default for projects vs. users.
                 try (InputStream defaultStream = getClass().getResourceAsStream("/static/assets/defaultProjectHeader.png")) {
                     if (defaultStream == null) {
                         throw new IOException("Default project image not found at /static/assets/defaultProjectHeader.png");
