@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useLayoutEffect } from "react";
 import "./Technologies.css";
 import SectionService from "../../services/SectionService";
 import LoadingSpinner from "../LoadingSpinner";
@@ -41,21 +41,204 @@ const Technologies = () => {
   const [promptEnabled, setPromptEnabled] = useState(false);
 
   const outputEndRef = useRef<HTMLDivElement>(null);
+  // Container that controls scrolling (no native scrollbar displayed)
+  const outputContainerRef = useRef<HTMLDivElement>(null);
+  // Track which line should be at the top of the visible area
+  const topVisibleLineRef = useRef<number>(0);
   const initRan = useRef(false);
 
   /* ------------------------------
    * Effects
    * ----------------------------*/
-  // Scroll to bottom whenever output grows
+  // Helper to scroll to a specific line index (making it the top visible line)
+  const scrollToLine = (lineIndex: number) => {
+    if (!outputContainerRef.current) return;
+    
+    const maxLine = Math.max(0, output.length - 1);
+    const clampedIndex = Math.max(0, Math.min(maxLine, lineIndex));
+    
+    const lineElement = outputContainerRef.current.querySelector(
+      `[data-line-index="${clampedIndex}"]`
+    ) as HTMLElement;
+    
+    if (lineElement) {
+      lineElement.scrollIntoView({ 
+        behavior: "auto", 
+        block: "start" 
+      });
+      topVisibleLineRef.current = clampedIndex;
+    }
+  };
+
+  // Helper to scroll by a number of lines relative to current position
+  const scrollByLines = (count: number) => {
+    scrollToLine(topVisibleLineRef.current + count);
+  };
+
+  // Update top visible line when user scrolls manually
   useEffect(() => {
-    outputEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    const container = outputContainerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      // Find which line is currently at the top
+      const containerRect = container.getBoundingClientRect();
+      const lines = container.querySelectorAll('[data-line-index]');
+      
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i] as HTMLElement;
+        const lineRect = line.getBoundingClientRect();
+        
+        if (lineRect.top >= containerRect.top - 1) { // -1 for floating point precision
+          const lineIndex = parseInt(line.getAttribute('data-line-index') || '0');
+          topVisibleLineRef.current = lineIndex;
+          return;
+        }
+      }
+      
+      // If no line is found (e.g., we're at the bottom), set to last line
+      if (lines.length > 0) {
+        const lastLine = lines[lines.length - 1] as HTMLElement;
+        const lineIndex = parseInt(lastLine.getAttribute('data-line-index') || '0');
+        topVisibleLineRef.current = lineIndex;
+      }
+    };
+
+    container.addEventListener('scroll', handleScroll);
+    return () => container.removeEventListener('scroll', handleScroll);
   }, [output]);
+
+  // Scroll to bottom whenever output grows (e.g. new command responses)
+  useLayoutEffect(() => {
+    const container = outputContainerRef.current;
+    if (container) {
+      container.scrollTop = container.scrollHeight;
+      // Update our tracking to reflect we're at the bottom
+      setTimeout(() => {
+        container.dispatchEvent(new Event('scroll'));
+      }, 0);
+    }
+  }, [output]);
+
+  // Wheel scrolling – move exactly one line per wheel event
+  useEffect(() => {
+    const container = outputContainerRef.current;
+    if (!container) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      const direction = e.deltaY > 0 ? 1 : -1;
+
+      const atTop = container.scrollTop <= 0 && direction < 0;
+
+      if (atTop) {
+        // Allow event to bubble so Home.tsx can handle viewport hide
+        return;
+      }
+
+      // For all other cases, handle internally
+      e.preventDefault();
+      e.stopPropagation();
+
+      // Calculate current position more reliably
+      const containerRect = container.getBoundingClientRect();
+      const lines = container.querySelectorAll('[data-line-index]');
+      let currentTopLine = 0;
+
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i] as HTMLElement;
+        const lineRect = line.getBoundingClientRect();
+
+        if (lineRect.top >= containerRect.top - 1) {
+          currentTopLine = parseInt(line.getAttribute('data-line-index') || '0');
+          break;
+        }
+        if (lineRect.bottom > containerRect.top) {
+          currentTopLine = Math.max(0, parseInt(line.getAttribute('data-line-index') || '0'));
+          break;
+        }
+      }
+
+      // At bottom guard
+      if (direction > 0) {
+        const isAtBottom = container.scrollTop >= container.scrollHeight - container.clientHeight - 1;
+        if (isAtBottom) return;
+      }
+
+      const targetLine = currentTopLine + direction;
+      scrollToLine(targetLine);
+    };
+
+    container.addEventListener("wheel", handleWheel, { passive: false });
+    return () => container.removeEventListener("wheel", handleWheel);
+  }, [output, outputContainerRef.current]);
+
+  // Touch scrolling for mobile – swipe up / down per line
+  useEffect(() => {
+    const container = outputContainerRef.current;
+    if (!container) return;
+
+    let startY = 0;
+    let hasMoved = false;
+
+    const onStart = (e: TouchEvent) => {
+      startY = e.touches[0].clientY;
+      hasMoved = false;
+    };
+
+    const onMove = (e: TouchEvent) => {
+      // Move one line per 50px of touch movement
+      if (Math.abs(e.touches[0].clientY - startY) >= 50 && !hasMoved) {
+        const direction = e.touches[0].clientY > startY ? 1 : -1;
+        scrollByLines(direction);
+        hasMoved = true;
+      }
+    };
+
+    container.addEventListener("touchstart", onStart);
+    container.addEventListener("touchmove", onMove);
+    return () => {
+      container.removeEventListener("touchstart", onStart);
+      container.removeEventListener("touchmove", onMove);
+    };
+  }, [outputContainerRef.current]);
+
+  // Ensure selected line stays within visible window when navigating with arrows
+  useEffect(() => {
+    if (
+      selectedIndex === null ||
+      !outputContainerRef.current
+    ) {
+      return;
+    }
+
+    // Scroll the selected line into view
+    const selectedElement = outputContainerRef.current.querySelector(
+      `[data-line-index="${selectedIndex}"]`
+    ) as HTMLElement;
+    
+    if (selectedElement) {
+      selectedElement.scrollIntoView({ 
+        behavior: "auto", 
+        block: "nearest" 
+      });
+    }
+  }, [selectedIndex]);
 
   // Key events for prompt input & selection navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!promptEnabled) return;
       if (e.key === "ArrowUp") {
+        const atTop =
+          outputContainerRef.current?.scrollTop === 0 &&
+          (selectedIndex === null || selectedIndex === 0);
+
+        if (atTop) {
+          // Dispatch synthetic wheel-up event so Home.tsx reacts consistently
+          window.dispatchEvent(new WheelEvent("wheel", { deltaY: -100 }));
+          return; // allow default
+        }
+
         // Navigate selection up
         setSelectedIndex((prev) => {
           if (prev === null) return output.length - 1;
@@ -201,27 +384,34 @@ const Technologies = () => {
    * ----------------------------*/
   return (
     <div className="technologies-component terminal">
-      <div className="output" aria-label="terminal output">
-        {output.map((line, idx) => (
-          <div
-            key={line.id}
-            className={`line ${line.isInitLine ? "init-line" : ""} ${
-              selectedIndex === idx ? "selected" : ""
-            }`}
-            onClick={() => handleLineClick(idx)}
-          >
-            {line.text.startsWith("EXO>") ? (
-              <>
-                <span className="prompt-label">EXO&gt;</span>{" "}
-                {line.text.slice(4)}
-              </>
-            ) : (
-              line.text
-            )}
-          </div>
-        ))}
-        {/* Dummy div to keep scroll at bottom */}
-        <div ref={outputEndRef} />
+      <div
+        className="output-container"
+        ref={outputContainerRef}
+        aria-label="terminal output container"
+      >
+        <div className="output" aria-label="terminal output">
+          {output.map((line, idx) => (
+            <div
+              key={line.id}
+              className={`line ${line.isInitLine ? "init-line" : ""} ${
+                selectedIndex === idx ? "selected" : ""
+              }`}
+              onClick={() => handleLineClick(idx)}
+              data-line-index={idx}
+            >
+              {line.text.startsWith("EXO>") ? (
+                <>
+                  <span className="prompt-label">EXO&gt;</span>{" "}
+                  {line.text.slice(4)}
+                </>
+              ) : (
+                line.text
+              )}
+            </div>
+          ))}
+          {/* Dummy div to keep scroll at bottom */}
+          <div ref={outputEndRef} />
+        </div>
       </div>
 
       <div className="prompt-line" aria-label="terminal prompt">
