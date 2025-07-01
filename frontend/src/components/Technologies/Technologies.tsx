@@ -457,6 +457,8 @@ const Technologies = () => {
     // Handle special commands first
     if (cmd === "clear") {
       clearOutput();
+      setProgramHistory([]);
+      setCurrentProgramId(null);
       setCurrentInput("");
       setSelectedIndex(null);
       return;
