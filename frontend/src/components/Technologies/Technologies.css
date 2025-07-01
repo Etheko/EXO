@@ -139,3 +139,14 @@
     opacity: 0;
   }
 }
+
+.line.ascii {
+  color: #00ff7f;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.ascii-html {
+  font-family: 'Courier New', Courier, monospace;
+  line-height: 1;
+  display: inline-block;
+}

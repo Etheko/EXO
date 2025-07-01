@@ -6,6 +6,8 @@ import type { Section } from "../../types/Section";
 import initSequence from "./InitializationSequence.txt?raw";
 import TechnologyService from "../../services/TechnologyService";
 import type { Technology } from "../../types/Technology";
+import { convertImageToAscii } from "../../utils/aa";
+import { DEFAULT_ASCII_WIDTH } from "../../config";
 
 /**
  * Technologies Component
@@ -28,6 +30,8 @@ interface OutputLine {
   text: string;
   isInitLine?: boolean;
   technology?: Technology;
+  isAsciiLine?: boolean;
+  html?: string; // if present, render with innerHTML (for colored ASCII)
 }
 
 // Utility sleep helper
@@ -41,6 +45,8 @@ const Technologies = () => {
   const [currentInput, setCurrentInput] = useState("");
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [promptEnabled, setPromptEnabled] = useState(false);
+  // ASCII art width in characters (resolution)
+  const [asciiWidth, setAsciiWidth] = useState<number>(DEFAULT_ASCII_WIDTH);
 
   const outputEndRef = useRef<HTMLDivElement>(null);
   // Container that controls scrolling (no native scrollbar displayed)
@@ -333,23 +339,32 @@ const Technologies = () => {
         responseLines = ["Error: unable to fetch technologies"];
       }
     } else {
-      switch (cmd.toLowerCase()) {
-        case "help":
-          responseLines = [
-            "Available commands:",
-            "  help      – display this message",
-            "  clear     – clear the screen",
-            "  technologies  – list technologies alphabetically",
-            "  exo       – restart the console intro",
-          ];
-          break;
-        case "clear":
-          setOutput([]);
-          setCurrentInput("");
-          setSelectedIndex(null);
-          return;
-        default:
-          responseLines = [`Unknown command: '${cmd}' (try 'help')`];
+      // Support: resolution <num>
+      const resMatch = cmd.match(/^resolution\s+(\d{1,3})$/i);
+      if (resMatch) {
+        const newWidth = Math.max(10, Math.min(100, parseInt(resMatch[1], 10)));
+        setAsciiWidth(newWidth);
+        responseLines = [`ASCII resolution width set to ${newWidth} characters.`];
+      } else {
+        switch (cmd.toLowerCase()) {
+          case "help":
+            responseLines = [
+              "Available commands:",
+              "  help            – display this message",
+              "  clear           – clear the screen",
+              "  technologies    – list technologies alphabetically",
+              "  resolution <n>  – set ASCII art width (10-100)",
+              "  exo             – restart the console intro",
+            ];
+            break;
+          case "clear":
+            setOutput([]);
+            setCurrentInput("");
+            setSelectedIndex(null);
+            return;
+          default:
+            responseLines = [`Unknown command: '${cmd}' (try 'help')`];
+        }
       }
     }
 
@@ -409,14 +424,34 @@ const Technologies = () => {
   /* ------------------------------
    * Line click handler
    * ----------------------------*/
-  const handleLineClick = (index: number) => {
+  const handleLineClick = async (index: number) => {
     const line = output[index];
 
     // If the clicked line represents a technology, show its details
     if (line?.technology) {
       const tech = line.technology;
       const now = Date.now();
+
+      // Attempt to fetch and convert icon to ASCII art
+      let asciiLines: OutputLine[] = [];
+      try {
+        if (tech.id !== undefined) {
+          const iconUrl = TechnologyService.getIconUrl(tech.id);
+          const ascii = await convertImageToAscii(iconUrl, { colored: true, width: asciiWidth });
+          asciiLines = ascii.map((htmlStr, i) => ({
+            id: now - ascii.length + i,
+            text: htmlStr.replace(/<[^>]+>/g, ""), // plain fallback for selection etc.
+            html: htmlStr,
+            isAsciiLine: true,
+          }));
+        }
+      } catch (err) {
+        console.error("Failed to generate ASCII art", err);
+        // It is fine to ignore – asciiLines stays empty
+      }
+
       const infoLines: OutputLine[] = [
+        ...asciiLines,
         { id: now, text: `${tech.name}` },
         { id: now + 1, text: tech.description ?? "No description available" },
         { id: now + 2, text: tech.link ? `Link: ${tech.link}` : "No link available" },
@@ -451,12 +486,17 @@ const Technologies = () => {
           <div
             key={line.id}
             className={`line ${line.isInitLine ? "init-line" : ""} ${
-              selectedIndex === idx ? "selected" : ""
-            }`}
+              line.isAsciiLine ? "ascii" : ""
+            } ${selectedIndex === idx ? "selected" : ""}`}
             onClick={() => handleLineClick(idx)}
               data-line-index={idx}
           >
-            {line.text.startsWith("EXO>") ? (
+            {line.html ? (
+              <span
+                className="ascii-html"
+                dangerouslySetInnerHTML={{ __html: line.html }}
+              />
+            ) : line.text.startsWith("EXO>") ? (
               <>
                 <span className="prompt-label">EXO&gt;</span>{" "}
                 {line.text.slice(4)}
