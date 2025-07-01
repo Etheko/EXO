@@ -123,6 +123,7 @@ public class UserInitializer {
         List<String> expectedLikes = Arrays.asList(
             "🐈 cats!",
             "💻 computers",
+            "🐧 fedora",
             "🍎 apple thingies",
             "🎮 gaming",
             "🍄 nintendo fanboy",
@@ -139,7 +140,7 @@ public class UserInitializer {
         
         // Add dislikes
         List<String> expectedDislikes = Arrays.asList(
-            "⛔phonk. plz. make it stop. it's horrible. tysm :)"
+            "⛔phonk."
         );
         
         user.getLikes().addAll(expectedLikes);

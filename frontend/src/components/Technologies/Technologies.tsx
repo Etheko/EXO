@@ -5,6 +5,7 @@ import LoadingSpinner from "../LoadingSpinner";
 import type { Section } from "../../types/Section";
 import initSequence from "./InitializationSequence.txt?raw";
 import TechnologyService from "../../services/TechnologyService";
+import type { Technology } from "../../types/Technology";
 
 /**
  * Technologies Component
@@ -26,6 +27,7 @@ interface OutputLine {
   id: number;
   text: string;
   isInitLine?: boolean;
+  technology?: Technology;
 }
 
 // Utility sleep helper
@@ -229,9 +231,17 @@ const Technologies = () => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!promptEnabled) return;
       if (e.key === "ArrowUp") {
-        const atTop =
-          outputContainerRef.current?.scrollTop === 0 &&
-          (selectedIndex === null || selectedIndex === 0);
+        const atScrollTop = outputContainerRef.current?.scrollTop === 0;
+        if (selectedIndex === null) {
+          if (atScrollTop) {
+            // Select the very first line instead of bubbling to Home
+            setSelectedIndex(0);
+            e.preventDefault();
+            return;
+          }
+        }
+
+        const atTop = atScrollTop && selectedIndex === 0;
 
         if (atTop) {
           // Dispatch synthetic wheel-up event so Home.tsx reacts consistently
@@ -252,23 +262,34 @@ const Technologies = () => {
         });
         e.preventDefault();
       } else if (e.key === "Backspace") {
-        setCurrentInput((prev) => prev.slice(0, -1));
+        if (selectedIndex === null) {
+          setCurrentInput((prev) => prev.slice(0, -1));
+        }
         e.preventDefault();
       } else if (e.key === "Enter") {
-        if (currentInput.trim() !== "") {
+        // If a line is selected, "Enter" acts on it
+        if (selectedIndex !== null) {
+          handleLineClick(selectedIndex);
+        } else if (currentInput.trim() !== "") {
+          // Otherwise, execute the command in the prompt
           executeCommand(currentInput.trim());
         }
         e.preventDefault();
       } else if (e.key.length === 1) {
-        // Regular character
-        setCurrentInput((prev) => prev + e.key);
+        // If a line is selected, typing deselects it and starts a new input
+        if (selectedIndex !== null) {
+          setSelectedIndex(null);
+          setCurrentInput(e.key);
+        } else {
+          setCurrentInput((prev) => prev + e.key);
+        }
         e.preventDefault();
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [currentInput, output.length, promptEnabled]);
+  }, [currentInput, output.length, promptEnabled, selectedIndex]);
 
   /* ------------------------------
    * Command execution stub
@@ -291,9 +312,22 @@ const Technologies = () => {
           "name",
           "asc"
         );
-        const techNames = techResp.content.map((t) => t.name);
-        const sorted = [...techNames].sort((a, b) => a.localeCompare(b));
-        responseLines = sorted.map((name, idx) => `${idx + 1}. ${name}`);
+
+        const sorted = [...techResp.content].sort((a, b) =>
+          a.name.localeCompare(b.name)
+        );
+
+        const techLines: OutputLine[] = sorted.map((tech, idx) => ({
+          id: idBase + idx + 1,
+          text: `${idx + 1}. ${tech.name}`,
+          technology: tech,
+        }));
+
+        // Append technology list lines to output and reset prompt
+        setOutput((prev) => [...prev, ...techLines]);
+        setCurrentInput("");
+        setSelectedIndex(null);
+        return;
       } catch (err) {
         console.error("Failed to fetch technologies", err);
         responseLines = ["Error: unable to fetch technologies"];
@@ -376,7 +410,30 @@ const Technologies = () => {
    * Line click handler
    * ----------------------------*/
   const handleLineClick = (index: number) => {
+    const line = output[index];
+
+    // If the clicked line represents a technology, show its details
+    if (line?.technology) {
+      const tech = line.technology;
+      const now = Date.now();
+      const infoLines: OutputLine[] = [
+        { id: now, text: `${tech.name}` },
+        { id: now + 1, text: tech.description ?? "No description available" },
+        { id: now + 2, text: tech.link ? `Link: ${tech.link}` : "No link available" },
+      ];
+
+      setOutput(infoLines);
+      setSelectedIndex(null);
+      setCurrentInput("");
+      return;
+    }
+
+    // Fallback to simple selection highlight
     setSelectedIndex(index);
+  };
+
+  const handlePromptClick = () => {
+    setSelectedIndex(null);
   };
 
   /* ------------------------------
@@ -389,35 +446,41 @@ const Technologies = () => {
         ref={outputContainerRef}
         aria-label="terminal output container"
       >
-        <div className="output" aria-label="terminal output">
-          {output.map((line, idx) => (
-            <div
-              key={line.id}
-              className={`line ${line.isInitLine ? "init-line" : ""} ${
-                selectedIndex === idx ? "selected" : ""
-              }`}
-              onClick={() => handleLineClick(idx)}
+      <div className="output" aria-label="terminal output">
+        {output.map((line, idx) => (
+          <div
+            key={line.id}
+            className={`line ${line.isInitLine ? "init-line" : ""} ${
+              selectedIndex === idx ? "selected" : ""
+            }`}
+            onClick={() => handleLineClick(idx)}
               data-line-index={idx}
-            >
-              {line.text.startsWith("EXO>") ? (
-                <>
-                  <span className="prompt-label">EXO&gt;</span>{" "}
-                  {line.text.slice(4)}
-                </>
-              ) : (
-                line.text
-              )}
-            </div>
-          ))}
-          {/* Dummy div to keep scroll at bottom */}
-          <div ref={outputEndRef} />
+          >
+            {line.text.startsWith("EXO>") ? (
+              <>
+                <span className="prompt-label">EXO&gt;</span>{" "}
+                {line.text.slice(4)}
+              </>
+            ) : (
+              line.text
+            )}
+          </div>
+        ))}
+        {/* Dummy div to keep scroll at bottom */}
+        <div ref={outputEndRef} />
         </div>
       </div>
 
-      <div className="prompt-line" aria-label="terminal prompt">
+      <div
+        className="prompt-line"
+        aria-label="terminal prompt"
+        onClick={handlePromptClick}
+      >
         <span className="prompt-label">EXO&gt;</span>
         <span className="prompt-input">{currentInput}</span>
-        <span className="prompt-cursor" aria-hidden="true" />
+        {selectedIndex === null && (
+          <span className="prompt-cursor" aria-hidden="true" />
+        )}
       </div>
     </div>
   );
