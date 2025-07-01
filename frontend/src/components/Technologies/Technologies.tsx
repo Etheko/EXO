@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useLayoutEffect } from "react";
 import "./Technologies.css";
 import initSequence from "./InitializationSequence.txt?raw";
-import { DEFAULT_ASCII_WIDTH } from "../../config";
+import { DEFAULT_ASCII_WIDTH, TERMINAL_TOP_SCROLL_COOLDOWN_MS } from "../../config";
 
 // Terminal programs system
 import { TerminalProgram, ProgramContext } from "./programs/ProgramTypes";
@@ -37,6 +37,8 @@ interface OutputLine {
   html?: string; // if present, render with innerHTML (for colored ASCII)
   linkUrl?: string;
   isBackLine?: boolean;
+  /** Optional severity styling */
+  severity?: "error" | "warning";
 }
 
 // Utility sleep helper
@@ -66,6 +68,13 @@ const Technologies = () => {
   const outputContainerRef = useRef<HTMLDivElement>(null);
   // Track which line should be at the top of the visible area
   const topVisibleLineRef = useRef<number>(0);
+  /** Timestamp of when the output first reached the very top (scrollTop === 0). Used
+   *  to impose a small cooldown before allowing the wheel-up event to propagate to
+   *  Home.tsx (which would otherwise immediately trigger the hide animation).
+   */
+  const topReachedTimeRef = useRef<number | null>(null);
+  /** Whether the output was at the very top in the previous wheel event. */
+  const wasAtTopRef = useRef<boolean>(false);
   const initRan = useRef(false);
 
   // Map program id -> display name
@@ -249,12 +258,34 @@ const Technologies = () => {
     const handleWheel = (e: WheelEvent) => {
       const direction = e.deltaY > 0 ? 1 : -1;
 
-      const atTop = container.scrollTop <= 0 && direction < 0;
+      const isAtTop = container.scrollTop <= 0;
 
-      if (atTop) {
-        // Allow event to bubble so Home.tsx can handle viewport hide
+      // ------------------------------------------------------------------
+      // Top-detector & cooldown logic
+      // ------------------------------------------------------------------
+      // Mark the first moment we reach the absolute top (scrollTop === 0).
+      if (isAtTop && !wasAtTopRef.current) {
+        topReachedTimeRef.current = Date.now();
+        wasAtTopRef.current = true;
+      } else if (!isAtTop && wasAtTopRef.current) {
+        // We moved away from top – reset flag so next reach records a new time.
+        wasAtTopRef.current = false;
+      }
+
+      const cooldownActive =
+        isAtTop && direction < 0 &&
+        topReachedTimeRef.current !== null &&
+        Date.now() - topReachedTimeRef.current < TERMINAL_TOP_SCROLL_COOLDOWN_MS; // cooldown from config
+
+      const shouldBubbleToHome = isAtTop && direction < 0 && !cooldownActive;
+
+      if (shouldBubbleToHome) {
+        // Cooldown elapsed – allow Home.tsx to handle viewport hide.
         return;
       }
+
+      // Either we are not at the top OR the cooldown is still active.
+      // In both cases we handle the scroll internally.
 
       // For all other cases, handle internally
       e.preventDefault();
@@ -416,7 +447,7 @@ const Technologies = () => {
   const executeCommand = async (rawCmd: string) => {
     if (!rawCmd) return;
 
-    // Echo the command
+    // Echo the command (no extra spacing after prompt)
     appendOutput([{ id: getNextId(), text: `EXO> ${rawCmd}` }]);
 
     const parts = rawCmd.trim().split(/\s+/);
@@ -440,7 +471,7 @@ const Technologies = () => {
           {
             id: getNextId(),
             text: "Nowhere to go back to!",
-            html: '<span class="back-line">Nowhere to go back to!</span>',
+            severity: "warning",
           },
         ]);
       }
@@ -464,7 +495,13 @@ const Technologies = () => {
 
     if (!program) {
       // Unknown command
-      appendOutput([{ id: getNextId(), text: `Unknown command: '${cmd}' (try 'help')` }]);
+      appendOutput([
+        {
+          id: getNextId(),
+          text: `Unknown command: '${cmd}' (try 'help')`,
+          severity: "error",
+        },
+      ]);
       setCurrentInput("");
       setSelectedIndex(null);
       return;
@@ -574,6 +611,13 @@ const Technologies = () => {
             } ${selectedIndex === idx ? "selected" : ""} ${
               line.linkUrl ? "link-line" : ""
             } ${line.isBackLine ? "back-line" : ""}`}
+            style={
+              line.severity === "error"
+                ? { color: "#ef4444" }
+                : line.severity === "warning"
+                ? { color: "#eab308" }
+                : undefined
+            }
             onClick={() => handleLineClick(idx)}
               data-line-index={idx}
           >
@@ -584,7 +628,7 @@ const Technologies = () => {
               />
             ) : line.text.startsWith("EXO>") ? (
               <>
-                <span className="prompt-label">EXO&gt;</span>{" "}
+                <span className="prompt-label">EXO&gt;</span>
                 {line.text.slice(4)}
               </>
             ) : (
@@ -603,6 +647,7 @@ const Technologies = () => {
         onClick={handlePromptClick}
       >
         <span className="prompt-label">EXO&gt;</span>
+        &nbsp;
         <span className="prompt-input">{currentInput}</span>
         {selectedIndex === null && (
           <span className="prompt-cursor" aria-hidden="true" />

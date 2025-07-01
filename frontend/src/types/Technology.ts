@@ -11,6 +11,9 @@ export type Technology = {
     // Timestamps
     createdAt?: Date;
     updatedAt?: Date;
+
+    // Category in which this technology is used (e.g., Backend, Frontend, Design)
+    category?: string;
 };
 
 // Technology creation/update DTO
@@ -19,4 +22,5 @@ export type TechnologyCreateRequest = {
     description?: string;
     link?: string;
     iconPath?: string; // Optional path to an existing icon on the server
+    category?: string;
 };

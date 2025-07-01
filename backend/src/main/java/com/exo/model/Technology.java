@@ -32,6 +32,10 @@ public class Technology {
 
     private String link;
 
+    // Category that this technology belongs to (e.g., Backend, Frontend, Design)
+    @Column(length = 100)
+    private String category;
+
     @JsonIgnore
     @Lob
     private Blob icon;
@@ -44,10 +48,11 @@ public class Technology {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    public Technology(String name, String description, String link, String iconPath) throws IOException, SQLException {
+    public Technology(String name, String description, String link, String iconPath, String category) throws IOException, SQLException {
         this.name = name;
         this.description = description;
         this.link = link;
+        this.category = category;
         if (iconPath == null || iconPath.isEmpty()) {
             this.iconString = "/assets/defaultProjectIcon.png"; // A default icon
         } else {

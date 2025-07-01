@@ -7,6 +7,8 @@ export interface OutputLine {
   html?: string;
   linkUrl?: string;
   isBackLine?: boolean;
+  /** Optional severity styling */
+  severity?: "error" | "warning";
 }
 
 export interface ProgramContext {

@@ -70,6 +70,7 @@ public class TechnologyController {
                     existingTechnology.setName(technologyDetails.getName());
                     existingTechnology.setDescription(technologyDetails.getDescription());
                     existingTechnology.setLink(technologyDetails.getLink());
+                    existingTechnology.setCategory(technologyDetails.getCategory());
                     return ResponseEntity.ok(technologyService.save(existingTechnology));
                 })
                 .orElse(ResponseEntity.notFound().build());
