@@ -2,6 +2,8 @@ package com.exo.service;
 
 import com.exo.model.Technology;
 import com.exo.repository.TechnologyRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -17,6 +19,8 @@ import java.util.Optional;
 
 @Service
 public class TechnologyService {
+
+    private static final Logger logger = LoggerFactory.getLogger(TechnologyService.class);
 
     @Autowired
     private TechnologyRepository technologyRepository;
@@ -50,9 +54,11 @@ public class TechnologyService {
      * ==========================
      */
 
+    @Transactional(readOnly = true)
     public byte[] getIcon(Long technologyId) throws SQLException, IOException {
         Technology technology = technologyRepository.findById(technologyId).orElse(null);
         if (technology == null) {
+            logger.warn("Technology with id {} not found while retrieving icon", technologyId);
             return null;
         }
 
@@ -71,6 +77,7 @@ public class TechnologyService {
         if (iconBlob != null) {
             return iconBlob.getBytes(1, (int) iconBlob.length());
         }
+        logger.warn("Icon blob for technology id {} is null", technologyId);
         return null;
     }
 

@@ -2,6 +2,8 @@ package com.exo.service;
 
 import com.exo.model.Project;
 import com.exo.repository.ProjectRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -19,6 +21,8 @@ import java.util.Optional;
 
 @Service
 public class ProjectService {
+
+    private static final Logger logger = LoggerFactory.getLogger(ProjectService.class);
 
     @Autowired
     private ProjectRepository projectRepository;
@@ -190,9 +194,11 @@ public class ProjectService {
         return null;
     }
 
+    @Transactional(readOnly = true)
     public byte[] getGalleryImage(Long projectId, int index) throws SQLException, IOException {
         Project project = projectRepository.findById(projectId).orElse(null);
         if (project == null || project.getGallery() == null || index < 0 || index >= project.getGallery().size()) {
+            logger.warn("Gallery image blob for project id {} at index {} is null", projectId, index);
             return null;
         }
         Blob imageBlob = project.getGallery().get(index);
@@ -247,9 +253,11 @@ public class ProjectService {
      * ==========================
      */
 
+    @Transactional(readOnly = true)
     public byte[] getHeaderPicture(Long projectId) throws SQLException, IOException {
         Project project = projectRepository.findById(projectId).orElse(null);
         if (project == null) {
+            logger.warn("Header picture blob for project id {} is null", projectId);
             return null;
         }
 
@@ -315,9 +323,11 @@ public class ProjectService {
      * ==========================
      */
 
+    @Transactional(readOnly = true)
     public byte[] getIcon(Long projectId) throws SQLException, IOException {
         Project project = projectRepository.findById(projectId).orElse(null);
         if (project == null) {
+            logger.warn("Icon blob for project id {} is null", projectId);
             return null;
         }
 

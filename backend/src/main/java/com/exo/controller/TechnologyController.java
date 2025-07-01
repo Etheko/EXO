@@ -4,6 +4,8 @@ import com.exo.model.Technology;
 import com.exo.service.TechnologyService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -27,6 +29,8 @@ import java.util.List;
 @RequestMapping("/api/technologies")
 @Tag(name = "Technology Management", description = "APIs for managing technologies")
 public class TechnologyController {
+
+    private static final Logger logger = LoggerFactory.getLogger(TechnologyController.class);
 
     @Autowired
     private TechnologyService technologyService;
@@ -123,6 +127,7 @@ public class TechnologyController {
             headers.setCacheControl("no-cache, no-store, must-revalidate");
             return new ResponseEntity<>(bytes, headers, HttpStatus.OK);
         } catch (Exception e) {
+            logger.error("Error retrieving icon for technology id {}", id, e);
             return ResponseEntity.internalServerError().build();
         }
     }

@@ -17,6 +17,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -32,6 +34,8 @@ public class ProjectController {
 
     @Autowired
     private ProjectService projectService;
+
+    private static final Logger logger = LoggerFactory.getLogger(ProjectController.class);
 
     // Basic CRUD operations
     @GetMapping
@@ -252,6 +256,7 @@ public class ProjectController {
             headers.setCacheControl("no-cache, no-store, must-revalidate");
             return new ResponseEntity<>(bytes, headers, HttpStatus.OK);
         } catch (Exception e) {
+            logger.error("Error retrieving gallery image for project id {} index {}", id, index, e);
             return ResponseEntity.internalServerError().build();
         }
     }
@@ -316,6 +321,7 @@ public class ProjectController {
             headers.setCacheControl("no-cache, no-store, must-revalidate");
             return new ResponseEntity<>(bytes, headers, HttpStatus.OK);
         } catch (Exception e) {
+            logger.error("Error retrieving project header for id {}", id, e);
             return ResponseEntity.internalServerError().build();
         }
     }
@@ -358,6 +364,7 @@ public class ProjectController {
             headers.setCacheControl("no-cache, no-store, must-revalidate");
             return new ResponseEntity<>(bytes, headers, HttpStatus.OK);
         } catch (Exception e) {
+            logger.error("Error retrieving project icon for id {}", id, e);
             return ResponseEntity.internalServerError().build();
         }
     }
