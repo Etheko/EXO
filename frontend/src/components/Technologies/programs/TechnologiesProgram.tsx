@@ -26,9 +26,9 @@ const getColorForCategory = (category: string): string => {
 };
 
 const TechnologiesProgram: TerminalProgram = {
-  id: "technologies",
-  displayName: "Technologies",
-  aliases: ["technologies", "tech", "technology"],
+  id: "know",
+  displayName: "Know",
+  aliases: ["know", "technologies", "tech", "technology"],
   clear: true,
   run: async (args: string[], context: ProgramContext) => {
     try {

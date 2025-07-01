@@ -119,7 +119,7 @@ const Technologies = () => {
     }
 
     // Determine clearing behavior considering first technologies run
-    const skipClearForTechFirst = program.id === "technologies" && !technologiesExecutedOnce;
+    const skipClearForTechFirst = program.id === "know" && !technologiesExecutedOnce;
     const willClear = program.clear && !skipClearForTechFirst;
 
     const prevProgramId = currentProgramId;
@@ -166,7 +166,7 @@ const Technologies = () => {
       ]);
     }
 
-    if (program.id === "technologies" && !technologiesExecutedOnce) {
+    if (program.id === "know" && !technologiesExecutedOnce) {
       setTechnologiesExecutedOnce(true);
     }
 
@@ -455,7 +455,7 @@ const Technologies = () => {
     const args = parts.slice(1);
 
     // Handle special commands first
-    if (cmd === "clear") {
+    if (cmd === "nuke" || cmd === "clear") {
       clearOutput();
       setProgramHistory([]);
       setCurrentProgramId(null);
@@ -464,7 +464,7 @@ const Technologies = () => {
       return;
     }
 
-    if (cmd === "back") {
+    if (cmd === "undo" || cmd === "back") {
       const hadHistory = programHistory.length > 0;
       if (hadHistory) {
         goBack();
@@ -482,7 +482,7 @@ const Technologies = () => {
     }
 
     // Resolution command (does not clear)
-    const resMatch = rawCmd.match(/^resolution\s+(\d{1,3})$/i);
+    const resMatch = rawCmd.match(/^(?:enhance|resolution)\s+(\d{1,3})$/i);
     if (resMatch) {
       const newWidth = Math.max(10, Math.min(100, parseInt(resMatch[1], 10)));
       setAsciiWidth(newWidth);
@@ -500,7 +500,7 @@ const Technologies = () => {
       appendOutput([
         {
           id: getNextId(),
-          text: `Unknown command: '${cmd}' (try 'help')`,
+          text: `Unknown command: '${cmd}' (try 'info')`,
           severity: "error",
         },
       ]);
@@ -537,7 +537,7 @@ const Technologies = () => {
     if (autoCommand) {
       await sleep(1200);
 
-      const autoCmd = "technologies";
+      const autoCmd = "know";
       for (let i = 0; i < autoCmd.length; i++) {
         setCurrentInput(autoCmd.slice(0, i + 1));
         await sleep(40);

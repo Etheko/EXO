@@ -32,15 +32,13 @@ public class SectionInitializer {
         
         // Define the expected sections with their data
         List<Section> expectedSections = Arrays.asList(
-            createSection("init-etheko", "INIT::Etheko()", "// Who am I?", "", 0, true, "about"),
-            createSection("projects", "PROJECTS.log", "// On-going & Finished", "", 1, true, "projects"),
-            createSection("modules-loaded", "MODULES_LOADED", "// Tech Stack", "", 2, true, "tech-stack"),
-            createSection("ux-lab", "UX.LAB{👾}", "// Design Zone", "", 3, false, "design"),
-            createSection("sys-sec-insights", "SYS_SEC::INSIGHTS", "// Cyber Logs", "", 4, false, "cyber-logs"),
-            createSection("pipeline-workflow", "PIPELINE::WORKFLOW", "// DevOps & Agile", "", 5, false, "devops"),
-            createSection("blog", "blog.txt", "// Thoughts & Posts", "", 6, false, "blog"),
-            createSection("contact", "contact.txt", "// CV & Links", "", 7, false, "contact"),
-            createSection("certs", "CERTS.log", "// Certificates & Courses", "", 8, false, "certificates")
+            createSection("init-etheko", "EXEC::Etheko()", "// who am I?", "", 0, true, "about"),
+            createSection("projects", "IMPORT::Projects.log", "// my projects", "", 1, true, "projects"),
+            createSection("modules-loaded", "NODE_MODULES_LOADED", "// what I use", "", 2, true, "tech-stack"),
+            createSection("skills-loaded", "UPGRADE.SKILLS_LOADED", "// my skills and certs  (Agile, DevOps, Cyber, Certs...)", "", 3, false, "skills-certs"),
+            createSection("ux-lab", "KERNEL.UX.LAB{👾}", "// cool thingies", "", 4, false, "design-zone"),
+            createSection("blog", "ECHO.blog.txt", "// blog", "", 6, false, "blog"),
+            createSection("contact", ".CONTACT.txt", "// CV & Links", "", 7, false, "contact")
         );
         
         // Get existing sections by slug for easy lookup
