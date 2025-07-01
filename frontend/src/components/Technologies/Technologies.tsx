@@ -1,13 +1,16 @@
 import { useEffect, useState, useRef, useLayoutEffect } from "react";
 import "./Technologies.css";
-import SectionService from "../../services/SectionService";
-import LoadingSpinner from "../LoadingSpinner";
-import type { Section } from "../../types/Section";
 import initSequence from "./InitializationSequence.txt?raw";
-import TechnologyService from "../../services/TechnologyService";
-import type { Technology } from "../../types/Technology";
-import { convertImageToAscii } from "../../utils/aa";
 import { DEFAULT_ASCII_WIDTH } from "../../config";
+
+// Terminal programs system
+import { TerminalProgram, ProgramContext } from "./programs/ProgramTypes";
+import HelpProgram from "./programs/HelpProgram";
+import ExoProgram from "./programs/ExoProgram";
+import TechnologiesProgram from "./programs/TechnologiesProgram";
+import { createTechnologyDetailsProgram } from "./programs/TechnologyDetailsProgram";
+
+import type { Technology } from "../../types/Technology";
 
 /**
  * Technologies Component
@@ -32,6 +35,8 @@ interface OutputLine {
   technology?: Technology;
   isAsciiLine?: boolean;
   html?: string; // if present, render with innerHTML (for colored ASCII)
+  linkUrl?: string;
+  isBackLine?: boolean;
 }
 
 // Utility sleep helper
@@ -48,12 +53,120 @@ const Technologies = () => {
   // ASCII art width in characters (resolution)
   const [asciiWidth, setAsciiWidth] = useState<number>(DEFAULT_ASCII_WIDTH);
 
+  // Program system state
+  const [programHistory, setProgramHistory] = useState<{ id: string | null; output: OutputLine[] }[]>([]);
+  const [currentProgramId, setCurrentProgramId] = useState<string | null>(null);
+  const [technologiesExecutedOnce, setTechnologiesExecutedOnce] = useState(false);
+
+  // Registry of available programs
+  const programs: TerminalProgram[] = [HelpProgram, ExoProgram, TechnologiesProgram];
+
   const outputEndRef = useRef<HTMLDivElement>(null);
   // Container that controls scrolling (no native scrollbar displayed)
   const outputContainerRef = useRef<HTMLDivElement>(null);
   // Track which line should be at the top of the visible area
   const topVisibleLineRef = useRef<number>(0);
   const initRan = useRef(false);
+
+  // Map program id -> display name
+  const programNamesRef = useRef<Map<string, string>>(new Map());
+
+  // Unique id generator for lines
+  const nextIdRef = useRef<number>(1);
+  const getNextId = () => nextIdRef.current++;
+
+  /** Utility to clear terminal output */
+  const clearOutput = () => {
+    setOutput([]);
+    setSelectedIndex(null);
+  };
+
+  const appendOutput = (lines: OutputLine[]) => {
+    setOutput((prev) => [...prev, ...lines]);
+  };
+
+  /** Navigate back to previous program */
+  const goBack = () => {
+    setProgramHistory((prev) => {
+      if (prev.length === 0) return prev;
+      const newHistory = [...prev];
+      const last = newHistory.pop();
+      if (last) {
+        setOutput(last.output);
+        setCurrentProgramId(last.id);
+        setSelectedIndex(null);
+        setCurrentInput("");
+      }
+      return newHistory;
+    });
+  };
+
+  /** Core executor for a program (internal & command-driven) */
+  const runProgram = async (program: TerminalProgram, args: string[] = []) => {
+    // Exo acts as hard reset: clear history and currentProgram
+    if (program.id === "exo") {
+      setProgramHistory([]);
+      setCurrentProgramId(null);
+    }
+
+    // Determine clearing behavior considering first technologies run
+    const skipClearForTechFirst = program.id === "technologies" && !technologiesExecutedOnce;
+    const willClear = program.clear && !skipClearForTechFirst;
+
+    const prevProgramId = currentProgramId;
+
+    if (willClear) {
+      if (prevProgramId !== null && program.id !== "exo") {
+        setProgramHistory((prev) => [...prev, { id: prevProgramId, output }]);
+      } else if (program.id === "exo") {
+        setProgramHistory([]);
+      }
+      clearOutput();
+    }
+
+    const context: ProgramContext = {
+      appendLines: appendOutput,
+      setOutput,
+      clearOutput,
+      asciiWidth,
+      setAsciiWidth,
+      setPromptEnabled,
+      executeCommand,
+      technologiesExecutedOnce,
+      markTechnologiesExecuted: () => setTechnologiesExecutedOnce(true),
+      getNextId,
+    };
+
+    // Register display name for this program
+    if (program.displayName) {
+      programNamesRef.current.set(program.id, program.displayName);
+    }
+
+    await program.run(args, context);
+
+    const hadHistory = currentProgramId !== null || programHistory.length > 0;
+    if (program.id !== "exo" && willClear && hadHistory) {
+      let backText = "< Back";
+      if (prevProgramId) {
+        const name = programNamesRef.current.get(prevProgramId) || prevProgramId;
+        backText = `< Back - ${name}`;
+      }
+      appendOutput([
+        { id: getNextId(), text: "\u00A0" },
+        { id: getNextId(), text: backText, isBackLine: true },
+      ]);
+    }
+
+    if (program.id === "technologies" && !technologiesExecutedOnce) {
+      setTechnologiesExecutedOnce(true);
+    }
+
+    if (willClear) {
+      setCurrentProgramId(program.id);
+    } else if (currentProgramId === null) {
+      setCurrentProgramId(program.id);
+    }
+  };
 
   /* ------------------------------
    * Effects
@@ -298,81 +411,66 @@ const Technologies = () => {
   }, [currentInput, output.length, promptEnabled, selectedIndex]);
 
   /* ------------------------------
-   * Command execution stub
+   * Command execution (program system)
    * ----------------------------*/
-  const executeCommand = async (cmd: string) => {
-    const idBase = Date.now();
-    setOutput((prev) => [...prev, { id: idBase, text: `EXO> ${cmd}` }]);
+  const executeCommand = async (rawCmd: string) => {
+    if (!rawCmd) return;
 
-    // Placeholder responses until actual logic is defined
-    let responseLines: string[];
-    if (cmd.toLowerCase() === "exo") {
-      await playInit(false);
+    // Echo the command
+    appendOutput([{ id: getNextId(), text: `EXO> ${rawCmd}` }]);
+
+    const parts = rawCmd.trim().split(/\s+/);
+    const cmd = parts[0].toLowerCase();
+    const args = parts.slice(1);
+
+    // Handle special commands first
+    if (cmd === "clear") {
+      clearOutput();
       setCurrentInput("");
+      setSelectedIndex(null);
       return;
-    } else if (cmd.toLowerCase() === "technologies") {
-      try {
-        const techResp = await TechnologyService.getAllTechnologies(
-          0,
-          100,
-          "name",
-          "asc"
-        );
-
-        const sorted = [...techResp.content].sort((a, b) =>
-          a.name.localeCompare(b.name)
-        );
-
-        const techLines: OutputLine[] = sorted.map((tech, idx) => ({
-          id: idBase + idx + 1,
-          text: `${idx + 1}. ${tech.name}`,
-          technology: tech,
-        }));
-
-        // Append technology list lines to output and reset prompt
-        setOutput((prev) => [...prev, ...techLines]);
-        setCurrentInput("");
-        setSelectedIndex(null);
-        return;
-      } catch (err) {
-        console.error("Failed to fetch technologies", err);
-        responseLines = ["Error: unable to fetch technologies"];
-      }
-    } else {
-      // Support: resolution <num>
-      const resMatch = cmd.match(/^resolution\s+(\d{1,3})$/i);
-      if (resMatch) {
-        const newWidth = Math.max(10, Math.min(100, parseInt(resMatch[1], 10)));
-        setAsciiWidth(newWidth);
-        responseLines = [`ASCII resolution width set to ${newWidth} characters.`];
-      } else {
-        switch (cmd.toLowerCase()) {
-          case "help":
-            responseLines = [
-              "Available commands:",
-              "  help            – display this message",
-              "  clear           – clear the screen",
-              "  technologies    – list technologies alphabetically",
-              "  resolution <n>  – set ASCII art width (10-100)",
-              "  exo             – restart the console intro",
-            ];
-            break;
-          case "clear":
-            setOutput([]);
-            setCurrentInput("");
-            setSelectedIndex(null);
-            return;
-          default:
-            responseLines = [`Unknown command: '${cmd}' (try 'help')`];
-        }
-      }
     }
 
-    // Append response lines
-    setOutput((prev) => [
-      ...prev,
-      ...responseLines.map((t, i) => ({ id: idBase + i + 1, text: t })),
-    ]);
+    if (cmd === "back") {
+      const hadHistory = programHistory.length > 0;
+      if (hadHistory) {
+        goBack();
+      } else {
+        appendOutput([
+          {
+            id: getNextId(),
+            text: "Nowhere to go back to!",
+            html: '<span class="back-line">Nowhere to go back to!</span>',
+          },
+        ]);
+      }
+      setCurrentInput("");
+      return;
+    }
+
+    // Resolution command (does not clear)
+    const resMatch = rawCmd.match(/^resolution\s+(\d{1,3})$/i);
+    if (resMatch) {
+      const newWidth = Math.max(10, Math.min(100, parseInt(resMatch[1], 10)));
+      setAsciiWidth(newWidth);
+      appendOutput([{ id: getNextId(), text: `ASCII resolution width set to ${newWidth} characters.` }]);
+      setCurrentInput("");
+      setSelectedIndex(null);
+      return;
+    }
+
+    // Find program by alias
+    const program = programs.find((p) => p.aliases.includes(cmd));
+
+    if (!program) {
+      // Unknown command
+      appendOutput([{ id: getNextId(), text: `Unknown command: '${cmd}' (try 'help')` }]);
+      setCurrentInput("");
+      setSelectedIndex(null);
+      return;
+    }
+
+    await runProgram(program, args);
 
     // Reset prompt
     setCurrentInput("");
@@ -392,7 +490,7 @@ const Technologies = () => {
       const rendered = line.trim() === "" ? "\u00A0" : line;
       setOutput((prev) => [
         ...prev,
-        { id: Math.random(), text: rendered, isInitLine: true },
+        { id: getNextId(), text: rendered, isInitLine: true },
       ]);
       await sleep(80);
     }
@@ -427,37 +525,23 @@ const Technologies = () => {
   const handleLineClick = async (index: number) => {
     const line = output[index];
 
+    // If the line has a URL, open it and stop further processing
+    if (line.linkUrl) {
+      window.open(line.linkUrl, "_blank", "noopener,noreferrer");
+      return;
+    }
+
+    // Back navigation line
+    if (line.isBackLine) {
+      goBack();
+      return;
+    }
+
     // If the clicked line represents a technology, show its details
     if (line?.technology) {
       const tech = line.technology;
-      const now = Date.now();
-
-      // Attempt to fetch and convert icon to ASCII art
-      let asciiLines: OutputLine[] = [];
-      try {
-        if (tech.id !== undefined) {
-          const iconUrl = TechnologyService.getIconUrl(tech.id);
-          const ascii = await convertImageToAscii(iconUrl, { colored: true, width: asciiWidth });
-          asciiLines = ascii.map((htmlStr, i) => ({
-            id: now - ascii.length + i,
-            text: htmlStr.replace(/<[^>]+>/g, ""), // plain fallback for selection etc.
-            html: htmlStr,
-            isAsciiLine: true,
-          }));
-        }
-      } catch (err) {
-        console.error("Failed to generate ASCII art", err);
-        // It is fine to ignore – asciiLines stays empty
-      }
-
-      const infoLines: OutputLine[] = [
-        ...asciiLines,
-        { id: now, text: `${tech.name}` },
-        { id: now + 1, text: tech.description ?? "No description available" },
-        { id: now + 2, text: tech.link ? `Link: ${tech.link}` : "No link available" },
-      ];
-
-      setOutput(infoLines);
+      const detailProgram = createTechnologyDetailsProgram({ technology: tech });
+      await runProgram(detailProgram, []);
       setSelectedIndex(null);
       setCurrentInput("");
       return;
@@ -487,13 +571,15 @@ const Technologies = () => {
             key={line.id}
             className={`line ${line.isInitLine ? "init-line" : ""} ${
               line.isAsciiLine ? "ascii" : ""
-            } ${selectedIndex === idx ? "selected" : ""}`}
+            } ${selectedIndex === idx ? "selected" : ""} ${
+              line.linkUrl ? "link-line" : ""
+            } ${line.isBackLine ? "back-line" : ""}`}
             onClick={() => handleLineClick(idx)}
               data-line-index={idx}
           >
             {line.html ? (
               <span
-                className="ascii-html"
+                className={line.isAsciiLine ? "ascii-html" : ""}
                 dangerouslySetInnerHTML={{ __html: line.html }}
               />
             ) : line.text.startsWith("EXO>") ? (
@@ -527,3 +613,5 @@ const Technologies = () => {
 };
 
 export default Technologies;
+
+export type { OutputLine };

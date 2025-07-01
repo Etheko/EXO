@@ -150,3 +150,17 @@
   line-height: 1;
   display: inline-block;
 }
+
+.line.link-line {
+  cursor: pointer;
+}
+
+.line.back-line {
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+}
+
+.link-url {
+  color: #58a6ff;
+  text-decoration: underline;
+}
