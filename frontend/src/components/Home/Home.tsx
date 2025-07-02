@@ -16,6 +16,7 @@ import { ErrorProvider } from '../../hooks/useError';
 import LoadingSpinner from '../LoadingSpinner';
 import ProjectService from '../../services/ProjectsService';
 import Technologies from '../Technologies';
+import { TERMINAL_TOP_SCROLL_COOLDOWN_MS } from '../../config';
 
 type AnimationState = 'text' | 'camera-to-grid' | 'mainframe' | 'camera-to-text';
 type MainFrameView = 'portfolioIndex' | 'projects' | 'projectView' | 'about' | 'tech-stack' | 'design' | 'cyber-logs' | 'devops' | 'blog' | 'contact' | 'certificates' | 'error';
@@ -49,6 +50,10 @@ const Home = () => {
   const [isProjectModified, setIsProjectModified] = useState(false);
   const [projectsRefreshKey, setProjectsRefreshKey] = useState(0);
 
+  // Cooldown for hiding mainframe on scroll up
+  const topReachedTimeRef = useRef<number | null>(null);
+  const wasAtTopRef = useRef<boolean>(false);
+
   const handleWheel = useCallback((e: WheelEvent) => {
     // Ignore scroll events until initial text animation is complete
     if (!isInitialTextAnimationComplete) return;
@@ -63,10 +68,30 @@ const Home = () => {
       setAnimationState('camera-to-grid'); 
     }
     // Scroll up to hide mainframe
-    else if (e.deltaY < 0 && animationState === 'mainframe' && contentRef.current?.scrollTop === 0) {
-      setIsAnimationInProgress(true);
-      // isMainFrameVisible will become false
-      setAnimationState('camera-to-text');
+    else if (e.deltaY < 0 && animationState === 'mainframe') {
+      const isAtTop = contentRef.current?.scrollTop === 0;
+
+      // Mark the first moment we reach the absolute top (scrollTop === 0).
+      if (isAtTop && !wasAtTopRef.current) {
+        topReachedTimeRef.current = Date.now();
+        wasAtTopRef.current = true;
+      } else if (!isAtTop && wasAtTopRef.current) {
+        // We moved away from top – reset flag so next reach records a new time.
+        wasAtTopRef.current = false;
+      }
+
+      const cooldownActive =
+        isAtTop &&
+        topReachedTimeRef.current !== null &&
+        Date.now() - topReachedTimeRef.current < TERMINAL_TOP_SCROLL_COOLDOWN_MS;
+
+      const shouldHide = isAtTop && !cooldownActive;
+
+      if (shouldHide) {
+        setIsAnimationInProgress(true);
+        // isMainFrameVisible will become false
+        setAnimationState('camera-to-text');
+      }
     }
   }, [isInitialTextAnimationComplete, isAnimationInProgress, animationState]);
   
@@ -321,4 +346,4 @@ const Home = () => {
   );
 };
 
-export default Home; 
+export default Home;
