@@ -2,9 +2,7 @@ import { useEffect, useState, useMemo, useCallback } from 'react';
 import ProjectService from '../../services/ProjectsService';
 import SectionService from '../../services/SectionService';
 import './Projects.css';
-import TechnologyIcon from './TechnologyIcon';
-import { TbBrandGithub, TbExternalLink, TbEdit, TbCheck, TbX, TbTrash, TbPlus, TbArrowRight, TbProgress, TbProgressCheck } from 'react-icons/tb';
-import SentientButton from '../SentientButton';
+import { TbCircleArrowUpRight, TbCircleArrowUpRightFilled, TbEdit, TbCheck, TbX, TbTrash, TbPlus, TbProgress, TbProgressCheck } from 'react-icons/tb';
 import LoadingSpinner from '../LoadingSpinner';
 import { Project } from '../../types/Project';
 import { Section } from '../../types/Section';
@@ -262,30 +260,9 @@ const Projects = ({ onProjectSelected, onBackToIndex }: ProjectsProps) => {
             </div>
             <h3 className="project-title-card">{project.title}</h3>
             <p className="project-description">{project.description}</p>
-            <div className="project-technologies">
-                {project.technologies.map((tech, index) => (
-                    <span
-                        key={index}
-                        className="technology-tag"
-                    >
-                        <TechnologyIcon technology={tech} />
-                        <span>{tech}</span>
-                    </span>
-                ))}
-            </div>
-            <div className="project-links">
-                {project.github && (
-                    <SentientButton href={project.github} className="project-button" as="a">
-                        <TbBrandGithub size={20} />
-                        <span>GitHub</span>
-                    </SentientButton>
-                )}
-                {project.liveDemoUrl && (
-                    <SentientButton href={project.liveDemoUrl} className="project-button" as="a">
-                        <TbExternalLink size={20} />
-                        <span>Live Demo</span>
-                    </SentientButton>
-                )}
+            <div className="card-arrow-wrapper">
+                <TbCircleArrowUpRight className="icon-outline" size={24} />
+                <TbCircleArrowUpRightFilled className="icon-filled" size={24} />
             </div>
         </div>
     );
