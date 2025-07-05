@@ -1,3 +1,5 @@
+import type { Technology } from "../../../types/Technology";
+
 export interface OutputLine {
   id: number;
   text: string;
@@ -7,8 +9,10 @@ export interface OutputLine {
   html?: string;
   linkUrl?: string;
   isBackLine?: boolean;
+  isEditLine?: boolean;
+  action?: string;
   /** Optional severity styling */
-  severity?: "error" | "warning";
+  severity?: "error" | "warning" | "success";
 }
 
 export interface ProgramContext {
@@ -32,6 +36,14 @@ export interface ProgramContext {
   markTechnologiesExecuted: () => void;
   /** Generate a globally unique id for output lines */
   getNextId: () => number;
+  /** Is the current user an admin? */
+  isAdmin: boolean;
+  /** Begin interactive editing of a field */
+  startFieldEditSession?: (tech: any, field: string) => void;
+  /** Begin delete confirmation for a technology */
+  startDeleteSession?: (tech: any) => void;
+  /** Request a file upload; program supplies a callback that receives the chosen file */
+  requestFileUpload?: (onFile: (file: File) => void) => void;
 }
 
 export interface TerminalProgram {
@@ -45,4 +57,6 @@ export interface TerminalProgram {
   clear: boolean;
   /** Program entry point */
   run: (args: string[], context: ProgramContext) => Promise<void>;
+  /** Optional technology context for detail/edit programs */
+  technology?: Technology;
 } 

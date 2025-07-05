@@ -16,6 +16,7 @@ export function createTechnologyDetailsProgram(opts: Options): TerminalProgram {
     displayName: tech.name,
     aliases: [],
     clear: true,
+    technology: tech,
     run: async (_args: string[], context: ProgramContext) => {
       const iconUrl = tech.id !== undefined ? TechnologyService.getIconUrl(tech.id) : "";
 

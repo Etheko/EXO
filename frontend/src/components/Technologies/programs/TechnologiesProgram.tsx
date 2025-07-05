@@ -102,6 +102,14 @@ const TechnologiesProgram: TerminalProgram = {
       }
 
       context.appendLines(lines);
+
+      // Admin: add option to create technology
+      if (context.isAdmin) {
+        context.appendLines([
+          { id: context.getNextId(), text: "\u00A0" },
+          { id: context.getNextId(), text: "Add New Technology", isEditLine: true, action: 'add-new-tech' },
+        ]);
+      }
     } catch (e) {
       console.error("Failed to fetch technologies", e);
       const errLine: OutputLine = {

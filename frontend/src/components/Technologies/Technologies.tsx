@@ -2,6 +2,8 @@ import { useEffect, useState, useRef, useLayoutEffect } from "react";
 import "./Technologies.css";
 import initSequence from "./InitializationSequence.txt?raw";
 import { DEFAULT_ASCII_WIDTH, TERMINAL_TOP_SCROLL_COOLDOWN_MS } from "../../config";
+import LoginService from "../../services/LoginService";
+import TechnologyService from "../../services/TechnologyService";
 
 // Terminal programs system
 import { TerminalProgram, ProgramContext } from "./programs/ProgramTypes";
@@ -9,8 +11,13 @@ import HelpProgram from "./programs/HelpProgram";
 import ExoProgram from "./programs/ExoProgram";
 import TechnologiesProgram from "./programs/TechnologiesProgram";
 import { createTechnologyDetailsProgram } from "./programs/TechnologyDetailsProgram";
+import { createEditTechnologyProgram } from "./programs/EditTechnologyProgram";
+import { createFieldEditProgram } from "./programs/FieldEditProgram";
+import { createDeleteTechnologyProgram } from "./programs/DeleteTechnologyProgram";
+import { createIconEditProgram } from "./programs/IconEditProgram";
 
 import type { Technology } from "../../types/Technology";
+import { convertImageToAscii } from "../../utils/aa";
 
 /**
  * Technologies Component
@@ -23,23 +30,12 @@ import type { Technology } from "../../types/Technology";
  * -----------------------------------------------------------
  * Structure
  *  ┌───────────────────────────────────────────────┐
- *  │ output (scrollable, grows upward)            │
+ *  │ output (scrollable, grows upward)             │
  *  │ prompt-line →  EXO> _ (input + blinking)      │
  *  └───────────────────────────────────────────────┘
  */
 
-interface OutputLine {
-  id: number;
-  text: string;
-  isInitLine?: boolean;
-  technology?: Technology;
-  isAsciiLine?: boolean;
-  html?: string; // if present, render with innerHTML (for colored ASCII)
-  linkUrl?: string;
-  isBackLine?: boolean;
-  /** Optional severity styling */
-  severity?: "error" | "warning";
-}
+import type { OutputLine } from "./programs/ProgramTypes";
 
 // Utility sleep helper
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -54,6 +50,8 @@ const Technologies = () => {
   const [promptEnabled, setPromptEnabled] = useState(false);
   // ASCII art width in characters (resolution)
   const [asciiWidth, setAsciiWidth] = useState<number>(DEFAULT_ASCII_WIDTH);
+  const [isAdmin, setIsAdmin] = useState<boolean>(LoginService.isCurrentUserAdmin());
+  const [activeTechnology, setActiveTechnology] = useState<Technology | null>(null);
 
   // Program system state
   const [programHistory, setProgramHistory] = useState<{ id: string | null; output: OutputLine[] }[]>([]);
@@ -83,6 +81,15 @@ const Technologies = () => {
   // Unique id generator for lines
   const nextIdRef = useRef<number>(1);
   const getNextId = () => nextIdRef.current++;
+
+  const [editSession, setEditSession] = useState<{ tech: Technology; field: "name" | "description" | "link" | "icon" } | null>(null);
+  const [deleteSession, setDeleteSession] = useState<{ tech: Technology } | null>(null);
+  const [iconUploadSession, setIconUploadSession] = useState<{ tech: Technology; file: File } | null>(null);
+  const [newTechDraft, setNewTechDraft] = useState<Technology | null>(null);
+  const [tempIconFile, setTempIconFile] = useState<File | null>(null);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const pendingUploadTechRef = useRef<Technology | null>(null);
 
   /** Utility to clear terminal output */
   const clearOutput = () => {
@@ -144,6 +151,9 @@ const Technologies = () => {
       technologiesExecutedOnce,
       markTechnologiesExecuted: () => setTechnologiesExecutedOnce(true),
       getNextId,
+      isAdmin,
+      startFieldEditSession: (t, f) => setEditSession({ tech: t, field: f as any }),
+      startDeleteSession: (t) => setDeleteSession({ tech: t }),
     };
 
     // Register display name for this program
@@ -151,9 +161,29 @@ const Technologies = () => {
       programNamesRef.current.set(program.id, program.displayName);
     }
 
+    // If the program has a technology context, make it active
+    if (program.technology) {
+      setActiveTechnology(program.technology);
+    }
+
     await program.run(args, context);
 
     const hadHistory = currentProgramId !== null || programHistory.length > 0;
+
+    // Add Edit line for admins on technology detail view
+    if (isAdmin && program.id.startsWith("tech-detail-") && program.technology) {
+      appendOutput([
+        { id: getNextId(), text: " " },
+        { 
+          id: getNextId(), 
+          text: "Edit", 
+          isEditLine: true, 
+          technology: program.technology,
+          action: 'show-edit-menu'
+        },
+      ]);
+    }
+    
     if (program.id !== "exo" && willClear && hadHistory) {
       let backText = "< Back";
       if (prevProgramId) {
@@ -175,6 +205,9 @@ const Technologies = () => {
     } else if (currentProgramId === null) {
       setCurrentProgramId(program.id);
     }
+
+    setSelectedIndex(null);
+    setCurrentInput('');
   };
 
   /* ------------------------------
@@ -441,6 +474,15 @@ const Technologies = () => {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [currentInput, output.length, promptEnabled, selectedIndex]);
 
+  // Listen to login status changes
+  useEffect(() => {
+    const handleLoginStatusChange = () => {
+      setIsAdmin(LoginService.isCurrentUserAdmin());
+    };
+    window.addEventListener("loginStatusChanged", handleLoginStatusChange as EventListener);
+    return () => window.removeEventListener("loginStatusChanged", handleLoginStatusChange as EventListener);
+  }, []);
+
   /* ------------------------------
    * Command execution (program system)
    * ----------------------------*/
@@ -453,6 +495,92 @@ const Technologies = () => {
     const parts = rawCmd.trim().split(/\s+/);
     const cmd = parts[0].toLowerCase();
     const args = parts.slice(1);
+
+    // Handle active edit session input
+    if (editSession) {
+      const value = rawCmd.trim();
+      if (value.toLowerCase() === 'cancel') {
+        appendOutput([{ id: getNextId(), text: 'Edit cancelled.' }]);
+        setEditSession(null);
+        // Return to previous detail view
+        if (activeTechnology) {
+          await runProgram(createTechnologyDetailsProgram({ technology: activeTechnology! }), []);
+        }
+        setCurrentInput('');
+        return;
+      }
+      try {
+        const techId = editSession.tech.id;
+        if (techId === undefined) {
+          // Creating new tech draft: update local draft
+          setNewTechDraft((prev) => ({ ...(prev ?? {}), [editSession.field]: value } as Technology));
+          appendOutput([{ id: getNextId(), text: `${editSession.field} set.` }]);
+          setEditSession(null);
+          await runProgram(createEditTechnologyProgram({ technology: { ...(newTechDraft ?? {}), [editSession.field]: value } as Technology, isCreate: true }), []);
+          setCurrentInput('');
+          return;
+        }
+        if (editSession.field === 'icon') {
+          // For icon, treat value as path URL on server
+          await TechnologyService.updateIconPath(techId, value);
+        } else {
+          // Merge existing technology data with the updated field to satisfy backend requirements
+          const base = {
+            name: (editSession.tech.name ?? ''),
+            description: (editSession.tech.description ?? ''),
+            link: (editSession.tech.link ?? ''),
+            category: (editSession.tech.category ?? ''),
+            iconPath: editSession.tech.iconString, // preserve existing icon path
+          } as any;
+
+          base[editSession.field] = value;
+
+          await TechnologyService.updateTechnology(techId, base);
+        }
+        // Fetch updated tech
+        const updatedTech = await TechnologyService.getTechnologyById(techId);
+        setActiveTechnology(updatedTech);
+        appendOutput([{ id: getNextId(), text: `${editSession.field} updated successfully.` }]);
+        setEditSession(null);
+        await runProgram(createTechnologyDetailsProgram({ technology: updatedTech! }), []);
+      } catch (err) {
+        console.error(err);
+        appendOutput([{ id: getNextId(), text: 'Failed to update.', severity: 'error' }]);
+      }
+      setCurrentInput('');
+      return;
+    }
+
+    if (deleteSession) {
+      const val = rawCmd.trim().toLowerCase();
+      if (val === 'cancel' || val === 'n' || val === 'no') {
+        appendOutput([{ id: getNextId(), text: 'Delete cancelled.' }]);
+        setDeleteSession(null);
+        await runProgram(createTechnologyDetailsProgram({ technology: deleteSession!.tech }), []);
+        setCurrentInput('');
+        return;
+      }
+      if (val === 'confirm' || val === 'y' || val === 'yes') {
+        try {
+          const techId = deleteSession.tech.id;
+          if (techId === undefined) throw new Error('Technology ID missing');
+          await TechnologyService.deleteTechnology(techId);
+          appendOutput([{ id: getNextId(), text: 'Technology deleted.' }]);
+          setDeleteSession(null);
+          // After deletion, go back to technologies list
+          await runProgram(TechnologiesProgram, []);
+        } catch (err) {
+          console.error(err);
+          appendOutput([{ id: getNextId(), text: 'Failed to delete.', severity: 'error' }]);
+        }
+        setCurrentInput('');
+        return;
+      }
+      // Unknown input in delete session, prompt again
+      appendOutput([{ id: getNextId(), text: "Please type 'confirm' or 'cancel'.", severity: 'warning' }]);
+      setCurrentInput('');
+      return;
+    }
 
     // Handle special commands first
     if (cmd === "nuke" || cmd === "clear") {
@@ -481,6 +609,91 @@ const Technologies = () => {
       return;
     }
 
+    // Edit command (admin only)
+    if (cmd === "edit") {
+      if (!isAdmin) {
+        appendOutput([
+          {
+            id: getNextId(),
+            text: `Unknown command: '${cmd}' (try 'info')`,
+            severity: "error",
+          },
+        ]);
+        setCurrentInput("");
+        return;
+      }
+
+      // If a specific field is provided (edit name, edit description, etc.)
+      const validFields = ['name', 'description', 'link', 'icon'];
+      if (args.length > 0 && validFields.includes(args[0])) {
+        if (!activeTechnology) {
+          appendOutput([
+            { id: getNextId(), text: 'No technology selected. View a technology before trying to edit it.', severity: 'warning' },
+          ]);
+          setCurrentInput('');
+          return;
+        }
+        const field = args[0] as 'name' | 'description' | 'link' | 'icon';
+        if (field === 'icon') {
+          const iconProg2 = createIconEditProgram({ technology: activeTechnology });
+          await runProgram(iconProg2, args.slice(1));
+        } else {
+          const fieldProgram = createFieldEditProgram({ technology: activeTechnology, field });
+          await runProgram(fieldProgram, args.slice(1));
+        }
+        setSelectedIndex(null);
+        setCurrentInput('');
+        return;
+      }
+
+      if (!activeTechnology) {
+        appendOutput([
+          {
+            id: getNextId(),
+            text: "No technology selected. View a technology before trying to edit it.",
+            severity: "warning",
+          },
+        ]);
+        setCurrentInput("");
+        return;
+      }
+      const editProgram = createEditTechnologyProgram({ technology: activeTechnology });
+      await runProgram(editProgram, args);
+      setCurrentInput("");
+      return;
+    }
+
+    // Delete command (admin only)
+    if (cmd === "delete") {
+      if (!isAdmin) {
+        appendOutput([
+          {
+            id: getNextId(),
+            text: `Unknown command: '${cmd}' (try 'info')`,
+            severity: "error",
+          },
+        ]);
+        setCurrentInput("");
+        return;
+      }
+      if (!activeTechnology) {
+        appendOutput([
+          {
+            id: getNextId(),
+            text: "No technology selected. View a technology before trying to delete it.",
+            severity: "warning",
+          },
+        ]);
+        setCurrentInput("");
+        return;
+      }
+      const delProgram = createDeleteTechnologyProgram({ technology: activeTechnology });
+      await runProgram(delProgram, []);
+      setSelectedIndex(null);
+      setCurrentInput('');
+      return;
+    }
+
     // Resolution command (does not clear)
     const resMatch = rawCmd.match(/^(?:enhance|resolution)\s+(\d{1,3})$/i);
     if (resMatch) {
@@ -489,6 +702,22 @@ const Technologies = () => {
       appendOutput([{ id: getNextId(), text: `ASCII resolution width set to ${newWidth} characters.` }]);
       setCurrentInput("");
       setSelectedIndex(null);
+      return;
+    }
+
+    // Add command (admin only)
+    if (cmd === 'add') {
+      if (!isAdmin) {
+        appendOutput([{ id: getNextId(), text: `Unknown command: '${cmd}' (try 'info')`, severity: 'error' }]);
+        setCurrentInput('');
+        return;
+      }
+      const draft: Technology = { name: '', description: '', link: '' };
+      setNewTechDraft(draft);
+      setTempIconFile(null);
+      const createProg = createEditTechnologyProgram({ technology: draft, isCreate: true });
+      await runProgram(createProg, []);
+      setCurrentInput('');
       return;
     }
 
@@ -576,6 +805,154 @@ const Technologies = () => {
       return;
     }
 
+    // If the line is an edit line, handle the action
+    if (isAdmin && line.isEditLine && line.technology) {
+      if (line.action === 'show-edit-menu') {
+        const editProgram = createEditTechnologyProgram({ technology: line.technology });
+        await runProgram(editProgram, []);
+        setSelectedIndex(null);
+        setCurrentInput("");
+        return;
+      }
+      // Placeholder for specific edit actions from the edit menu
+      if (line.action) {
+        if (line.action === 'delete') {
+          const delProgram = createDeleteTechnologyProgram({ technology: line.technology });
+          await runProgram(delProgram, []);
+          setSelectedIndex(null);
+          setCurrentInput('');
+          return;
+        }
+        if (line.action === 'upload-icon') {
+          pendingUploadTechRef.current = line.technology;
+          fileInputRef.current?.click();
+          return; // wait for file selection
+        }
+        if (line.action === 'save-new-icon') {
+          if (iconUploadSession && iconUploadSession.tech.id) {
+            try {
+              await TechnologyService.uploadIcon(iconUploadSession.tech.id, iconUploadSession.file);
+              appendOutput([{ id: getNextId(), text: 'Icon updated successfully.' }]);
+              const updatedTech = await TechnologyService.getTechnologyById(iconUploadSession.tech.id);
+              setActiveTechnology(updatedTech);
+              setIconUploadSession(null);
+              await runProgram(createTechnologyDetailsProgram({ technology: updatedTech }), []);
+            } catch (err) {
+              console.error(err);
+              appendOutput([{ id: getNextId(), text: 'Failed to upload icon.', severity: 'error' }]);
+            }
+          }
+          // Handle create mode: just store the file in the draft
+          else if (iconUploadSession && newTechDraft) {
+            setTempIconFile(iconUploadSession.file);
+            setNewTechDraft(prev => ({ ...prev!, iconString: 'temp-uploaded' }));
+            appendOutput([{ id: getNextId(), text: 'Icon set for new technology.' }]);
+            setIconUploadSession(null);
+            await runProgram(createEditTechnologyProgram({ technology: { ...newTechDraft!, iconString: 'temp-uploaded' } as Technology, isCreate: true }), []);
+          }
+          setSelectedIndex(null);
+          setCurrentInput('');
+          return;
+        }
+        if (line.action === 'discard-new-icon') {
+          if (iconUploadSession) {
+            if (newTechDraft) {
+              setTempIconFile(null);
+            }
+            setIconUploadSession(null);
+          }
+          // Return to icon edit program
+          const iconProg2 = createIconEditProgram({ technology: line.technology });
+          await runProgram(iconProg2, []);
+          setSelectedIndex(null);
+          setCurrentInput('');
+          return;
+        }
+        if (line.action === 'delete-yes') {
+          // Perform deletion similar to yes command
+          if (line.technology.id !== undefined) {
+            try {
+              await TechnologyService.deleteTechnology(line.technology.id);
+              appendOutput([{ id: getNextId(), text: 'Technology deleted.' }]);
+              await runProgram(TechnologiesProgram, []);
+            } catch (err) {
+              console.error(err);
+              appendOutput([{ id: getNextId(), text: 'Failed to delete.', severity: 'error' }]);
+            }
+            setSelectedIndex(null);
+            setCurrentInput('');
+          }
+          return;
+        }
+        if (line.action === 'delete-no') {
+          // Cancel deletion
+          const iconProg2 = createIconEditProgram({ technology: line.technology });
+          await runProgram(createTechnologyDetailsProgram({ technology: line.technology }), []);
+          setSelectedIndex(null);
+          setCurrentInput('');
+          return;
+        }
+        if (line.action === 'add-new-tech') {
+          const draft: Technology = { name: '', description: '', link: '' };
+          setNewTechDraft(draft);
+          setTempIconFile(null);
+          const createProg = createEditTechnologyProgram({ technology: draft, isCreate: true });
+          await runProgram(createProg, []);
+          setSelectedIndex(null);
+          setCurrentInput('');
+          return;
+        }
+        if (line.action === 'create-save') {
+          if (newTechDraft) {
+            try {
+              const createdTech = await TechnologyService.createTechnology({
+                name: newTechDraft.name,
+                description: newTechDraft.description,
+                link: newTechDraft.link,
+                iconPath: newTechDraft.iconString === 'temp-uploaded' ? undefined : newTechDraft.iconString,
+                category: newTechDraft.category,
+              });
+              
+              // Upload icon if we have a temp file
+              if (tempIconFile && createdTech.id) {
+                await TechnologyService.uploadIcon(createdTech.id, tempIconFile);
+              }
+              
+              appendOutput([{ id: getNextId(), text: 'Technology created successfully.' }]);
+              setNewTechDraft(null);
+              setTempIconFile(null);
+              await runProgram(TechnologiesProgram, []);
+            } catch (err) {
+              console.error(err);
+              appendOutput([{ id: getNextId(), text: 'Failed to create technology.', severity: 'error' }]);
+            }
+          }
+          setSelectedIndex(null);
+          setCurrentInput('');
+          return;
+        }
+        if (line.action === 'create-cancel') {
+          setNewTechDraft(null);
+          setTempIconFile(null);
+          await runProgram(TechnologiesProgram, []);
+          setSelectedIndex(null);
+          setCurrentInput('');
+          return;
+        }
+        const field = line.action.replace('edit-', '') as 'name' | 'description' | 'link' | 'icon';
+        if (field === 'icon') {
+          const iconProg2 = createIconEditProgram({ technology: line.technology });
+          await runProgram(iconProg2, []);
+        } else {
+          const fieldProgram = createFieldEditProgram({ technology: line.technology, field });
+          await runProgram(fieldProgram, []);
+        }
+        setSelectedIndex(null);
+        setCurrentInput('');
+        return;
+      }
+    }
+
     // If the clicked line represents a technology, show its details
     if (line?.technology) {
       const tech = line.technology;
@@ -583,6 +960,18 @@ const Technologies = () => {
       await runProgram(detailProgram, []);
       setSelectedIndex(null);
       setCurrentInput("");
+      return;
+    }
+
+    // If the line is an add-new-tech action (no tech)
+    if (isAdmin && line.isEditLine && line.action === 'add-new-tech') {
+      const draft: Technology = { name: '', description: '', link: '' };
+      setNewTechDraft(draft);
+      setTempIconFile(null);
+      const createProg = createEditTechnologyProgram({ technology: draft, isCreate: true });
+      await runProgram(createProg, []);
+      setSelectedIndex(null);
+      setCurrentInput('');
       return;
     }
 
@@ -618,6 +1007,8 @@ const Technologies = () => {
                 ? { color: "#ef4444" }
                 : line.severity === "warning"
                 ? { color: "#eab308" }
+                : line.severity === "success"
+                ? { color: "#22c55e" }
                 : undefined
             }
             onClick={() => handleLineClick(idx)}
@@ -655,10 +1046,45 @@ const Technologies = () => {
           <span className="prompt-cursor" aria-hidden="true" />
         )}
       </div>
+      <input
+        type="file"
+        accept="image/*"
+        ref={fileInputRef}
+        style={{ display: 'none' }}
+        aria-label="Upload icon file"
+        onChange={async (e) => {
+          const file = e.target.files?.[0];
+          if (!file) return;
+          const tech = pendingUploadTechRef.current;
+          if (!tech) return;
+          const objectUrl = URL.createObjectURL(file);
+          try {
+            const asciiArr = await convertImageToAscii(objectUrl, { colored: true, width: asciiWidth });
+            URL.revokeObjectURL(objectUrl);
+            const asciiLines = asciiArr.map((htmlStr) => ({
+              id: getNextId(),
+              text: htmlStr.replace(/<[^>]+>/g, ''),
+              html: htmlStr,
+              isAsciiLine: true,
+            }));
+            appendOutput([
+              { id: getNextId(), text: '\u00A0' },
+              ...asciiLines,
+              { id: getNextId(), text: '\u00A0' },
+              { id: getNextId(), text: 'Save new icon', isEditLine: true, technology: tech, action: 'save-new-icon' },
+              { id: getNextId(), text: 'Discard', isEditLine: true, technology: tech, action: 'discard-new-icon' },
+            ]);
+            setIconUploadSession({ tech, file });
+          } catch (err) {
+            console.error(err);
+            appendOutput([{ id: getNextId(), text: 'Failed to render icon.', severity: 'error' }]);
+          }
+          // reset input value
+          e.target.value = '';
+        }}
+      />
     </div>
   );
 };
 
 export default Technologies;
-
-export type { OutputLine };
