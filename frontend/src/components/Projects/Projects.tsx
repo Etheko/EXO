@@ -10,6 +10,7 @@ import LoginService from '../../services/LoginService';
 import SentientIOB from '../SentientIOB';
 import { useError } from '../../hooks/useError';
 import { ERROR_CODES } from '../../utils/errorCodes';
+import SmoothToggler from '../SmoothToggler';
 
 const createTooltipHandlers = (text: string) => ({
     onMouseEnter: () => window.dispatchEvent(new CustomEvent('tooltipHover', { detail: { text } })),
@@ -34,6 +35,7 @@ const Projects = ({ onProjectSelected, onBackToIndex }: ProjectsProps) => {
     const { showError } = useError();
     const [selectionMode, setSelectionMode] = useState<'moving-to-finished' | 'moving-to-ongoing' | null>(null);
     const [projectsToMove, setProjectsToMove] = useState<number[]>([]);
+    const [hoveredProjectId, setHoveredProjectId] = useState<number | null>(null);
 
     const fetchProjects = useCallback(async () => {
         setLoading(true);
@@ -221,6 +223,7 @@ const Projects = ({ onProjectSelected, onBackToIndex }: ProjectsProps) => {
         const isSelectionModeActive = (sectionKey === 'ongoing' && selectionMode === 'moving-to-finished') || 
                                       (sectionKey === 'finished' && selectionMode === 'moving-to-ongoing');
         const isMarkedForMove = project.id ? projectsToMove.includes(project.id) : false;
+        const isHovered = hoveredProjectId === project.id;
 
         const handleCardClick = () => {
             if (isSelectionModeActive && project.id) {
@@ -235,6 +238,8 @@ const Projects = ({ onProjectSelected, onBackToIndex }: ProjectsProps) => {
                 key={project.id} 
                 className={`project-card ${isMarkedForDeletion ? 'marked-for-deletion' : ''} ${isMarkedForMove ? 'marked-for-move' : ''}`}
                 onClick={handleCardClick}
+                onMouseEnter={() => project.id && setHoveredProjectId(project.id)}
+                onMouseLeave={() => setHoveredProjectId(null)}
             >
                 {isEditingThisSection && !isSelectionModeActive && project.id && (
                     <div className="edit-controls card-edit-controls">
@@ -261,8 +266,12 @@ const Projects = ({ onProjectSelected, onBackToIndex }: ProjectsProps) => {
             <h3 className="project-title-card">{project.title}</h3>
             <p className="project-description">{project.description}</p>
             <div className="card-arrow-wrapper">
-                <TbCircleArrowUpRight className="icon-outline" size={24} />
-                <TbCircleArrowUpRightFilled className="icon-filled" size={24} />
+                <SmoothToggler
+                    containerClassName="arrow-toggler"
+                    isToggled={isHovered}
+                    toggledContent={<TbCircleArrowUpRightFilled size={24} />}
+                    untoggledContent={<TbCircleArrowUpRight size={24} />}
+                />
             </div>
         </div>
     );

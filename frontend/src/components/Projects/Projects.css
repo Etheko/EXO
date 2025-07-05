@@ -350,6 +350,8 @@
 .card-arrow-wrapper {
     display: flex;
     justify-content: flex-end;
+    margin-top: auto;
+    padding-top: 1rem;
 }
 
 .card-arrow-wrapper .icon-filled {
@@ -362,4 +364,9 @@
 
 .project-card:hover .card-arrow-wrapper .icon-outline {
     display: none;
+}
+
+.arrow-toggler {
+    width: 24px;
+    height: 24px;
 } 
