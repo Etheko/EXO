@@ -25,18 +25,23 @@ interface MainFrameProps extends PropsWithChildren {
   viewId: number;
 }
 
+const BLUR_AMOUNT = 10; // px
+
 const slideVariants = {
   enter: (direction: number) => ({
     x: direction > 0 ? '100%' : '-100%',
     opacity: 0,
+    filter: `blur(${BLUR_AMOUNT}px)`,
   }),
   center: {
     x: 0,
     opacity: 1,
+    filter: 'blur(0px)',
   },
   exit: (direction: number) => ({
     x: direction > 0 ? '-100%' : '100%',
     opacity: 0,
+    filter: `blur(${BLUR_AMOUNT}px)`,
   }),
 };
 
@@ -290,6 +295,7 @@ const MainFrame = ({
             transition={{
               x: { type: 'spring', stiffness: 260, damping: 25, bounce: 0.05 },
               opacity: { duration: 0.2 },
+              filter: { duration: 0.25 },
             }}
             style={{ position: 'absolute', inset: 0, padding: '2.5rem' }}
           >
