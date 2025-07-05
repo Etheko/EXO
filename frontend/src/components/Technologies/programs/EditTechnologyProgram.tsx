@@ -68,7 +68,7 @@ export function createEditTechnologyProgram(opts: Options): TerminalProgram {
               { id: getNextId(), text: "Save New Technology", isEditLine: true, technology: tech, action: 'create-save' },
               { id: getNextId(), text: "Cancel", isEditLine: true, technology: tech, action: 'create-cancel' },
             ]
-          : [{ id: getNextId(), text: "DELETE Technology", isEditLine: true, technology: tech, action: 'delete', severity: 'error' }]),
+          : [{ id: getNextId(), text: "DELETE Technology", isEditLine: true, technology: tech, action: 'delete', severity: 'error' as const }]),
       ];
 
       appendLines(lines);
