@@ -174,13 +174,12 @@
     font-size: 0.95rem;
     max-height: calc(1.6em * 2); /* limit to 2 lines */
     flex-grow: 0;
-    margin-bottom: 1.5rem;
     line-height: 1.6;
     text-align: left;
-
     display: -webkit-box;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
+    line-clamp: 2;
     overflow: hidden;
     text-overflow: ellipsis;
 }
@@ -351,7 +350,6 @@
     display: flex;
     justify-content: flex-end;
     margin-top: auto;
-    padding-top: 1rem;
 }
 
 .card-arrow-wrapper .icon-filled {
@@ -369,4 +367,13 @@
 .arrow-toggler {
     width: 24px;
     height: 24px;
+}
+
+.icon-unfilled {
+    color: rgba(255, 255, 255, 0.6);
+    transition: color 0.3s ease;
+}
+
+.project-card:hover .icon-unfilled {
+    color: white;
 } 

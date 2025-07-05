@@ -270,7 +270,7 @@ const Projects = ({ onProjectSelected, onBackToIndex }: ProjectsProps) => {
                     containerClassName="arrow-toggler"
                     isToggled={isHovered}
                     toggledContent={<TbCircleArrowUpRightFilled size={24} />}
-                    untoggledContent={<TbCircleArrowUpRight size={24} />}
+                    untoggledContent={<TbCircleArrowUpRight size={24} className="icon-unfilled" />}
                 />
             </div>
         </div>

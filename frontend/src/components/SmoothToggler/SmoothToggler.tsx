@@ -15,7 +15,7 @@ interface SmoothTogglerProps {
 
 const defaultEnterTransition: Transition = {
     scale: { type: 'spring', stiffness: 220, damping: 20 },
-    filter: { type: 'spring', stiffness: 220, damping: 20 },
+    filter: { duration: 0.35, ease: 'easeOut' },
     opacity: { duration: 0.35, ease: 'easeOut' },
 };
 
@@ -30,7 +30,7 @@ const SmoothToggler: React.FC<SmoothTogglerProps> = ({
     untoggledContent,
     toggledContent,
     containerClassName,
-    animationMode = 'wait',
+    animationMode = 'popLayout',
     scaleAmount = 0.5,
     blurAmount = 4,
     enterTransition = defaultEnterTransition,
