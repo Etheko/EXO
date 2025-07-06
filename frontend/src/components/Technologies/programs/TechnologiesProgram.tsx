@@ -107,6 +107,7 @@ const TechnologiesProgram: TerminalProgram = {
       if (context.isAdmin) {
         context.appendLines([
           { id: context.getNextId(), text: "\u00A0" },
+          { id: context.getNextId(), text: "Reload List", isEditLine: true, action: 'reload-list' },
           { id: context.getNextId(), text: "Add New Technology", isEditLine: true, action: 'add-new-tech' },
         ]);
       }

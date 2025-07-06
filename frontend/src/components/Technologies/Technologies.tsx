@@ -195,15 +195,16 @@ const Technologies = () => {
       setEditContext(null);
     }
 
+    const prevProgramId = currentProgramId;
+    const isReload = prevProgramId === program.id;
+
     // Determine clearing behavior considering first technologies run
     const skipClearForTechFirst = program.id === "know" && !technologiesExecutedOnce;
     const willClear = program.clear && !skipClearForTechFirst;
 
-    const prevProgramId = currentProgramId;
-
     // Handle edit context for back navigation
     if (willClear) {
-      if (prevProgramId !== null && program.id !== "exo") {
+      if (prevProgramId !== null && program.id !== "exo" && !isReload) {
         // Check if we're entering an edit program
         if (program.id.startsWith('tech-edit-')) {
           // This is the main edit program - store the source context
@@ -325,27 +326,26 @@ const Technologies = () => {
     
     if (program.id !== "exo" && willClear && hadHistory) {
       let backText = "< Back";
-      let backTarget = prevProgramId;
+      const lastProgramInHistory = programHistory.length > 0 ? programHistory[programHistory.length - 1] : null;
+      const backTargetForName = isReload ? lastProgramInHistory?.id : prevProgramId;
       
       // Handle special back navigation for edit programs
       if (program.id.startsWith('edit-field-') || program.id.startsWith('icon-edit-') || 
           program.id.startsWith('category-edit-') || program.id.startsWith('delete-tech-')) {
         // Sub-edit programs → back to main edit
         if (editContext?.editProgramId) {
-          backTarget = editContext.editProgramId;
           const editName = programNamesRef.current.get(editContext.editProgramId) || 'Edit Menu';
           backText = `< Back - ${editName}`;
         }
       } else if (program.id.startsWith('tech-edit-')) {
         // Main edit program → back to original source
         if (editContext?.sourceProgramId) {
-          backTarget = editContext.sourceProgramId;
           const sourceName = programNamesRef.current.get(editContext.sourceProgramId) || 'Technologies';
           backText = `< Back - ${sourceName}`;
         }
-      } else if (prevProgramId) {
+      } else if (backTargetForName) {
         // Regular programs
-        const name = programNamesRef.current.get(prevProgramId) || prevProgramId;
+        const name = programNamesRef.current.get(backTargetForName) || backTargetForName;
         backText = `< Back - ${name}`;
       }
       
@@ -655,6 +655,28 @@ const Technologies = () => {
     const cmd = parts[0].toLowerCase();
     const args = parts.slice(1);
 
+    // Emergency exit commands that work everywhere
+    if (cmd === "nuke" || cmd === "clear") {
+      clearOutput();
+      setProgramHistory([]);
+      setCurrentProgramId(null);
+      setEditContext(null);
+      setEditSession(null);
+      setDeleteSession(null);
+      setCurrentInput("");
+      setSelectedIndex(null);
+      return;
+    }
+
+    if (cmd === "exo") {
+      setEditSession(null);
+      setDeleteSession(null);
+      await runProgram(ExoProgram, args);
+      setCurrentInput("");
+      setSelectedIndex(null);
+      return;
+    }
+
     // Handle active edit session input
     if (editSession) {
       const value = rawCmd.trim();
@@ -744,15 +766,6 @@ const Technologies = () => {
     }
 
     // Handle special commands first
-    if (cmd === "nuke" || cmd === "clear") {
-      clearOutput();
-      setProgramHistory([]);
-      setCurrentProgramId(null);
-      setCurrentInput("");
-      setSelectedIndex(null);
-      return;
-    }
-
     if (cmd === "undo" || cmd === "back") {
       const hadHistory = programHistory.length > 0;
       if (hadHistory) {
@@ -767,6 +780,18 @@ const Technologies = () => {
         ]);
       }
       setCurrentInput("");
+      return;
+    }
+
+    if (cmd === 'reload') {
+      if (!isAdmin) {
+        appendOutput([{ id: getNextId(), text: `Unknown command: '${cmd}' (try 'info')`, severity: 'error' }]);
+        setCurrentInput('');
+        return;
+      }
+      await runProgram(TechnologiesProgram, []);
+      setCurrentInput('');
+      setSelectedIndex(null);
       return;
     }
 
@@ -1195,6 +1220,14 @@ const Technologies = () => {
       return;
     }
 
+    // Handle reload list action
+    if (isAdmin && line.isEditLine && line.action === 'reload-list') {
+      await runProgram(TechnologiesProgram, []);
+      setSelectedIndex(null);
+      setCurrentInput('');
+      return;
+    }
+
     // Fallback to simple selection highlight
     setSelectedIndex(index);
   };
@@ -1221,7 +1254,9 @@ const Technologies = () => {
               line.isAsciiLine ? "ascii" : ""
             } ${selectedIndex === idx ? "selected" : ""} ${
               line.linkUrl ? "link-line" : ""
-            } ${line.isBackLine ? "back-line" : ""}`}
+            } ${line.isBackLine ? "back-line" : ""} ${
+              line.action === 'reload-list' ? 'reload-line' : ''
+            }`}
             style={
               line.severity === "error"
                 ? { color: "#ef4444" }

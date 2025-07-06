@@ -160,6 +160,11 @@
   cursor: pointer;
 }
 
+.line.reload-line {
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+}
+
 .link-url {
   color: #58a6ff;
   text-decoration: underline;

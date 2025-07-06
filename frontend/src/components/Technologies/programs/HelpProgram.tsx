@@ -21,6 +21,7 @@ const HelpProgram: TerminalProgram = {
         ...[
           { id: context.getNextId(), text: " " },
           { id: context.getNextId(), text: "Admin Commands:" },
+          { id: context.getNextId(), text: "  reload          – re-fetches and displays the technology list" },
           { id: context.getNextId(), text: "  edit            – show edit menu for current technology" },
           { id: context.getNextId(), text: "  edit <field>     – directly edit a field (name, description, link, icon)" },
           { id: context.getNextId(), text: "  delete           – delete the current technology" },
