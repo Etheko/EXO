@@ -125,6 +125,16 @@ const Technologies = () => {
     setOutput((prev) => [...prev, ...lines]);
   };
 
+  /** Finds the actual program to navigate to, skipping duplicates and edit programs. */
+  const findTrueBackTarget = (history: typeof programHistory) => {
+    const tempHistory = [...history];
+    // Strip edit-related programs from the end
+    while (tempHistory.length > 0 && isEditRelatedProgram(tempHistory[tempHistory.length - 1].id)) {
+      tempHistory.pop();
+    }
+    return tempHistory.length > 0 ? tempHistory[tempHistory.length - 1] : null;
+  };
+
   /** Navigate back to previous program (skips any edit-related programs) */
   const goBack = () => {
     setProgramHistory((prev) => {
@@ -137,11 +147,23 @@ const Technologies = () => {
         newHistory.pop();
       }
 
-      // Retrieve next valid history entry (if any)
-      const last = newHistory.pop();
-      if (last) {
-        setOutput(last.output);
-        setCurrentProgramId(last.id);
+      if (newHistory.length === 0) {
+        return []; // No non-edit programs to go back to.
+      }
+
+      // Retrieve next valid history entry
+      const targetProgram = newHistory.pop();
+      if (!targetProgram) return []; // Should not happen
+
+      // Now, remove any other instances of this program from the end of the history.
+      while (newHistory.length > 0 && newHistory[newHistory.length - 1].id === targetProgram.id) {
+        newHistory.pop();
+      }
+
+      // Restore the target program's state
+      if (targetProgram) {
+        setOutput(targetProgram.output);
+        setCurrentProgramId(targetProgram.id);
         setSelectedIndex(null);
         setCurrentInput("");
       }
@@ -310,49 +332,38 @@ const Technologies = () => {
 
     const hadHistory = currentProgramId !== null || programHistory.length > 0;
 
-    // Add Edit line for admins on technology detail view
-    if (isAdmin && program.id.startsWith("tech-detail-") && program.technology) {
-      appendOutput([
-        { id: getNextId(), text: " " },
-        { 
-          id: getNextId(), 
-          text: "Edit", 
-          isEditLine: true, 
-          technology: program.technology,
-          action: 'show-edit-menu'
-        },
-      ]);
-    }
-    
     if (program.id !== "exo" && willClear && hadHistory) {
-      let backText = "< Back";
-      const lastProgramInHistory = programHistory.length > 0 ? programHistory[programHistory.length - 1] : null;
-      const backTargetForName = isReload ? lastProgramInHistory?.id : prevProgramId;
+      const showBackButton = (!isReload && prevProgramId !== null) || (isReload && findTrueBackTarget(programHistory) !== null);
       
-      // Handle special back navigation for edit programs
-      if (program.id.startsWith('edit-field-') || program.id.startsWith('icon-edit-') || 
-          program.id.startsWith('category-edit-') || program.id.startsWith('delete-tech-')) {
-        // Sub-edit programs → back to main edit
-        if (editContext?.editProgramId) {
-          const editName = programNamesRef.current.get(editContext.editProgramId) || 'Edit Menu';
-          backText = `< Back - ${editName}`;
+      if (showBackButton) {
+        let backText = "< Back";
+        
+        // Handle special back navigation for edit programs first
+        if (program.id.startsWith('edit-field-') || program.id.startsWith('icon-edit-') || 
+            program.id.startsWith('category-edit-') || program.id.startsWith('delete-tech-')) {
+          if (editContext?.editProgramId) {
+            const editName = programNamesRef.current.get(editContext.editProgramId) || 'Edit Menu';
+            backText = `< Back - ${editName}`;
+          }
+        } else if (program.id.startsWith('tech-edit-')) {
+          if (editContext?.sourceProgramId) {
+            const sourceName = programNamesRef.current.get(editContext.sourceProgramId) || 'Technologies';
+            backText = `< Back - ${sourceName}`;
+          }
+        } else {
+          // Regular programs
+          const backTargetId = isReload ? findTrueBackTarget(programHistory)?.id : prevProgramId;
+          if (backTargetId) {
+            const name = programNamesRef.current.get(backTargetId) || backTargetId;
+            backText = `< Back - ${name}`;
+          }
         }
-      } else if (program.id.startsWith('tech-edit-')) {
-        // Main edit program → back to original source
-        if (editContext?.sourceProgramId) {
-          const sourceName = programNamesRef.current.get(editContext.sourceProgramId) || 'Technologies';
-          backText = `< Back - ${sourceName}`;
-        }
-      } else if (backTargetForName) {
-        // Regular programs
-        const name = programNamesRef.current.get(backTargetForName) || backTargetForName;
-        backText = `< Back - ${name}`;
+        
+        appendOutput([
+          { id: getNextId(), text: "\u00A0" },
+          { id: getNextId(), text: backText, isBackLine: true },
+        ]);
       }
-      
-      appendOutput([
-        { id: getNextId(), text: "\u00A0" },
-        { id: getNextId(), text: backText, isBackLine: true },
-      ]);
     }
 
     if (program.id === "know" && !technologiesExecutedOnce) {
@@ -767,8 +778,9 @@ const Technologies = () => {
 
     // Handle special commands first
     if (cmd === "undo" || cmd === "back") {
-      const hadHistory = programHistory.length > 0;
-      if (hadHistory) {
+      const backTarget = findTrueBackTarget(programHistory);
+
+      if (backTarget) {
         goBack();
       } else {
         appendOutput([
@@ -998,6 +1010,7 @@ const Technologies = () => {
         // Main edit program should go back to source
         await goBackFromEditProgram();
       } else {
+        // The line wouldn't be rendered if there's nowhere to go, so no check needed here.
         goBack();
       }
       return;
