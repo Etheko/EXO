@@ -22,6 +22,9 @@ export function createCategoryEditProgram(opts: Options): TerminalProgram {
         return;
       }
 
+      // Start a session to capture raw text input for a new category
+      context.startFieldEditSession?.(tech, 'category');
+
       try {
         // Fetch all existing categories
         const categories = await TechnologyService.getAllCategories();

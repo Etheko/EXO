@@ -41,6 +41,21 @@ import type { OutputLine } from "./programs/ProgramTypes";
 // Utility sleep helper
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+// Disallowed program prefixes that should never be the target of a < Back navigation from outside the editing flow
+const EDIT_PROGRAM_PREFIXES = [
+  'tech-edit-',           // main edit menu
+  'edit-field-',          // field edit
+  'icon-edit-',           // icon edit
+  'category-edit-',       // category edit
+  'delete-tech-'          // delete confirm
+];
+
+// Utility to know if a program id is an edit-related one
+const isEditRelatedProgram = (id: string | null | undefined) => {
+  if (!id) return false;
+  return EDIT_PROGRAM_PREFIXES.some((p) => id.startsWith(p));
+};
+
 const Technologies = () => {
   /* ------------------------------
    * State / refs
@@ -58,6 +73,14 @@ const Technologies = () => {
   const [programHistory, setProgramHistory] = useState<{ id: string | null; output: OutputLine[] }[]>([]);
   const [currentProgramId, setCurrentProgramId] = useState<string | null>(null);
   const [technologiesExecutedOnce, setTechnologiesExecutedOnce] = useState(false);
+  
+  // Edit context tracking for proper back navigation
+  const [editContext, setEditContext] = useState<{
+    editProgramId: string | null;
+    sourceProgramId: string | null;
+    sourceOutput: OutputLine[];
+    isCreateMode: boolean;
+  } | null>(null);
 
   // Registry of available programs
   const programs: TerminalProgram[] = [HelpProgram, ExoProgram, TechnologiesProgram];
@@ -102,11 +125,19 @@ const Technologies = () => {
     setOutput((prev) => [...prev, ...lines]);
   };
 
-  /** Navigate back to previous program */
+  /** Navigate back to previous program (skips any edit-related programs) */
   const goBack = () => {
     setProgramHistory((prev) => {
       if (prev.length === 0) return prev;
+      // Make a mutable copy so we can pop freely
       const newHistory = [...prev];
+
+      // Pop edit-related programs that should be invisible to the global back flow
+      while (newHistory.length > 0 && isEditRelatedProgram(newHistory[newHistory.length - 1].id)) {
+        newHistory.pop();
+      }
+
+      // Retrieve next valid history entry (if any)
       const last = newHistory.pop();
       if (last) {
         setOutput(last.output);
@@ -117,6 +148,43 @@ const Technologies = () => {
       return newHistory;
     });
   };
+  
+  /** Navigate back to edit program from sub-edit program */
+  const goBackToEditProgram = async () => {
+    if (editContext?.editProgramId && activeTechnology) {
+      // Clear the program history to remove the sub-edit program
+      // This ensures that when we go back from the edit program, we go to the original source
+      setProgramHistory((prev) => {
+        // Remove the last entry if it's a sub-edit program
+        if (prev.length > 0) {
+          const lastEntry = prev[prev.length - 1];
+          if (lastEntry.id?.startsWith('edit-field-') || lastEntry.id?.startsWith('icon-edit-') || 
+              lastEntry.id?.startsWith('category-edit-') || lastEntry.id?.startsWith('delete-tech-')) {
+            return prev.slice(0, -1);
+          }
+        }
+        return prev;
+      });
+      
+      // Re-run the edit program for the current technology
+      // The edit context should already be set up correctly with the original source
+      const editProgram = createEditTechnologyProgram({ 
+        technology: activeTechnology, 
+        isCreate: editContext.isCreateMode 
+      });
+      await runProgram(editProgram, []);
+    } else {
+      // Fallback to normal back navigation
+      goBack();
+    }
+  };
+  
+  /** Navigate back from edit program to source */
+  const goBackFromEditProgram = async () => {
+    // The history is now managed correctly by the purge logic in runProgram,
+    // so a standard goBack() is all that's needed.
+    goBack();
+  };
 
   /** Core executor for a program (internal & command-driven) */
   const runProgram = async (program: TerminalProgram, args: string[] = []) => {
@@ -124,6 +192,7 @@ const Technologies = () => {
     if (program.id === "exo") {
       setProgramHistory([]);
       setCurrentProgramId(null);
+      setEditContext(null);
     }
 
     // Determine clearing behavior considering first technologies run
@@ -132,13 +201,59 @@ const Technologies = () => {
 
     const prevProgramId = currentProgramId;
 
+    // Handle edit context for back navigation
     if (willClear) {
       if (prevProgramId !== null && program.id !== "exo") {
-        setProgramHistory((prev) => [...prev, { id: prevProgramId, output }]);
+        // Check if we're entering an edit program
+        if (program.id.startsWith('tech-edit-')) {
+          // This is the main edit program - store the source context
+          // If we already have an edit context, preserve the original source
+          const originalSource = editContext?.sourceProgramId || prevProgramId;
+          const originalOutput = editContext?.sourceOutput || [...output];
+          const originalCreateMode = editContext?.isCreateMode || program.id.includes('undefined') || program.id.includes('temp');
+          
+          setEditContext({
+            editProgramId: program.id,
+            sourceProgramId: originalSource,
+            sourceOutput: originalOutput,
+            isCreateMode: originalCreateMode
+          });
+          setProgramHistory((prev) => [...prev, { id: prevProgramId, output }]);
+        } else if (program.id.startsWith('edit-field-') || program.id.startsWith('icon-edit-') || 
+                   program.id.startsWith('category-edit-') || program.id.startsWith('delete-tech-')) {
+          // This is a sub-edit program - back should go to the edit program
+          if (editContext?.editProgramId) {
+            // Don't add to history here - we'll handle the back navigation specially
+            // The edit program should already be in history from when we entered it
+          } else {
+            // Fallback to normal history if no edit context
+            setProgramHistory((prev) => [...prev, { id: prevProgramId, output }]);
+          }
+        } else if (program.id.startsWith('tech-detail-') && prevProgramId?.startsWith('tech-edit-')) {
+          // Coming from edit menu back to detail – push original source program instead of the edit menu.
+          if (editContext?.sourceProgramId) {
+            setProgramHistory((prev) => [...prev, { id: editContext.sourceProgramId, output: editContext.sourceOutput }]);
+          }
+        } else {
+          // Regular program - normal history
+          setProgramHistory((prev) => [...prev, { id: prevProgramId, output }]);
+        }
       } else if (program.id === "exo") {
         setProgramHistory([]);
+        setEditContext(null);
       }
       clearOutput();
+    }
+
+    // If navigating to a technology details program, purge trailing edit-related programs from history
+    if (program.id.startsWith('tech-detail-')) {
+      setProgramHistory((prev) => {
+        const newHist = [...prev];
+        while (newHist.length > 0 && isEditRelatedProgram(newHist[newHist.length - 1].id)) {
+          newHist.pop();
+        }
+        return newHist;
+      });
     }
 
     const context: ProgramContext = {
@@ -165,6 +280,29 @@ const Technologies = () => {
     // If the program has a technology context, make it active
     if (program.technology) {
       setActiveTechnology(program.technology);
+      
+      // Update edit context if we're navigating to a technology detail view after creation
+      if (program.id.startsWith('tech-detail-') && editContext?.isCreateMode) {
+        setEditContext(prev => prev ? {
+          ...prev,
+          sourceProgramId: program.id,
+          sourceOutput: [...output],
+          isCreateMode: false
+        } : null);
+      }
+    }
+    
+    // Clear edit context if we're navigating to a non-edit program
+    if (!program.id.startsWith('tech-edit-') && !program.id.startsWith('edit-field-') && 
+        !program.id.startsWith('icon-edit-') && !program.id.startsWith('category-edit-') && 
+        !program.id.startsWith('delete-tech-') && program.id !== 'exo') {
+      setEditContext(null);
+    }
+    
+    // Preserve edit context when navigating between edit programs
+    if (program.id.startsWith('edit-field-') || program.id.startsWith('icon-edit-') || 
+        program.id.startsWith('category-edit-') || program.id.startsWith('delete-tech-')) {
+      // Don't clear edit context for sub-edit programs
     }
 
     await program.run(args, context);
@@ -187,10 +325,30 @@ const Technologies = () => {
     
     if (program.id !== "exo" && willClear && hadHistory) {
       let backText = "< Back";
-      if (prevProgramId) {
+      let backTarget = prevProgramId;
+      
+      // Handle special back navigation for edit programs
+      if (program.id.startsWith('edit-field-') || program.id.startsWith('icon-edit-') || 
+          program.id.startsWith('category-edit-') || program.id.startsWith('delete-tech-')) {
+        // Sub-edit programs → back to main edit
+        if (editContext?.editProgramId) {
+          backTarget = editContext.editProgramId;
+          const editName = programNamesRef.current.get(editContext.editProgramId) || 'Edit Menu';
+          backText = `< Back - ${editName}`;
+        }
+      } else if (program.id.startsWith('tech-edit-')) {
+        // Main edit program → back to original source
+        if (editContext?.sourceProgramId) {
+          backTarget = editContext.sourceProgramId;
+          const sourceName = programNamesRef.current.get(editContext.sourceProgramId) || 'Technologies';
+          backText = `< Back - ${sourceName}`;
+        }
+      } else if (prevProgramId) {
+        // Regular programs
         const name = programNamesRef.current.get(prevProgramId) || prevProgramId;
         backText = `< Back - ${name}`;
       }
+      
       appendOutput([
         { id: getNextId(), text: "\u00A0" },
         { id: getNextId(), text: backText, isBackLine: true },
@@ -503,9 +661,9 @@ const Technologies = () => {
       if (value.toLowerCase() === 'cancel') {
         appendOutput([{ id: getNextId(), text: 'Edit cancelled.' }]);
         setEditSession(null);
-        // Return to previous detail view
+        // Return to edit program instead of technology details
         if (activeTechnology) {
-          await runProgram(createTechnologyDetailsProgram({ technology: activeTechnology! }), []);
+          await runProgram(createEditTechnologyProgram({ technology: activeTechnology! }), []);
         }
         setCurrentInput('');
         return;
@@ -543,7 +701,8 @@ const Technologies = () => {
         setActiveTechnology(updatedTech);
         appendOutput([{ id: getNextId(), text: `${editSession.field} updated successfully.` }]);
         setEditSession(null);
-        await runProgram(createTechnologyDetailsProgram({ technology: updatedTech! }), []);
+        // Return to edit program instead of technology details
+        await runProgram(createEditTechnologyProgram({ technology: updatedTech! }), []);
       } catch (err) {
         console.error(err);
         appendOutput([{ id: getNextId(), text: 'Failed to update.', severity: 'error' }]);
@@ -557,7 +716,8 @@ const Technologies = () => {
       if (val === 'cancel' || val === 'n' || val === 'no') {
         appendOutput([{ id: getNextId(), text: 'Delete cancelled.' }]);
         setDeleteSession(null);
-        await runProgram(createTechnologyDetailsProgram({ technology: deleteSession!.tech }), []);
+        // Return to edit program instead of technology details
+        await runProgram(createEditTechnologyProgram({ technology: deleteSession!.tech }), []);
         setCurrentInput('');
         return;
       }
@@ -805,7 +965,16 @@ const Technologies = () => {
 
     // Back navigation line
     if (line.isBackLine) {
-      goBack();
+      // Check if we're in a sub-edit program and should go back to edit program
+      if (currentProgramId?.startsWith('edit-field-') || currentProgramId?.startsWith('icon-edit-') || 
+          currentProgramId?.startsWith('category-edit-') || currentProgramId?.startsWith('delete-tech-')) {
+        await goBackToEditProgram();
+      } else if (currentProgramId?.startsWith('tech-edit-')) {
+        // Main edit program should go back to source
+        await goBackFromEditProgram();
+      } else {
+        goBack();
+      }
       return;
     }
 
@@ -840,7 +1009,8 @@ const Technologies = () => {
               const updatedTech = await TechnologyService.getTechnologyById(iconUploadSession.tech.id);
               setActiveTechnology(updatedTech);
               setIconUploadSession(null);
-              await runProgram(createTechnologyDetailsProgram({ technology: updatedTech }), []);
+              // Return to edit program instead of technology details
+              await runProgram(createEditTechnologyProgram({ technology: updatedTech }), []);
             } catch (err) {
               console.error(err);
               appendOutput([{ id: getNextId(), text: 'Failed to upload icon.', severity: 'error' }]);
@@ -889,9 +1059,8 @@ const Technologies = () => {
           return;
         }
         if (line.action === 'delete-no') {
-          // Cancel deletion
-          const iconProg2 = createIconEditProgram({ technology: line.technology });
-          await runProgram(createTechnologyDetailsProgram({ technology: line.technology }), []);
+          // Cancel deletion - return to edit program instead of technology details
+          await runProgram(createEditTechnologyProgram({ technology: line.technology }), []);
           setSelectedIndex(null);
           setCurrentInput('');
           return;
@@ -925,7 +1094,16 @@ const Technologies = () => {
               appendOutput([{ id: getNextId(), text: 'Technology created successfully.' }]);
               setNewTechDraft(null);
               setTempIconFile(null);
-              await runProgram(TechnologiesProgram, []);
+              
+              // Navigate to the newly created technology's detail view
+              // Update edit context to reflect that we're now viewing the created technology
+              setEditContext(prev => prev ? {
+                ...prev,
+                sourceProgramId: `tech-detail-${createdTech.id}`,
+                sourceOutput: [],
+                isCreateMode: false
+              } : null);
+              await runProgram(createTechnologyDetailsProgram({ technology: createdTech }), []);
             } catch (err) {
               console.error(err);
               appendOutput([{ id: getNextId(), text: 'Failed to create technology.', severity: 'error' }]);
@@ -945,6 +1123,7 @@ const Technologies = () => {
         }
         // Handle category selection from category edit program
         if (line.action && line.action.startsWith('select-category-')) {
+          setEditSession(null);
           const selectedCategory = line.action.replace('select-category-', '');
           if (line.technology.id !== undefined) {
             try {
@@ -961,7 +1140,8 @@ const Technologies = () => {
               const updatedTech = await TechnologyService.getTechnologyById(line.technology.id);
               setActiveTechnology(updatedTech);
               appendOutput([{ id: getNextId(), text: `Category updated to: ${selectedCategory}` }]);
-              await runProgram(createTechnologyDetailsProgram({ technology: updatedTech! }), []);
+              // Return to edit program instead of technology details
+              await runProgram(createEditTechnologyProgram({ technology: updatedTech! }), []);
             } catch (err) {
               console.error(err);
               appendOutput([{ id: getNextId(), text: 'Failed to update category.', severity: 'error' }]);
