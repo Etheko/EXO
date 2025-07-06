@@ -71,11 +71,17 @@ public class TechnologyController {
     public ResponseEntity<Technology> updateTechnology(@PathVariable Long id, @RequestBody Technology technologyDetails) {
         return technologyService.findById(id)
                 .map(existingTechnology -> {
+                    String oldCategory = existingTechnology.getCategory();
                     existingTechnology.setName(technologyDetails.getName());
                     existingTechnology.setDescription(technologyDetails.getDescription());
                     existingTechnology.setLink(technologyDetails.getLink());
                     existingTechnology.setCategory(technologyDetails.getCategory());
-                    return ResponseEntity.ok(technologyService.save(existingTechnology));
+                    Technology saved = technologyService.save(existingTechnology);
+                    
+                    // Clean up empty categories after update
+                    technologyService.cleanupEmptyCategories();
+                    
+                    return ResponseEntity.ok(saved);
                 })
                 .orElse(ResponseEntity.notFound().build());
     }
@@ -87,6 +93,10 @@ public class TechnologyController {
         return technologyService.findById(id)
                 .map(technology -> {
                     technologyService.deleteById(id);
+                    
+                    // Clean up empty categories after deletion
+                    technologyService.cleanupEmptyCategories();
+                    
                     return ResponseEntity.ok().<Void>build();
                 })
                 .orElse(ResponseEntity.notFound().build());
@@ -170,5 +180,11 @@ public class TechnologyController {
     @Operation(summary = "Check if technology name exists", description = "Check if a technology with the given name exists")
     public ResponseEntity<Boolean> technologyNameExists(@RequestParam String name) {
         return ResponseEntity.ok(technologyService.existsByName(name));
+    }
+
+    @GetMapping("/categories")
+    @Operation(summary = "Get all categories", description = "Retrieve a list of all unique categories")
+    public ResponseEntity<List<String>> getAllCategories() {
+        return ResponseEntity.ok(technologyService.getAllCategories());
     }
 }

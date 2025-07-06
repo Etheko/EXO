@@ -15,6 +15,7 @@ import { createEditTechnologyProgram } from "./programs/EditTechnologyProgram";
 import { createFieldEditProgram } from "./programs/FieldEditProgram";
 import { createDeleteTechnologyProgram } from "./programs/DeleteTechnologyProgram";
 import { createIconEditProgram } from "./programs/IconEditProgram";
+import { createCategoryEditProgram } from "./programs/CategoryEditProgram";
 
 import type { Technology } from "../../types/Technology";
 import { convertImageToAscii } from "../../utils/aa";
@@ -82,7 +83,7 @@ const Technologies = () => {
   const nextIdRef = useRef<number>(1);
   const getNextId = () => nextIdRef.current++;
 
-  const [editSession, setEditSession] = useState<{ tech: Technology; field: "name" | "description" | "link" | "icon" } | null>(null);
+  const [editSession, setEditSession] = useState<{ tech: Technology; field: "name" | "description" | "link" | "icon" | "category" } | null>(null);
   const [deleteSession, setDeleteSession] = useState<{ tech: Technology } | null>(null);
   const [iconUploadSession, setIconUploadSession] = useState<{ tech: Technology; file: File } | null>(null);
   const [newTechDraft, setNewTechDraft] = useState<Technology | null>(null);
@@ -624,7 +625,7 @@ const Technologies = () => {
       }
 
       // If a specific field is provided (edit name, edit description, etc.)
-      const validFields = ['name', 'description', 'link', 'icon'];
+      const validFields = ['name', 'description', 'link', 'icon', 'category'];
       if (args.length > 0 && validFields.includes(args[0])) {
         if (!activeTechnology) {
           appendOutput([
@@ -633,10 +634,13 @@ const Technologies = () => {
           setCurrentInput('');
           return;
         }
-        const field = args[0] as 'name' | 'description' | 'link' | 'icon';
+        const field = args[0] as 'name' | 'description' | 'link' | 'icon' | 'category';
         if (field === 'icon') {
           const iconProg2 = createIconEditProgram({ technology: activeTechnology });
           await runProgram(iconProg2, args.slice(1));
+        } else if (field === 'category') {
+          const categoryProg = createCategoryEditProgram({ technology: activeTechnology });
+          await runProgram(categoryProg, args.slice(1));
         } else {
           const fieldProgram = createFieldEditProgram({ technology: activeTechnology, field });
           await runProgram(fieldProgram, args.slice(1));
@@ -939,10 +943,46 @@ const Technologies = () => {
           setCurrentInput('');
           return;
         }
-        const field = line.action.replace('edit-', '') as 'name' | 'description' | 'link' | 'icon';
+        // Handle category selection from category edit program
+        if (line.action && line.action.startsWith('select-category-')) {
+          const selectedCategory = line.action.replace('select-category-', '');
+          if (line.technology.id !== undefined) {
+            try {
+              // Update the technology with the selected category
+              const base = {
+                name: (line.technology.name ?? ''),
+                description: (line.technology.description ?? ''),
+                link: (line.technology.link ?? ''),
+                category: selectedCategory,
+                iconPath: line.technology.iconString,
+              } as any;
+              
+              await TechnologyService.updateTechnology(line.technology.id, base);
+              const updatedTech = await TechnologyService.getTechnologyById(line.technology.id);
+              setActiveTechnology(updatedTech);
+              appendOutput([{ id: getNextId(), text: `Category updated to: ${selectedCategory}` }]);
+              await runProgram(createTechnologyDetailsProgram({ technology: updatedTech! }), []);
+            } catch (err) {
+              console.error(err);
+              appendOutput([{ id: getNextId(), text: 'Failed to update category.', severity: 'error' }]);
+            }
+          } else if (newTechDraft) {
+            // For new technology draft
+            setNewTechDraft(prev => ({ ...prev!, category: selectedCategory }));
+            appendOutput([{ id: getNextId(), text: `Category set to: ${selectedCategory}` }]);
+            await runProgram(createEditTechnologyProgram({ technology: { ...newTechDraft!, category: selectedCategory } as Technology, isCreate: true }), []);
+          }
+          setSelectedIndex(null);
+          setCurrentInput('');
+          return;
+        }
+        const field = line.action.replace('edit-', '') as 'name' | 'description' | 'link' | 'icon' | 'category';
         if (field === 'icon') {
           const iconProg2 = createIconEditProgram({ technology: line.technology });
           await runProgram(iconProg2, []);
+        } else if (field === 'category') {
+          const categoryProg = createCategoryEditProgram({ technology: line.technology });
+          await runProgram(categoryProg, []);
         } else {
           const fieldProgram = createFieldEditProgram({ technology: line.technology, field });
           await runProgram(fieldProgram, []);

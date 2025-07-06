@@ -110,4 +110,19 @@ public class TechnologyService {
     public boolean existsByName(String name) {
         return technologyRepository.existsByNameIgnoreCase(name);
     }
+
+    public List<String> getAllCategories() {
+        return technologyRepository.findAllCategories();
+    }
+
+    @Transactional
+    public void cleanupEmptyCategories() {
+        List<String> allCategories = technologyRepository.findAllCategories();
+        for (String category : allCategories) {
+            long count = technologyRepository.countByCategory(category);
+            if (count == 0) {
+                logger.info("Category '{}' is empty and will be automatically removed", category);
+            }
+        }
+    }
 }

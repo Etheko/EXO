@@ -33,7 +33,7 @@ public class ProjectInitializer {
         // Define the expected projects with their data
         List<Project> expectedProjects = Arrays.asList(
             createProject("EXO", "Project EXO", 
-                "This website: The ✨Etheko Experience Online✨.",
+                "This website: The ✨Etheko Xperience Online✨.",
                 false,
                 "/assets/projects/project-exo-header.png",
                 "/assets/projects/project-exo-logo.png",

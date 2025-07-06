@@ -56,6 +56,14 @@ export function createEditTechnologyProgram(opts: Options): TerminalProgram {
         },
         { 
           id: getNextId(), 
+          text: isCreate ? `Set Category${tech.category ? ' ✓' : ''}` : "Edit Category", 
+          isEditLine: true, 
+          technology: tech, 
+          action: 'edit-category',
+          severity: isCreate && tech.category ? 'success' : undefined
+        },
+        { 
+          id: getNextId(), 
           text: isCreate ? `Set Icon${tech.iconString ? ' ✓' : ''}` : "Change Icon", 
           isEditLine: true, 
           technology: tech, 

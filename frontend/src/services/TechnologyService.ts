@@ -84,6 +84,11 @@ class TechnologyService {
         });
         return response.data;
     }
+
+    async getAllCategories(): Promise<string[]> {
+        const response = await api.get<string[]>('/technologies/categories');
+        return response.data;
+    }
 }
 
 export default new TechnologyService();

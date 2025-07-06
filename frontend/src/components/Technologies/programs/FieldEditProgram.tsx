@@ -3,7 +3,7 @@ import type { Technology } from "../../../types/Technology";
 
 interface Options {
   technology: Technology;
-  field: "name" | "description" | "link" | "icon";
+  field: "name" | "description" | "link" | "icon" | "category";
 }
 
 export function createFieldEditProgram(opts: Options): TerminalProgram {

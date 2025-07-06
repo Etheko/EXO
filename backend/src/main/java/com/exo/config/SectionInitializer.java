@@ -35,7 +35,7 @@ public class SectionInitializer {
             createSection("init-etheko", "EXEC::Etheko()", "// who am I?", "", 0, true, "about"),
             createSection("projects", "IMPORT::Projects.log", "// my projects", "", 1, true, "projects"),
             createSection("modules-loaded", "NODE_MODULES_LOADED", "// what I use", "", 2, true, "tech-stack"),
-            createSection("skills-loaded", "UPGRADE.SKILLS_LOADED", "// my skills and certs  (Agile, DevOps, Cyber, Certs...)", "", 3, false, "skills-certs"),
+            createSection("skills-loaded", "UPGRADE.SKILLS_LOADED", "// my skills and certs  (Agile, DevOps, Cyber, Certs...)", "", 3, true, "skills-certs"),
             createSection("ux-lab", "KERNEL.UX.LAB{👾}", "// cool thingies", "", 4, false, "design-zone"),
             createSection("blog", "ECHO.blog.txt", "// blog", "", 6, false, "blog"),
             createSection("contact", ".CONTACT.txt", "// CV & Links", "", 7, false, "contact")
